@@ -1,10 +1,10 @@
 Name:           auter
-Version:        0.5
+Version:        0.6
 Release:        1%{?dist}
 Summary:        Prepare and apply updates
 
 License:        ASL 2.0
-URL:            https://github.rackspace.com/IAW/auter
+URL:            https://github.com/rackerlabs/auter
 Source0:        %{name}-%{version}.tar.gz
 BuildArch:      noarch
 
@@ -60,6 +60,10 @@ fi
 %dir %{_sharedstatedir}/auter/post-apply.d
 
 %changelog
+* Wed Jul 06 2016 Cameron Beere <cameron.beere@rackspace.co.uk>
+- Release version 0.6
+- Add maintainers file
+
 * Thu Apr 28 2016 Cameron Beere <cameron.beere@rackspace.co.uk>
 - Release version 0.5
 - Added transaction ID logging

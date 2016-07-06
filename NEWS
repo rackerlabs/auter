@@ -1,5 +1,9 @@
 Auter NEWS
 
+0.6
+ * Initial public release
+ * Add maintainers file
+
 0.5
  * Added transaction ID logging
  * Disable random sleeps when running from a tty
