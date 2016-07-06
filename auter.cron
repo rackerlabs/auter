@@ -1,0 +1,31 @@
+# Cron schedule for auter
+
+# Preparing package downloads:
+# Example of running the prep stage. This pre-downloads updates to make 
+# the apply phase quicker
+
+# 30 1 2 * *   root /usr/bin/auter --prep                              # On the 2nd of every month
+# 30 0 * * *   root /usr/bin/auter --prep                              # Every day at 00:30
+# 0 22 * * Sun root /usr/bin/auter --prep                              # Every Sunday at 22:00
+# 15 3 * * Tue root [ $(date +\%d) -le 7 ] && /usr/bin/auter --prep    # First Tuesday of the month
+
+# Executing updates:
+# Example of executing the updates on the server. This may have a different
+# schedule for each server on your infrastructure to avoid overlapping 
+# downtime on servers which serve the same function, e.g. if you dont want to 
+# update all your web servers at the same time.
+
+# 30 1 14 * *    root /usr/bin/auter --apply                             # On the 14th of every month
+# 30 1 1-7 * *   root [ $(date +\%a) = "Tue" ] && /usr/bin/auter --prep  # Another way for first Tuesday
+# 30 1 15-21 * * root [ $(date +\%a) = "Sun" ] && /usr/bin/auter --prep  # Third Sunday
+
+# Running at boot time:
+# You can schedule auter to run at boot time using a @reboot cron job. An 
+# @reboot cron job will run on both a reboot and cold boot.
+
+# @reboot        root /usr/bin/auter --apply
+
+
+# Notes on scheduling:
+# - If no cron schedule matches what you need, comment out all cron jobs and create 'at' jobs instead
+# - Be aware that for example the third Friday may come before the third Wednesday

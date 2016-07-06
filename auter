@@ -1,0 +1,315 @@
+#!/bin/bash 
+#
+# auter is a yum-cron type package which will implement automatic updates on an
+# individual server with features such as predownloading packages & reboots. 
+#
+#
+# Copyright 2016 Rackspace, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not use
+# this file except in compliance with the License.  You may obtain a copy of the
+# License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations under the License.
+#
+
+
+readonly AUTERVERSION="0.5"
+readonly DATADIR="/var/lib/auter"
+readonly LOCKFILE="${DATADIR}/enabled"
+readonly PIDFILE="/var/run/auter/auter.pid"
+
+# Set default options - these can be overridden in the config file or with a command line argument.
+AUTOREBOOT="no"
+PACKAGEMANAGEROPTIONS=""
+PREDOWNLOADUPDATES="yes"
+CONFIGFILE="/etc/auter/auter.conf"
+MAXDELAY=3600
+CONFIGSET="default"
+PREAPPLYSCRIPTDIR="${DATADIR}/pre-apply.d"
+POSTAPPLYSCRIPTDIR="${DATADIR}/post-apply.d"
+PREREBOOTSCRIPTDIR="${DATADIR}/pre-reboot.d"
+POSTREBOOTSCRIPTDIR="${DATADIR}/post-reboot.d"
+
+
+function default_signal_handling() {
+  trap 'rm -f "${PIDFILE}"' SIGINT SIGTERM
+}
+
+# The man page is generated in part from the print_help() text by running:
+#   help2man --include=auter.help2man --no-info ./auter > auter.man
+function print_help() {
+  echo "auter - Automatic Update Transaction Executor by Rackspace
+
+Usage: auter [--enable|--disable|--status] [--prep] [--apply] [--reboot] [--postreboot] [--config=<configfile>] [OPTION]
+
+Actions:
+  --enable      Enable auter
+  --disable     Disable auter
+  --status      Show whether enabled or disabled
+  --prep        Pre-download updates before applying
+  --apply       Apply updates, and reboot if AUTOREBOOT=yes
+  --reboot      Reboot system
+  --postreboot  Run post reboot script
+ 
+Options:
+  --config=FILE Specify the full path to an auter config file. Defaults to /etc/auter/auter.conf
+  -h, --help    Show this help text
+  -v, --version Show the version
+
+"
+}
+
+function logit() {
+  # If running on a tty, print to screen
+  $(tty -s) && echo "$1"
+  logger -p info -t auter "$1"
+}
+
+function run_script {
+  SCRIPT=$1
+  if [[ -x "${SCRIPT}" ]] && [[ -f "${SCRIPT}" ]]; then
+    logit "Running script ${SCRIPT}"
+    ${SCRIPT}
+    local RC=$?
+    if [[ "${RC}" -ne 0 ]]; then
+      logit "Script ${SCRIPT} exited with non-zero exit code ${RC}. Aborting auter run."
+      quit 8
+    fi
+  elif [[ -f "${SCRIPT}" ]]; then
+    logit "Script ${SCRIPT} exists but the execute bit is not set. Skipping."
+  fi
+}
+
+# Check whether yum, or dnf is available
+function check_package_manager() {
+  if [[ -x /usr/bin/dnf ]]; then
+    echo dnf
+  elif [[ -x /usr/bin/yum ]]; then
+    echo yum
+  else
+    logit "Cannot find yum or dnf"
+    exit 7
+  fi
+}
+
+function prepare_updates() {
+  if [[ "${PREDOWNLOADUPDATES}" == "yes" ]]; then
+    if [[ $(${PACKAGE_MANAGER} --help | grep -c downloadonly) -gt 0 ]]; then
+      local RC=$(${PACKAGE_MANAGER} check-update ${PACKAGEMANAGEROPTIONS} &>/dev/null; echo $?)
+
+      # If check-update has an exit code of 100, updates are available.
+      if [[ "${RC}" -eq 100 ]]; then
+        sleep $(($RANDOM % ${MAXDELAY}))
+        PREPOUTPUT=$(${PACKAGE_MANAGER} ${PACKAGEMANAGEROPTIONS} update --downloadonly -y)
+        logit "Updates downloaded"
+      elif [[ "${RC}" -eq 1 ]]; then
+        logit "Exit status ${RC} returned by \`${PACKAGE_MANAGER} ${PACKAGEMANAGEROPTIONS} update --downloadonly -y\`. Exiting."
+      else
+        logit "No updates are available to be downloaded."
+      fi
+    else
+      logit "downloadonly option is not available"
+    fi
+  else
+    PREPOUTPUT=$(${PACKAGE_MANAGER} ${PACKAGEMANAGEROPTIONS} check-update)
+  fi
+  [[ "${PREPOUTPUT}" ]] && echo "${PREPOUTPUT}" > ${DATADIR}/last-prep-${CONFIGSET}
+}
+
+function apply_updates() {
+  local RC=$(${PACKAGE_MANAGER} check-update ${PACKAGEMANAGEROPTIONS} &>/dev/null; echo $?)
+
+  # If check-update has an exit code of 100, updates are available.
+  if [[ "${RC}" -eq 100 ]]; then
+    for SCRIPT in "${PREAPPLYSCRIPTDIR}"/*; do
+      run_script "${SCRIPT}"
+    done
+  
+    sleep $(($RANDOM % ${MAXDELAY}))
+    logit "Applying updates"
+    local HISTORY_BEFORE=$(${PACKAGE_MANAGER} history list)
+
+    # We don't want to allow the user to interrupt a yum/dnf transaction or Bad Things Happen.
+    trap '' SIGINT SIGTERM
+    ${PACKAGE_MANAGER} update -y ${PACKAGEMANAGEROPTIONS} &>/dev/null
+    ${PACKAGE_MANAGER} history info > ${DATADIR}/last-update-${CONFIGSET}
+    default_signal_handling
+
+    local HISTORY_AFTER=$(${PACKAGE_MANAGER} history list)
+  
+    if [[ "${HISTORY_BEFORE}" == "${HISTORY_AFTER}" ]]; then 
+      logit "Updates failed. Exiting."
+      quit 3
+    fi
+  
+    local TRANSACTIONID=$(grep "Transaction ID" ${DATADIR}/last-update-${CONFIGSET})
+    logit "Updates complete (${PACKAGE_MANAGER} ${TRANSACTIONID}). You may need to reboot for some updates to take effect"
+
+    for SCRIPT in "${POSTAPPLYSCRIPTDIR}"/*; do
+      run_script "${SCRIPT}"
+    done
+
+    [[ "${AUTOREBOOT}" == "yes" ]] && reboot_server
+
+  elif [[ "${RC}" -eq 0 ]]; then
+    logit "No updates are available to be applied."
+    quit 0
+  else
+    logit "Exit status ${RC} returned by \`${PACKAGE_MANAGER} check-update ${PACKAGEMANAGEROPTIONS}\`. Exiting."
+    quit 3
+  fi
+}
+
+function reboot_server() {
+  for SCRIPT in "${PREREBOOTSCRIPTDIR}"/*; do
+    run_script "${SCRIPT}"
+  done
+
+  if [[ $(ls "${POSTREBOOTSCRIPTDIR}/" 2>/dev/null) ]]; then
+    logit "Adding post-reboot-hook to run scripts under ${POSTREBOOTSCRIPTDIR} to /etc/cron.d/auter-postreboot-${CONFIGSET}"
+    echo -e "@reboot root /usr/bin/auter --postreboot --config ${CONFIGFILE}" > /etc/cron.d/auter-postreboot-${CONFIGSET}
+  fi
+
+  logit "Rebooting server"
+  /sbin/shutdown -r +2 "auter: System reboot to apply updates" &
+  quit 0
+}
+
+function post_reboot() {
+  logit "Removed post-reboot hook: /etc/cron.d/auter-postreboot-${CONFIGSET}"
+  rm -f "/etc/cron.d/auter-postreboot-${CONFIGSET}"
+  $(tty -s) || sleep 300
+
+  for SCRIPT in "${POSTREBOOTSCRIPTDIR}"/*; do
+    run_script "${SCRIPT}"
+  done
+}
+
+function print_status() {
+  if [[ -f "${LOCKFILE}" ]] && [[ -f "${PIDFILE}" ]]; then
+    logit "auter is currently enabled and running"
+  elif [[ -f "${LOCKFILE}" ]] && [[ ! -f "${PIDFILE}" ]]; then
+    logit "auter is currently enabled and not running"
+  else
+    logit "auter is currently disabled"
+  fi
+}
+
+# Needed to cleanup our PID file. The only argument is the exit code to use.
+function quit() {
+  if [[ -f "${PIDFILE}" ]]; then
+    rm -f "${PIDFILE}"
+  fi
+  exit $1
+}
+
+
+# Main
+
+# Make sure we trap signals and clean up the PID before exiting
+default_signal_handling
+
+[[ ! $1 ]] && print_help && exit 0
+
+ARGS=$@
+OPTS=$(getopt -n "$0" -o h,v --long prep,apply,enable,disable,reboot,postreboot,version,help,status,config: -- "$@")
+if [[ $? -ne 0 ]]; then
+  echo "Try '$0 --help' for more information."
+  exit
+fi
+
+eval set -- "$OPTS"
+
+while true ; do
+  case "$1" in
+    -h|--help) print_help ; exit 0; shift;;
+    -v|--version) echo "auter ${AUTERVERSION}"; exit 0 ; shift;;
+    --config) unset CONFIGSET ; CONFIGFILE=$2 ; CUSTOMCONFIG=1 ; shift 2;;
+    --prep) PREP=1 ; shift;;
+    --apply) APPLY=1 ; shift;;
+    --reboot) REBOOTCALL=1 ; shift;;
+    --postreboot) POSTREBOOT=1 ; shift;;
+    --enable) ENABLE=1 ; shift;;
+    --disable) DISABLE=1 ; shift;;
+    --status) print_status ; exit 0 ; shift;;
+    --) shift ; break ;;
+  esac
+done
+
+readonly PACKAGE_MANAGER=$(check_package_manager)
+
+# Do this after option processing so --help and --status still work.
+if [[ "$(whoami)" != "root" ]]; then
+  echo "Script must be run as root"
+  exit 5
+fi
+
+if [[ ! -d "${DATADIR}" ]]; then
+  logit "FATAL ERROR: auter DATADIR ${DATADIR} does not exist."
+  exit 5
+fi
+
+if [[ "${ENABLE}" ]] ; then
+  touch "${LOCKFILE}"
+  logit "auter enabled"
+  exit 0
+fi
+
+if [[ "${DISABLE}" ]] ; then
+  rm -f "${LOCKFILE}"
+  logit "auter disabled"
+  exit 0
+fi
+
+if [[ ! -f "${LOCKFILE}" ]]; then
+  logit "auter disabled. Please run auter --enable to enable automatic updates."
+  exit 4
+fi
+
+# PID file checking to make sure multiple copies of auter don't run at once.
+PIDDIR=$(dirname "${PIDFILE}")
+if [[ ! -d "${PIDDIR}" ]]; then
+  install -m 755 -o root -g root -d "${PIDDIR}"
+fi
+
+# Note: ALL script exits after this block must use the quit() function instead so the PIDfile is cleaned up.
+if [[ -f "${PIDFILE}" ]]; then
+  logit "auter is already running or ${PIDFILE} exists."
+  exit 6
+else
+  echo "$$" > "${PIDFILE}"
+fi
+
+if [[ -f "${CONFIGFILE}" ]]; then
+  source "${CONFIGFILE}"
+elif [[ "${CUSTOMCONFIG}" ]]; then
+  logit "Custom config file ${CONFIGFILE} does not exist"
+  quit 5
+else
+  logit "Using default config values."
+fi
+
+# CONFIGSET needs to be set if we're using a custom configuration file.
+if [[ -z "${CONFIGSET}" ]]; then
+  logit "You must specify the CONFIGSET variable in custom config file ${CONFIGFILE} to avoid naming collisions"
+  quit 5
+fi
+
+logit "Running with: $0 ${ARGS}"
+
+[[ "${MAXDELAY}" -lt 1 ]] && MAXDELAY=1
+$(tty -s) && MAXDELAY=1 && logit "Running in an interactive shell, disabling all random sleeps"
+
+[[ "${POSTREBOOT}" ]] && post_reboot && quit 0
+
+[[ "${PREP}" ]] && prepare_updates
+[[ "${APPLY}" ]] && apply_updates
+[[ "${REBOOTCALL}" ]] && reboot_server
+
+quit 0
