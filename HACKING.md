@@ -63,7 +63,7 @@ When making any changes to code, make sure documentation (--help, man page) has 
 
   # help2man --include=auter.help2man --no-info ./auter > auter.man
 
-3.  Add notes to auter.spec and README with a list of the changes for this release
+3.  Add notes to auter.spec and NEWS with a list of the changes for this release
 
 4.  Push to github
 

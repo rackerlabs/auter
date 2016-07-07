@@ -51,3 +51,13 @@ You'll usually want everything to run via cron, but you can also run auter manua
 auter --prep
 auter --apply
 ```
+
+**yum repo & binaries**
+
+You can find rpm files attached to each auter release in github.
+
+For a yum repo with pre-built binaries for each supported distribution, see our copr page:
+
+```
+  https://copr.fedorainfracloud.org/coprs/piersc/auter/
+```
