@@ -19,7 +19,7 @@
 #
 
 
-readonly AUTERVERSION="0.6"
+readonly AUTERVERSION="0.7"
 readonly DATADIR="/var/lib/auter"
 readonly LOCKFILE="${DATADIR}/enabled"
 readonly PIDFILE="/var/run/auter/auter.pid"

@@ -1,5 +1,7 @@
 # auter
 
+Automatic updates for RHEL, CentOS or Fedora servers, with the ability to run pre/post hooks, pre-download packages & reboot after the updates.
+
 **Enable/Disable**
 
 Adds or removes a lockfile that auter will check the presence of to see whether to do anything:

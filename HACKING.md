@@ -50,3 +50,23 @@ auter --reboot
 **Documentation**
 
 When making any changes to code, make sure documentation (--help, man page) has been updated to reflect any changes
+
+**Release Process**
+
+1.  Ensure that all files are updated to the version of the release number you're about to tag.  This includes:
+  - auter
+  - auter.man
+  - NEWS
+  - auter.spec
+
+2.  Regenerate the man page using help2man:
+
+  # help2man --include=auter.help2man --no-info ./auter > auter.man
+
+3.  Add notes to auter.spec and README with a list of the changes for this release
+
+4.  Push to github
+
+5.  Tag a release through github
+
+6.  Engage with the rpmbuilding process to get rpms built based on the new tab, and attach those to the github release. 
