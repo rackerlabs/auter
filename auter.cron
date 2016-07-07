@@ -16,8 +16,8 @@
 # update all your web servers at the same time.
 
 # 30 1 14 * *    root /usr/bin/auter --apply                             # On the 14th of every month
-# 30 1 1-7 * *   root [ $(date +\%a) = "Tue" ] && /usr/bin/auter --prep  # Another way for first Tuesday
-# 30 1 15-21 * * root [ $(date +\%a) = "Sun" ] && /usr/bin/auter --prep  # Third Sunday
+# 30 1 1-7 * *   root [ $(date +\%a) = "Tue" ] && /usr/bin/auter --apply  # Another way for first Tuesday
+# 30 1 15-21 * * root [ $(date +\%a) = "Sun" ] && /usr/bin/auter --apply  # Third Sunday
 
 # Running at boot time:
 # You can schedule auter to run at boot time using a @reboot cron job. An 
