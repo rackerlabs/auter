@@ -1,5 +1,7 @@
 # auter
 
+Automatic updates for RHEL, CentOS or Fedora servers, with the ability to run pre/post hooks, pre-download packages & reboot after the updates.
+
 **Enable/Disable**
 
 Adds or removes a lockfile that auter will check the presence of to see whether to do anything:
@@ -48,4 +50,14 @@ You'll usually want everything to run via cron, but you can also run auter manua
 ```
 auter --prep
 auter --apply
+```
+
+**yum repo & binaries**
+
+You can find rpm files attached to each auter release in github.
+
+For a yum repo with pre-built binaries for each supported distribution, see our copr page:
+
+```
+  https://copr.fedorainfracloud.org/coprs/piersc/auter/
 ```

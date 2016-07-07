@@ -1,5 +1,5 @@
 Name:           auter
-Version:        0.6
+Version:        0.7
 Release:        1%{?dist}
 Summary:        Prepare and apply updates
 
