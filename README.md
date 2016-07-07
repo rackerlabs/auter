@@ -1,6 +1,17 @@
 # auter
 
-Automatic updates for RHEL, CentOS or Fedora servers, with the ability to run pre/post hooks, pre-download packages & reboot after the updates.
+Automatic updates for RHEL, CentOS or Fedora Linux servers, with the ability to run pre/post hooks, pre-download packages & reboot after the updates.
+
+**When to use Auter?**
+
+Updates should be applied regularly to Linux systems in order to apply security and bug fixes. For some of those updates, for example the kernel, or a shared library, a system restart is required for those updates to take effect. Whether you apply those updates manually, or automatically will depend on your requirements.
+
+Auter provides a host-based (i.e. installed on the OS) way on systems using yum/dnf (RHEL, CentOS, Fedora, Amazon Linux, etc.) of automatically applying updates and rebooting. For servers, it is often the case that updates and reboots must only happen during defined maintenance windows. Auter provides flexible scheduling to ensure updates and reboots happen when you want them to. Auter allows you to customize how updates run - you can pre-download updates in advance of the window to apply them, and you can run custom scripts before and after the updates.
+
+Here's some cases where other options may be better:
+
+- I want to update nightly, and will handle reboots myself - yum-cron or dnf-automatic do exactly this
+- I want a console to manage updates to all my systems - a central management system like RHN Satellite, or perhaps updates applied via a configuration management system like Chef or Puppet. These all need some additional infrastructure, and may impose some limits on flexibility.
 
 **Enable/Disable**
 
@@ -58,6 +69,4 @@ You can find rpm files attached to each auter release in github.
 
 For a yum repo with pre-built binaries for each supported distribution, see our copr page:
 
-```
-  https://copr.fedorainfracloud.org/coprs/piersc/auter/
-```
+- <https://copr.fedorainfracloud.org/coprs/piersc/auter/>
