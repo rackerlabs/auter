@@ -193,11 +193,11 @@ function post_reboot() {
 
 function print_status() {
   if [[ -f "${LOCKFILE}" ]] && [[ -f "${PIDFILE}" ]]; then
-    logit "auter is currently enabled and running"
+    echo "auter is currently enabled and running"
   elif [[ -f "${LOCKFILE}" ]] && [[ ! -f "${PIDFILE}" ]]; then
-    logit "auter is currently enabled and not running"
+    echo "auter is currently enabled and not running"
   else
-    logit "auter is currently disabled"
+    echo "auter is currently disabled"
   fi
 }
 
