@@ -74,15 +74,15 @@ function logit() {
 function run_script {
   SCRIPT=$1
   if [[ -x "${SCRIPT}" ]] && [[ -f "${SCRIPT}" ]]; then
-    logit "Running script ${SCRIPT}"
+    logit "INFO: Running script ${SCRIPT}"
     ${SCRIPT}
     local RC=$?
     if [[ "${RC}" -ne 0 ]]; then
-      logit "Script ${SCRIPT} exited with non-zero exit code ${RC}. Aborting auter run."
+      logit "ERROR: Script ${SCRIPT} exited with non-zero exit code ${RC}. Aborting auter run."
       quit 8
     fi
   elif [[ -f "${SCRIPT}" ]]; then
-    logit "Script ${SCRIPT} exists but the execute bit is not set. Skipping."
+    logit "ERROR: Script ${SCRIPT} exists but the execute bit is not set. Skipping."
   fi
 }
 
@@ -93,7 +93,7 @@ function check_package_manager() {
   elif [[ -x /usr/bin/yum ]]; then
     echo yum
   else
-    logit "Cannot find yum or dnf"
+    logit "ERROR: Cannot find yum or dnf"
     exit 7
   fi
 }
@@ -107,14 +107,14 @@ function prepare_updates() {
       if [[ "${RC}" -eq 100 ]]; then
         sleep $(($RANDOM % ${MAXDELAY}))
         PREPOUTPUT=$(${PACKAGE_MANAGER} ${PACKAGEMANAGEROPTIONS} update --downloadonly -y)
-        logit "Updates downloaded"
+        logit "INFO: Updates downloaded"
       elif [[ "${RC}" -eq 1 ]]; then
-        logit "Exit status ${RC} returned by \`${PACKAGE_MANAGER} ${PACKAGEMANAGEROPTIONS} update --downloadonly -y\`. Exiting."
+        logit "ERROR: Exit status ${RC} returned by \`${PACKAGE_MANAGER} ${PACKAGEMANAGEROPTIONS} update --downloadonly -y\`. Exiting."
       else
-        logit "No updates are available to be downloaded."
+        logit "INFO: No updates are available to be downloaded."
       fi
     else
-      logit "downloadonly option is not available"
+      logit "WARNING: downloadonly option is not available"
     fi
   else
     PREPOUTPUT=$(${PACKAGE_MANAGER} ${PACKAGEMANAGEROPTIONS} check-update)
@@ -132,7 +132,7 @@ function apply_updates() {
     done
   
     sleep $(($RANDOM % ${MAXDELAY}))
-    logit "Applying updates"
+    logit "INFO: Applying updates"
     local HISTORY_BEFORE=$(${PACKAGE_MANAGER} history list)
 
     # We don't want to allow the user to interrupt a yum/dnf transaction or Bad Things Happen.
@@ -144,12 +144,12 @@ function apply_updates() {
     local HISTORY_AFTER=$(${PACKAGE_MANAGER} history list)
   
     if [[ "${HISTORY_BEFORE}" == "${HISTORY_AFTER}" ]]; then 
-      logit "Updates failed. Exiting."
+      logit "ERROR: Updates failed. Exiting."
       quit 3
     fi
   
     local TRANSACTIONID=$(grep "Transaction ID" ${DATADIR}/last-update-${CONFIGSET})
-    logit "Updates complete (${PACKAGE_MANAGER} ${TRANSACTIONID}). You may need to reboot for some updates to take effect"
+    logit "INFO: Updates complete (${PACKAGE_MANAGER} ${TRANSACTIONID}). You may need to reboot for some updates to take effect"
 
     for SCRIPT in "${POSTAPPLYSCRIPTDIR}"/*; do
       run_script "${SCRIPT}"
@@ -158,10 +158,10 @@ function apply_updates() {
     [[ "${AUTOREBOOT}" == "yes" ]] && reboot_server
 
   elif [[ "${RC}" -eq 0 ]]; then
-    logit "No updates are available to be applied."
+    logit "INFO: No updates are available to be applied."
     quit 0
   else
-    logit "Exit status ${RC} returned by \`${PACKAGE_MANAGER} check-update ${PACKAGEMANAGEROPTIONS}\`. Exiting."
+    logit "ERROR: Exit status ${RC} returned by \`${PACKAGE_MANAGER} check-update ${PACKAGEMANAGEROPTIONS}\`. Exiting."
     quit 3
   fi
 }
@@ -172,17 +172,17 @@ function reboot_server() {
   done
 
   if [[ $(ls "${POSTREBOOTSCRIPTDIR}/" 2>/dev/null) ]]; then
-    logit "Adding post-reboot-hook to run scripts under ${POSTREBOOTSCRIPTDIR} to /etc/cron.d/auter-postreboot-${CONFIGSET}"
+    logit "INFO: Adding post-reboot-hook to run scripts under ${POSTREBOOTSCRIPTDIR} to /etc/cron.d/auter-postreboot-${CONFIGSET}"
     echo -e "@reboot root /usr/bin/auter --postreboot --config ${CONFIGFILE}" > /etc/cron.d/auter-postreboot-${CONFIGSET}
   fi
 
-  logit "Rebooting server"
+  logit "INFO: Rebooting server"
   /sbin/shutdown -r +2 "auter: System reboot to apply updates" &
   quit 0
 }
 
 function post_reboot() {
-  logit "Removed post-reboot hook: /etc/cron.d/auter-postreboot-${CONFIGSET}"
+  logit "INFO: Removed post-reboot hook: /etc/cron.d/auter-postreboot-${CONFIGSET}"
   rm -f "/etc/cron.d/auter-postreboot-${CONFIGSET}"
   $(tty -s) || sleep 300
 
@@ -257,18 +257,18 @@ fi
 
 if [[ "${ENABLE}" ]] ; then
   touch "${LOCKFILE}"
-  logit "auter enabled"
+  logit "INFO: auter enabled"
   exit 0
 fi
 
 if [[ "${DISABLE}" ]] ; then
   rm -f "${LOCKFILE}"
-  logit "auter disabled"
+  logit "INFO: auter disabled"
   exit 0
 fi
 
 if [[ ! -f "${LOCKFILE}" ]]; then
-  logit "auter disabled. Please run auter --enable to enable automatic updates."
+  logit "WARNING: auter disabled. Please run auter --enable to enable automatic updates."
   exit 4
 fi
 
@@ -280,7 +280,7 @@ fi
 
 # Note: ALL script exits after this block must use the quit() function instead so the PIDfile is cleaned up.
 if [[ -f "${PIDFILE}" ]]; then
-  logit "auter is already running or ${PIDFILE} exists."
+  logit "ERROR: auter is already running or ${PIDFILE} exists."
   exit 6
 else
   echo "$$" > "${PIDFILE}"
@@ -289,22 +289,22 @@ fi
 if [[ -f "${CONFIGFILE}" ]]; then
   source "${CONFIGFILE}"
 elif [[ "${CUSTOMCONFIG}" ]]; then
-  logit "Custom config file ${CONFIGFILE} does not exist"
+  logit "ERROR: Custom config file ${CONFIGFILE} does not exist"
   quit 5
 else
-  logit "Using default config values."
+  logit "WARNING: Using default config values."
 fi
 
 # CONFIGSET needs to be set if we're using a custom configuration file.
 if [[ -z "${CONFIGSET}" ]]; then
-  logit "You must specify the CONFIGSET variable in custom config file ${CONFIGFILE} to avoid naming collisions"
+  logit "ERROR: You must specify the CONFIGSET variable in custom config file ${CONFIGFILE} to avoid naming collisions"
   quit 5
 fi
 
-logit "Running with: $0 ${ARGS}"
+logit "INFO: Running with: $0 ${ARGS}"
 
 [[ "${MAXDELAY}" -lt 1 ]] && MAXDELAY=1
-$(tty -s) && MAXDELAY=1 && logit "Running in an interactive shell, disabling all random sleeps"
+$(tty -s) && MAXDELAY=1 && logit "INFO: Running in an interactive shell, disabling all random sleeps"
 
 [[ "${POSTREBOOT}" ]] && post_reboot && quit 0
 
