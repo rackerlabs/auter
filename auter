@@ -73,16 +73,17 @@ function logit() {
 
 function run_script {
   SCRIPT=$1
+  PHASE=$2
   if [[ -x "${SCRIPT}" ]] && [[ -f "${SCRIPT}" ]]; then
-    logit "Running script ${SCRIPT}"
+    logit "Running $PHASE script ${SCRIPT}"
     ${SCRIPT}
     local RC=$?
     if [[ "${RC}" -ne 0 ]]; then
-      logit "Script ${SCRIPT} exited with non-zero exit code ${RC}. Aborting auter run."
+      logit "$PHASE script ${SCRIPT} exited with non-zero exit code ${RC}. Aborting auter run."
       quit 8
     fi
   elif [[ -f "${SCRIPT}" ]]; then
-    logit "Script ${SCRIPT} exists but the execute bit is not set. Skipping."
+    logit "$PHASE script ${SCRIPT} exists but the execute bit is not set. Skipping."
   fi
 }
 
@@ -128,7 +129,7 @@ function apply_updates() {
   # If check-update has an exit code of 100, updates are available.
   if [[ "${RC}" -eq 100 ]]; then
     for SCRIPT in "${PREAPPLYSCRIPTDIR}"/*; do
-      run_script "${SCRIPT}"
+      run_script "${SCRIPT}" "Pre-Apply"
     done
   
     sleep $(($RANDOM % ${MAXDELAY}))
@@ -152,7 +153,7 @@ function apply_updates() {
     logit "Updates complete (${PACKAGE_MANAGER} ${TRANSACTIONID}). You may need to reboot for some updates to take effect"
 
     for SCRIPT in "${POSTAPPLYSCRIPTDIR}"/*; do
-      run_script "${SCRIPT}"
+      run_script "${SCRIPT}" "Post-Apply"
     done
 
     [[ "${AUTOREBOOT}" == "yes" ]] && reboot_server
@@ -168,7 +169,7 @@ function apply_updates() {
 
 function reboot_server() {
   for SCRIPT in "${PREREBOOTSCRIPTDIR}"/*; do
-    run_script "${SCRIPT}"
+    run_script "${SCRIPT}" "Pre-Reboot"
   done
 
   if [[ $(ls "${POSTREBOOTSCRIPTDIR}/" 2>/dev/null) ]]; then
@@ -187,7 +188,7 @@ function post_reboot() {
   $(tty -s) || sleep 300
 
   for SCRIPT in "${POSTREBOOTSCRIPTDIR}"/*; do
-    run_script "${SCRIPT}"
+    run_script "${SCRIPT}" "Post-Reboot"
   done
 }
 
