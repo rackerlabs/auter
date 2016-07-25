@@ -75,15 +75,15 @@ function run_script {
   SCRIPT=$1
   PHASE=$2
   if [[ -x "${SCRIPT}" ]] && [[ -f "${SCRIPT}" ]]; then
-    logit "Running $PHASE script ${SCRIPT}"
+    logit "Running ${PHASE} script ${SCRIPT}"
     ${SCRIPT}
     local RC=$?
     if [[ "${RC}" -ne 0 ]]; then
-      logit "$PHASE script ${SCRIPT} exited with non-zero exit code ${RC}. Aborting auter run."
+      logit "${PHASE} script ${SCRIPT} exited with non-zero exit code ${RC}. Aborting auter run."
       quit 8
     fi
   elif [[ -f "${SCRIPT}" ]]; then
-    logit "$PHASE script ${SCRIPT} exists but the execute bit is not set. Skipping."
+    logit "${PHASE} script ${SCRIPT} exists but the execute bit is not set. Skipping."
   fi
 }
 
