@@ -29,7 +29,7 @@ chmod +x /var/lib/auter/*script
 Now there will be at least one update:
 
 ```
-Edit /etc/sysconfig/auter to set MAXDELAY=1
+Edit /etc/auter/auter.conf to set MAXDELAY=1
 
 auter --prep
     prints "Running with: ./auter --prep Updates downloaded", /var/lib/auter/last-prep-auter
