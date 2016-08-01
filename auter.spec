@@ -56,6 +56,8 @@ fi
 %files
 %defattr(-,root,root,-)
 %doc README.md
+%{!?_licensedir:%global license %doc} 
+%license LICENSE
 %doc %{_mandir}/man1/auter.1*
 %{_sharedstatedir}/auter
 %config(noreplace) %{_sysconfdir}/auter/auter.conf
