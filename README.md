@@ -1,6 +1,6 @@
 # auter
 
-Automatic updates for RHEL, CentOS or Fedora Linux servers, with the ability to run pre/post hooks, pre-download packages & reboot after the updates.
+Automatic updates for RHEL, CentOS or Fedora Linux servers, with the ability to run pre/post hooks, pre-download packages and reboot after the updates.
 
 **When to use Auter?**
 
@@ -63,10 +63,10 @@ auter --prep
 auter --apply
 ```
 
-**yum repo & binaries**
+**Repo and Binaries**
 
 You can find rpm files attached to each auter release in github.
 
-For a yum repo with pre-built binaries for each supported distribution, see our copr page:
+For a yum/dnf repo with pre-built binaries for each supported distribution, see our copr page:
 
 - <https://copr.fedorainfracloud.org/coprs/piersc/auter/>

@@ -24,7 +24,7 @@ readonly DATADIR="/var/lib/auter"
 readonly LOCKFILE="${DATADIR}/enabled"
 readonly PIDFILE="/var/run/auter/auter.pid"
 
-# Set default options - these can be overridden in the config file or with a command line argument.
+# Set default options - these can be overridden in the config file or with a command line argument
 AUTOREBOOT="no"
 PACKAGEMANAGEROPTIONS=""
 PREDOWNLOADUPDATES="yes"
@@ -44,8 +44,7 @@ function default_signal_handling() {
 # The man page is generated in part from the print_help() text by running:
 #   help2man --include=auter.help2man --no-info ./auter > auter.man
 function print_help() {
-  echo "auter - Automatic Update Transaction Executor by Rackspace
-
+  echo "
 Usage: auter [--enable|--disable|--status] [--prep] [--apply] [--reboot] [--postreboot] [--config=<configfile>] [OPTION]
 
 Actions:
@@ -61,7 +60,6 @@ Options:
   --config=FILE Specify the full path to an auter config file. Defaults to /etc/auter/auter.conf
   -h, --help    Show this help text
   -v, --version Show the version
-
 "
 }
 
