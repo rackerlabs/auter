@@ -8,7 +8,15 @@ URL:            https://github.com/rackerlabs/auter
 Source0:        %{name}-%{version}.tar.gz
 BuildArch:      noarch
 
-Requires:       cronie, /usr/bin/yum
+Requires:       crontabs
+
+%if 0%{?fedora} >= 18
+Requires:       dnf
+%else
+Requires:       yum
+%endif
+
+BuildRequires:	help2man
 
 %description
 auter (optionally) pre-downloads updates and then runs then automatically on a set schedule, and optionally reboots to finish applying updates
@@ -17,6 +25,7 @@ auter (optionally) pre-downloads updates and then runs then automatically on a s
 %setup -q
 
 %build
+help2man --include=auter.help2man --no-info ./auter > auter.man
 
 %install
 mkdir -p %{buildroot}%{_bindir} %{buildroot}%{_sharedstatedir}/auter \
@@ -33,7 +42,7 @@ install -m 644 auter.man %{buildroot}%{_mandir}/man1/auter.1
 chmod 755 %{buildroot}%{_sharedstatedir}/auter/*.d
 
 %post
-# If this is the first time install, create the lockfile by default
+# If this is the first time install, create the lockfile
 if [ $1 -eq 1 ]; then
   /usr/bin/auter --enable
 fi
@@ -48,16 +57,11 @@ fi
 %defattr(-,root,root,-)
 %doc README.md
 %doc %{_mandir}/man1/auter.1*
-%license LICENSE
 %{_sharedstatedir}/auter
 %config(noreplace) %{_sysconfdir}/auter/auter.conf
 %config(noreplace) %{_sysconfdir}/cron.d/auter
 %{_bindir}/auter
 %{_localstatedir}/run/auter
-%dir %{_sharedstatedir}/auter/pre-reboot.d
-%dir %{_sharedstatedir}/auter/post-reboot.d
-%dir %{_sharedstatedir}/auter/pre-apply.d
-%dir %{_sharedstatedir}/auter/post-apply.d
 
 %changelog
 * Wed Jul 06 2016 Cameron Beere <cameron.beere@rackspace.co.uk>

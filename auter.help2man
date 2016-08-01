@@ -1,30 +1,30 @@
-
 [Files]
-/etc/auter/auter.conf
+
+\//etc/auter/auter.conf
   Default config file location. Use the --config option to pass an alternative config file to use within /etc/auter.
 
-/usr/bin/auter
+\//usr/bin/auter
   The main auter script, which gets called to prepare and apply updates.
 
-/var/lib/auter/enabled
+\//var/lib/auter/enabled
   The lock file to determine if auter is enabled. If this file doesn't exist, auter is disabled.
 
-/etc/cron.d/auter
+\//etc/cron.d/auter
   The cron file defining the default schedule for auter. Commented out by default.
 
-/etc/cron.d/auter-postreboot-CONFIGSET
+\//etc/cron.d/auter-postreboot-CONFIGSET
   On reboot, auter will add a call to auter --postreboot via an @reboot cron job. The CONFIGSET part of the filename is defined in the auter config file by setting a variable of the same name, and if not defined is set to "default".
 
-/var/lib/auter/last-prep-CONFIGSET
+\//var/lib/auter/last-prep-CONFIGSET
   These files contain the list of packages to be updated according to the last time --prep was run. There may be multiple logs if different config files are used. This file will not be updated/created if there are no new updates to be applied. The CONFIGSET part of the filename is defined in the auter config file by setting a variable of the same name, and if not defined is set to "default".
 
-/var/lib/auter/last-update-CONFIGSET
+\//var/lib/auter/last-update-CONFIGSET
   This file contains the updates that were last applied by auter. The CONFIGSET part of the filename is defined in the auter config file by setting a variable of the same name, and if not defined is set to "default".
 
-/var/lib/auter/pre-apply.d/
-/var/lib/auter/post-apply.d/
-/var/lib/auter/pre-reboot.d/
-/var/lib/auter/post-reboot.d/
+\//var/lib/auter/pre-apply.d/
+\//var/lib/auter/post-apply.d/
+\//var/lib/auter/pre-reboot.d/
+\//var/lib/auter/post-reboot.d/
   Directories containing scripts to run before/after updates are applied, and before/after the server is rebooted (if applicable). Default locations are above, but also customizable in the config file. If any scripts in the pre/post hook directories are not executable a warning will be logged with the filename but auter will continue. If any scripts in the pre-post hook directories exit with a non-zero exit code an error will be logged with the filename and exit code, and auter will abort.
 
 [Enable/Disable]
@@ -42,8 +42,7 @@ Config options are set in /etc/auter/auter.conf, or in the file referenced by th
  CONFIGSET
  Default: "default"
  Required: yes
- This option defines a name which auter will use to uniquely identify logs & postreboot hooks. This value must be unique 
- amongst configs on a machine, and is required when using a custom configuration file.
+ Defines a name which auter will use to uniquely identify logs and postreboot hooks. This value must be unique amongst configs on a system, and is required when using a custom configuration file.
 
  AUTOREBOOT
  Valid options: "yes" or "no"
@@ -53,7 +52,7 @@ Config options are set in /etc/auter/auter.conf, or in the file referenced by th
  PACKAGEMANAGEROPTIONS
  Valid options: Any valid yum or dnf options can be specified (including dashes). This is passed directly to the package manager.
  Default: ""
- See man pages for yum, or dnf as appropriate for more info. example: "--disableexcludes=all"
+ See man pages for yum, or dnf as appropriate for more info. Example: "--disableexcludes=all"
 
  PREDOWNLOADUPDATES
  Valid options: "yes" or "no"
@@ -62,12 +61,12 @@ Config options are set in /etc/auter/auter.conf, or in the file referenced by th
 
  MAXDELAY
  Valid options: Any positive number above 0
- Default "3600"
- This is the upper limit of a random time to wait before querying repositories.
+ Default: "3600"
+ This is the upper limit in seconds of a random time to wait before querying repositories.
 
  PREAPPLYSCRIPTDIR
  Valid options: path to directory containing scripts which MUST reside under the /var/lib/auter directory
- Default value: "/var/lib/auter/pre-apply.d"
+ Default: "/var/lib/auter/pre-apply.d"
  Custom scripts to be run before applying updates
 
  POSTAPPLYSCRIPTDIR
