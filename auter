@@ -20,6 +20,7 @@
 
 
 readonly AUTERVERSION="0.7"
+readonly SCRIPTDIR="/etc/auter"
 readonly DATADIR="/var/lib/auter"
 readonly LOCKFILE="${DATADIR}/enabled"
 readonly PIDFILE="/var/run/auter/auter.pid"
@@ -31,10 +32,10 @@ PREDOWNLOADUPDATES="yes"
 CONFIGFILE="/etc/auter/auter.conf"
 MAXDELAY=3600
 CONFIGSET="default"
-PREAPPLYSCRIPTDIR="${DATADIR}/pre-apply.d"
-POSTAPPLYSCRIPTDIR="${DATADIR}/post-apply.d"
-PREREBOOTSCRIPTDIR="${DATADIR}/pre-reboot.d"
-POSTREBOOTSCRIPTDIR="${DATADIR}/post-reboot.d"
+PREAPPLYSCRIPTDIR="${SCRIPTDIR}/pre-apply.d"
+POSTAPPLYSCRIPTDIR="${SCRIPTDIR}/post-apply.d"
+PREREBOOTSCRIPTDIR="${SCRIPTDIR}/pre-reboot.d"
+POSTREBOOTSCRIPTDIR="${SCRIPTDIR}/post-reboot.d"
 
 
 function default_signal_handling() {
