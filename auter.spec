@@ -40,15 +40,15 @@ touch %{buildroot}%{_localstatedir}/run/%{name}/%{name}.pid
 mkdir -p %{buildroot}%{_bindir} %{buildroot}%{_sharedstatedir}/%{name} \
   %{buildroot}%{_sysconfdir}/cron.d %{buildroot}%{_sysconfdir}/%{name} \
   %{buildroot}%{_mandir}/man1 \
-  %{buildroot}%{_sharedstatedir}/%{name}/pre-reboot.d \
-  %{buildroot}%{_sharedstatedir}/%{name}/post-reboot.d \
-  %{buildroot}%{_sharedstatedir}/%{name}/pre-apply.d \
-  %{buildroot}%{_sharedstatedir}/%{name}/post-apply.d
+  %{buildroot}%{_sysconfdir}/%{name}/pre-reboot.d \
+  %{buildroot}%{_sysconfdir}/%{name}/post-reboot.d \
+  %{buildroot}%{_sysconfdir}/%{name}/pre-apply.d \
+  %{buildroot}%{_sysconfdir}/%{name}/post-apply.d
 install -p -m 0755 %{name} %{buildroot}%{_bindir}
 install -p -m 0644 %{name}.cron %{buildroot}%{_sysconfdir}/cron.d/%{name}
 install -p -m 0644 %{name}.conf %{buildroot}%{_sysconfdir}/%{name}/%{name}.conf
 install -p -m 0644 %{name}.man %{buildroot}%{_mandir}/man1/%{name}.1
-chmod 0755 %{buildroot}%{_sharedstatedir}/%{name}/*.d
+chmod 0755 %{buildroot}%{_sysconfdir}/%{name}/*.d
 
 %post
 # If this is the first time install, create the lockfile
@@ -77,6 +77,10 @@ exit 0
 %config(noreplace) %{_sysconfdir}/%{name}/%{name}.conf
 %config(noreplace) %{_sysconfdir}/cron.d/%{name}
 %{_bindir}/%{name}
+%dir %{_sysconfdir}/%{name}/pre-reboot.d
+%dir %{_sysconfdir}/%{name}/post-reboot.d
+%dir %{_sysconfdir}/%{name}/pre-apply.d
+%dir %{_sysconfdir}/%{name}/post-apply.d
 %if 0%{?el6}
 %dir %{_localstatedir}/run/%{name}/
 %ghost %{_localstatedir}/run/%{name}/%{name}.pid
