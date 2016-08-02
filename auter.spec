@@ -2,21 +2,20 @@ Name:           auter
 Version:        0.7
 Release:        1%{?dist}
 Summary:        Prepare and apply updates
-
 License:        ASL 2.0
 URL:            https://github.com/rackerlabs/auter
-Source0:        %{name}-%{version}.tar.gz
+Source0:        https://github.com/rackerlabs/%{name}/archive/%{version}.tar.gz
 BuildArch:      noarch
-
+BuildRequires:  help2man
+%if 0%{?fedora} >= 15 || 0%{?rhel} >= 7
+BuildRequires:  systemd
+%endif
 Requires:       crontabs
-
 %if 0%{?fedora} >= 18
 Requires:       dnf
 %else
 Requires:       yum
 %endif
-
-BuildRequires:	help2man
 
 %description
 auter (optionally) pre-downloads updates and then runs then automatically on a set schedule, and optionally reboots to finish applying updates
@@ -25,45 +24,67 @@ auter (optionally) pre-downloads updates and then runs then automatically on a s
 %setup -q
 
 %build
-help2man --include=auter.help2man --no-info ./auter > auter.man
+help2man --include=auter.help2man --no-info ./auter -o auter.man
 
 %install
-mkdir -p %{buildroot}%{_bindir} %{buildroot}%{_sharedstatedir}/auter \
-  %{buildroot}%{_sysconfdir}/cron.d %{buildroot}%{_sysconfdir}/auter \
-  %{buildroot}%{_mandir}/man1 %{buildroot}%{_localstatedir}/run/auter \
-  %{buildroot}%{_sharedstatedir}/auter/pre-reboot.d \
-  %{buildroot}%{_sharedstatedir}/auter/post-reboot.d \
-  %{buildroot}%{_sharedstatedir}/auter/pre-apply.d \
-  %{buildroot}%{_sharedstatedir}/auter/post-apply.d
-install -m 755 auter %{buildroot}%{_bindir}
-install -m 644 auter.cron %{buildroot}%{_sysconfdir}/cron.d/auter
-install -m 644 auter.conf %{buildroot}%{_sysconfdir}/auter/auter.conf
-install -m 644 auter.man %{buildroot}%{_mandir}/man1/auter.1
-chmod 755 %{buildroot}%{_sharedstatedir}/auter/*.d
+%if 0%{?fedora} >= 15 || 0%{?rhel} >= 7
+mkdir -p %{buildroot}%{_tmpfilesdir}
+echo "d %{_rundir}/%{name} 0755 root root -" > %{buildroot}%{_tmpfilesdir}/%{name}.conf
+mkdir -p %{buildroot}%{_rundir}/%{name}
+touch %{buildroot}%{_rundir}/%{name}/%{name}.pid
+%else
+mkdir -p %{buildroot}%{_localstatedir}/run/%{name}
+touch %{buildroot}%{_localstatedir}/run/%{name}/%{name}.pid
+%endif
+
+mkdir -p %{buildroot}%{_bindir} %{buildroot}%{_sharedstatedir}/%{name} \
+  %{buildroot}%{_sysconfdir}/cron.d %{buildroot}%{_sysconfdir}/%{name} \
+  %{buildroot}%{_mandir}/man1 \
+  %{buildroot}%{_sharedstatedir}/%{name}/pre-reboot.d \
+  %{buildroot}%{_sharedstatedir}/%{name}/post-reboot.d \
+  %{buildroot}%{_sharedstatedir}/%{name}/pre-apply.d \
+  %{buildroot}%{_sharedstatedir}/%{name}/post-apply.d
+install -p -m 0755 %{name} %{buildroot}%{_bindir}
+install -p -m 0644 %{name}.cron %{buildroot}%{_sysconfdir}/cron.d/%{name}
+install -p -m 0644 %{name}.conf %{buildroot}%{_sysconfdir}/%{name}/%{name}.conf
+install -p -m 0644 %{name}.man %{buildroot}%{_mandir}/man1/%{name}.1
+chmod 0755 %{buildroot}%{_sharedstatedir}/%{name}/*.d
 
 %post
 # If this is the first time install, create the lockfile
 if [ $1 -eq 1 ]; then
   /usr/bin/auter --enable
 fi
+exit 0
 
 %preun
 # If this is a complete removal, then remove lockfile
 if [ $1 -eq 0 ]; then
  /usr/bin/auter --disable
 fi
+exit 0
 
 %files
 %defattr(-,root,root,-)
-%doc README.md
-%{!?_licensedir:%global license %doc} 
+%{!?_licensedir:%global license %doc}
 %license LICENSE
-%doc %{_mandir}/man1/auter.1*
-%{_sharedstatedir}/auter
-%config(noreplace) %{_sysconfdir}/auter/auter.conf
-%config(noreplace) %{_sysconfdir}/cron.d/auter
-%{_bindir}/auter
-%{_localstatedir}/run/auter
+%doc README.md
+%doc NEWS
+%doc MAINTAINERS.md
+%{_mandir}/man1/%{name}.1*
+%{_sharedstatedir}/%{name}
+%dir %{_sysconfdir}/%{name}
+%config(noreplace) %{_sysconfdir}/%{name}/%{name}.conf
+%config(noreplace) %{_sysconfdir}/cron.d/%{name}
+%{_bindir}/%{name}
+%if 0%{?el6}
+%dir %{_localstatedir}/run/%{name}/
+%ghost %{_localstatedir}/run/%{name}/%{name}.pid
+%else
+%dir %{_rundir}/%{name}/
+%ghost %{_rundir}/%{name}/%{name}.pid
+%{_tmpfilesdir}/%{name}.conf
+%endif
 
 %changelog
 * Wed Jul 06 2016 Cameron Beere <cameron.beere@rackspace.co.uk>
