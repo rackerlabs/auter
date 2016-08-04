@@ -3,7 +3,7 @@ Version:        0.7
 Release:        1%{?dist}
 Summary:        Prepare and apply updates
 License:        ASL 2.0
-URL:            https://github.com/rackerlabs/auter
+URL:            https://github.com/rackerlabs/%{name}
 Source0:        https://github.com/rackerlabs/%{name}/archive/%{version}.tar.gz
 BuildArch:      noarch
 BuildRequires:  help2man
@@ -18,7 +18,8 @@ Requires:       yum
 %endif
 
 %description
-auter (optionally) pre-downloads updates and then runs then automatically on a set schedule, and optionally reboots to finish applying updates
+auter (optionally) pre-downloads updates and then runs then automatically on a
+set schedule, and optionally reboots to finish applying updates.
 
 %prep
 %setup -q
@@ -44,6 +45,7 @@ mkdir -p %{buildroot}%{_bindir} %{buildroot}%{_sharedstatedir}/%{name} \
   %{buildroot}%{_sysconfdir}/%{name}/post-reboot.d \
   %{buildroot}%{_sysconfdir}/%{name}/pre-apply.d \
   %{buildroot}%{_sysconfdir}/%{name}/post-apply.d
+
 install -p -m 0755 %{name} %{buildroot}%{_bindir}
 install -p -m 0644 %{name}.cron %{buildroot}%{_sysconfdir}/cron.d/%{name}
 install -p -m 0644 %{name}.conf %{buildroot}%{_sysconfdir}/%{name}/%{name}.conf
@@ -74,13 +76,13 @@ exit 0
 %{_mandir}/man1/%{name}.1*
 %{_sharedstatedir}/%{name}
 %dir %{_sysconfdir}/%{name}
-%config(noreplace) %{_sysconfdir}/%{name}/%{name}.conf
-%config(noreplace) %{_sysconfdir}/cron.d/%{name}
-%{_bindir}/%{name}
 %dir %{_sysconfdir}/%{name}/pre-reboot.d
 %dir %{_sysconfdir}/%{name}/post-reboot.d
 %dir %{_sysconfdir}/%{name}/pre-apply.d
 %dir %{_sysconfdir}/%{name}/post-apply.d
+%config(noreplace) %{_sysconfdir}/%{name}/%{name}.conf
+%config(noreplace) %{_sysconfdir}/cron.d/%{name}
+%{_bindir}/%{name}
 %if 0%{?el6}
 %dir %{_localstatedir}/run/%{name}/
 %ghost %{_localstatedir}/run/%{name}/%{name}.pid
@@ -91,11 +93,18 @@ exit 0
 %endif
 
 %changelog
-* Wed Jul 06 2016 Cameron Beere <cameron.beere@rackspace.co.uk>
+* Thu Aug 04 2016 Piers Cornwell <piers.cornwell@rackspace.co.uk> 0.7-1
+- Release version 0.7
+- Updated the .spec file according to Fedora's guidelines
+- Moved scriptdir from /var/lib/auter to /etc/auter
+- Catagorize log messages as INFO, WARNING or ERROR
+- Remove pre-built man page
+
+* Wed Jul 06 2016 Cameron Beere <cameron.beere@rackspace.co.uk> 0.6-1
 - Release version 0.6
 - Add maintainers file
 
-* Thu Apr 28 2016 Cameron Beere <cameron.beere@rackspace.co.uk>
+* Thu Apr 28 2016 Cameron Beere <cameron.beere@rackspace.co.uk> 0.5-1
 - Release version 0.5
 - Added transaction ID logging
 - Disable random sleepis when running from a tty
@@ -109,7 +118,7 @@ exit 0
 - Added CONFIGSET variable used to distinguish between distinct configs
 - Various bugfixes
 
-* Wed Mar 23 2016 Piers Cornwell <piers.cornwell@rackspace.co.uk>
+* Wed Mar 23 2016 Piers Cornwell <piers.cornwell@rackspace.co.uk> 0.4-1
 - Release version 0.4
 - Support DNF
 - Add HACKING.md
@@ -119,14 +128,14 @@ exit 0
 - Record prep and apply output
 - Updated man page
 
-* Mon Mar 14 2016 Paolo Gigante <paolo.gigante@rackspace.co.uk>
+* Mon Mar 14 2016 Paolo Gigante <paolo.gigante@rackspace.co.uk> 0.3-1
 - Release version 0.3
 - Better defined exit codes
 - Added bounds check for MAXDELAY
 - Updated documentation with more details abount configuration options
 - Fixed logging error if downloadonly is not available
 
-* Thu Mar 10 2016 Piers Cornwell <piers.cornwell@rackspace.co.uk>
+* Thu Mar 10 2016 Piers Cornwell <piers.cornwell@rackspace.co.uk> 0.2-1
 - Release version 0.2
 - Locking
 - Trap Ctrl+C during dangerous section
@@ -138,5 +147,5 @@ exit 0
 - Removed yum transaction support
 - Added pid locking to prevent multiple instances of auter running at the same time
 
-* Fri Mar 02 2016 Mike Frost <mike.frost@rackspace.co.uk>
+* Wed Mar 02 2016 Mike Frost <mike.frost@rackspace.co.uk> 0.1-1
 - Release version 0.1
