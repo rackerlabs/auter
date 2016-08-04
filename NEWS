@@ -1,5 +1,11 @@
 Auter NEWS
 
+0.7
+ * Updated the .spec file according to Fedora's guidelines
+ * Moved scriptdir from /var/lib/auter to /etc/auter
+ * Catagorize log messages as INFO, WARNING or ERROR
+ * Remove pre-built man page
+
 0.6
  * Initial public release
  * Add maintainers file
