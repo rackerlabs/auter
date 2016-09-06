@@ -43,6 +43,8 @@ mkdir -p %{buildroot}%{_bindir} %{buildroot}%{_sharedstatedir}/%{name} \
   %{buildroot}%{_mandir}/man1 \
   %{buildroot}%{_sysconfdir}/%{name}/pre-reboot.d \
   %{buildroot}%{_sysconfdir}/%{name}/post-reboot.d \
+  %{buildroot}%{_sysconfdir}/%{name}/pre-prep.d \
+  %{buildroot}%{_sysconfdir}/%{name}/post-prep.d \
   %{buildroot}%{_sysconfdir}/%{name}/pre-apply.d \
   %{buildroot}%{_sysconfdir}/%{name}/post-apply.d
 
@@ -78,6 +80,8 @@ exit 0
 %dir %{_sysconfdir}/%{name}
 %dir %{_sysconfdir}/%{name}/pre-reboot.d
 %dir %{_sysconfdir}/%{name}/post-reboot.d
+%dir %{_sysconfdir}/%{name}/pre-prep.d
+%dir %{_sysconfdir}/%{name}/post-prep.d
 %dir %{_sysconfdir}/%{name}/pre-apply.d
 %dir %{_sysconfdir}/%{name}/post-apply.d
 %config(noreplace) %{_sysconfdir}/%{name}/%{name}.conf

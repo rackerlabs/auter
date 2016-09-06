@@ -32,6 +32,8 @@ PREDOWNLOADUPDATES="yes"
 CONFIGFILE="/etc/auter/auter.conf"
 MAXDELAY=3600
 CONFIGSET="default"
+PREPREPSCRIPTDIR="${SCRIPTDIR}/pre-prep.d"
+POSTPREPSCRIPTDIR="${SCRIPTDIR}/post-prep.d"
 PREAPPLYSCRIPTDIR="${SCRIPTDIR}/pre-apply.d"
 POSTAPPLYSCRIPTDIR="${SCRIPTDIR}/post-apply.d"
 PREREBOOTSCRIPTDIR="${SCRIPTDIR}/pre-reboot.d"
@@ -105,9 +107,16 @@ function prepare_updates() {
 
       # If check-update has an exit code of 100, updates are available.
       if [[ "${RC}" -eq 100 ]]; then
+        for SCRIPT in "${PREPREPSCRIPTDIR}"/*; do
+          run_script "${SCRIPT}" "Pre-Prep"
+        done
         sleep $(($RANDOM % ${MAXDELAY}))
         PREPOUTPUT=$(${PACKAGE_MANAGER} ${PACKAGEMANAGEROPTIONS} update --downloadonly -y)
         logit "INFO: Updates downloaded"
+
+        for SCRIPT in "${POSTPREPSCRIPTDIR}"/*; do
+          run_script "${SCRIPT}" "Post-Prep"
+        done
       elif [[ "${RC}" -eq 1 ]]; then
         logit "ERROR: Exit status ${RC} returned by \`${PACKAGE_MANAGER} ${PACKAGEMANAGEROPTIONS} update --downloadonly -y\`. Exiting."
       else
