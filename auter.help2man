@@ -21,6 +21,8 @@
 \//var/lib/auter/last-update-CONFIGSET
   This file contains the updates that were last applied by auter. The CONFIGSET part of the filename is defined in the auter config file by setting a variable of the same name, and if not defined is set to "default".
 
+\//etc/auter/pre-prep.d/
+\//etc/auter/post-prep.d/
 \//etc/auter/pre-apply.d/
 \//etc/auter/post-apply.d/
 \//etc/auter/pre-reboot.d/
@@ -63,6 +65,16 @@ Config options are set in /etc/auter/auter.conf, or in the file referenced by th
  Valid options: Any positive number above 0
  Default: "3600"
  This is the upper limit in seconds of a random time to wait before querying repositories.
+
+ PREPREPSCRIPTDIR
+ Valid options: path to directory containing scripts
+ Default: "/etc/auter/pre-prep.d"
+ Custom scripts to be run before preparing updates
+
+ POSTPREPSCRIPTDIR
+ Valid options: path to directory containing scripts
+ Default: "/etc/auter/post-prep.d"
+ Custom scripts to be run after preparing updates
 
  PREAPPLYSCRIPTDIR
  Valid options: path to directory containing scripts
