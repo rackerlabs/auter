@@ -63,10 +63,7 @@ auter --prep
 auter --apply
 ```
 
-**Repo and Binaries**
+**RPM Packages**
 
-You can find rpm files attached to each auter release in github.
-
-For a yum/dnf repo with pre-built binaries for each supported distribution, see our copr page:
-
-- <https://copr.fedorainfracloud.org/coprs/piersc/auter/>
+auter is available in Fedora 23 and newer, and EPEL for el6 and el7:
+- <https://admin.fedoraproject.org/pkgdb/package/rpms/auter/>
