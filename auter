@@ -135,7 +135,23 @@ function prepare_updates() {
 }
 
 function apply_updates() {
-  local RC=$(${PACKAGE_MANAGER} check-update ${PACKAGEMANAGEROPTIONS} &>/dev/null; echo $?)
+  # Set the rpm directory for if USETRANSACTIONS is set to yes
+  TRANSACTIONDIR=""
+  if [[ "${USETRANSACTIONS}" == "yes" ]]; then
+    if [[ -d /var/cache/auter/${CONFIGSET} ]]; then
+      if [[ $( ls -1 /var/cache/auter/${CONFIGSET}/*.rpm | wc -l) -gt 0 ]]; then
+        TRANSACTIONDIR="/var/cache/auter/${CONFIGSET}/*.rpm"
+        RC=100
+      else
+        RC=0
+      fi
+    else
+      logit "ERROR: USETRANSACTIONS set to \"yes\" but the /var/cache/auter/${CONFIGSET} directory does not exixt. Exiting. Check if auter --prep has been run"
+      quit 3
+    fi
+  else
+    local RC=$(${PACKAGE_MANAGER} check-update ${PACKAGEMANAGEROPTIONS} &>/dev/null; echo $?)
+  fi
 
   # If check-update has an exit code of 100, updates are available.
   if [[ "${RC}" -eq 100 ]]; then
@@ -146,17 +162,6 @@ function apply_updates() {
     sleep $(($RANDOM % ${MAXDELAY}))
     logit "INFO: Applying updates"
     local HISTORY_BEFORE=$(${PACKAGE_MANAGER} history list)
-
-    # Set the rpm directory for if USETRANSACTIONS is set to yes
-    TRANSACTIONDIR=""
-    if [[ "${USETRANSACTIONS}" == "yes" ]]; then
-      if [[ -d /var/cache/auter/${CONFIGSET} ]]; then
-        TRANSACTIONDIR="/var/cache/auter/${CONFIGSET}/*.rpm"
-      else
-        logit "ERROR: USETRANSACTIONS set to \"yes\" but the /var/cache/auter/${CONFIGSET} directory does not exixt. Exiting."
-      quit 3
-      fi
-    fi
 
     # We don't want to allow the user to interrupt a yum/dnf transaction or Bad Things Happen.
     trap '' SIGINT SIGTERM
@@ -187,7 +192,6 @@ function apply_updates() {
     logit "ERROR: Exit status ${RC} returned by \`${PACKAGE_MANAGER} check-update ${PACKAGEMANAGEROPTIONS}\`. Exiting."
     quit 3
   fi
-
 }
 
 function reboot_server() {
