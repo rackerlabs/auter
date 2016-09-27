@@ -103,13 +103,13 @@ function prepare_updates() {
   if [[ "${PREDOWNLOADUPDATES}" == "yes" ]]; then
     if [[ $(${PACKAGE_MANAGER} --help | grep -c downloadonly) -gt 0 ]]; then
       local RC=$(${PACKAGE_MANAGER} check-update ${PACKAGEMANAGEROPTIONS} &>/dev/null; echo $?)
+      TRANSACTIONCOMMAND=""
 
       # If check-update has an exit code of 100, updates are available.
       if [[ "${RC}" -eq 100 ]]; then
         sleep $(($RANDOM % ${MAXDELAY}))
 
         # If USETRANSACTIONS is set then update the add it to the yum command
-        TRANSACTIONCOMMAND=""
         if [[ "${USETRANSACTIONS}" == "yes" ]]; then
           if [[ -d /var/cache/auter/${CONFIGSET} ]]; then
             rm -f /var/cache/auter/${CONFIGSET}/*.rpm
