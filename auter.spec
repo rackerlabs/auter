@@ -40,6 +40,7 @@ touch %{buildroot}%{_localstatedir}/run/%{name}/%{name}.pid
 
 mkdir -p %{buildroot}%{_bindir} %{buildroot}%{_sharedstatedir}/%{name} \
   %{buildroot}%{_sysconfdir}/cron.d %{buildroot}%{_sysconfdir}/%{name} \
+  %{buildroot}%{_var}/cache/auter \
   %{buildroot}%{_mandir}/man1 \
   %{buildroot}%{_sysconfdir}/%{name}/pre-reboot.d \
   %{buildroot}%{_sysconfdir}/%{name}/post-reboot.d \
@@ -76,6 +77,7 @@ exit 0
 %{_mandir}/man1/%{name}.1*
 %{_sharedstatedir}/%{name}
 %dir %{_sysconfdir}/%{name}
+%dir %{_var}/cache/auter
 %dir %{_sysconfdir}/%{name}/pre-reboot.d
 %dir %{_sysconfdir}/%{name}/post-reboot.d
 %dir %{_sysconfdir}/%{name}/pre-apply.d
