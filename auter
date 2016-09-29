@@ -31,7 +31,7 @@ PACKAGEMANAGEROPTIONS=""
 PREDOWNLOADUPDATES="yes"
 ONLYINSTALLFROMPREP="no"
 CONFIGFILE="/etc/auter/auter.conf"
-DOWNLOADDIR="/var/cache/auter/"
+DOWNLOADDIR="/var/cache/auter"
 MAXDELAY=3600
 CONFIGSET="default"
 PREAPPLYSCRIPTDIR="${SCRIPTDIR}/pre-apply.d"
@@ -109,15 +109,11 @@ function prepare_updates() {
         sleep $(($RANDOM % ${MAXDELAY}))
         # If ONLYINSTALLFROMPREP is set then confirm the directory exists and clear existing rpms.
         if [[ "${ONLYINSTALLFROMPREP}" == "yes" ]]; then
-          if [[ -d ${DOWNLOADDIR}/${CONFIGSET} ]]; then
-            rm -f ${DOWNLOADDIR}/${CONFIGSET}/*.rpm
-          else
-            install -m 755 -o root -g root -d ${DOWNLOADDIR}/${CONFIGSET}
-          fi
-          DOWNLOADLOGMSG="to ${DOWNLOADDIR}/${CONFIGSET}"
+          rm -f ${DOWNLOADDIR}/${CONFIGSET}/*.rpm
+          DOWNLOADLOGMSG=" to ${DOWNLOADDIR}/${CONFIGSET}"
         fi
         PREPOUTPUT=$(${PACKAGE_MANAGER} ${PACKAGEMANAGEROPTIONS} update --downloadonly -y)
-        logit "INFO: Updates downloaded ${DOWNLOADLOGMSG}"
+        logit "INFO: Updates downloaded${DOWNLOADLOGMSG}"
       elif [[ "${RC}" -eq 1 ]]; then
         logit "ERROR: Exit status ${RC} returned by \`${PACKAGE_MANAGER} ${PACKAGEMANAGEROPTIONS} update --downloadonly -y\`. Exiting."
       else
@@ -134,17 +130,16 @@ function prepare_updates() {
 
 function apply_updates() {
   # Set the list of rpms to be installed
-  RPMS=""
   if [[ "${ONLYINSTALLFROMPREP}" == "yes" ]]; then
     if [[ -d ${DOWNLOADDIR}/${CONFIGSET} ]]; then
       if [[ $(stat -c %G%U%a auter) == rootroot[0-9][0-9][0,1,4,5] ]]; then
         RC=0
-        if [[ $( ls -1 ${DOWNLOADDIR}/${CONFIGSET}/*.rpm | wc -l) -gt 0 ]]; then
+        if [[ $(ls -1 ${DOWNLOADDIR}/${CONFIGSET}/*.rpm | wc -l) -gt 0 ]]; then
           RPMS="${DOWNLOADDIR}/${CONFIGSET}/*.rpm"
           RC=100
         fi
       else
-        logit "ERROR: The ${DOWNLOADDIR}/${CONFIGSET} directory does not have the correct permissions.(Owner and Group set to root and not writable by Other)"
+        logit "ERROR: ${DOWNLOADDIR}/${CONFIGSET} does not have the correct permissions."
         quit 3
       fi
     fi
@@ -329,6 +324,9 @@ if [[ -z "${CONFIGSET}" ]]; then
 fi
 
 if [[ "${ONLYINSTALLFROMPREP}" == "yes" ]]; then
+  if [[ ! -d ${DOWNLOADDIR}/${CONFIGSET} ]]; then
+    install -m 755 -o root -g root -d ${DOWNLOADDIR}/${CONFIGSET}
+  fi
   PACKAGEMANAGEROPTIONS+=" --downloaddir=${DOWNLOADDIR}/${CONFIGSET}"
 fi
 
