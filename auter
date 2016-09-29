@@ -29,7 +29,7 @@ readonly PIDFILE="/var/run/auter/auter.pid"
 AUTOREBOOT="no"
 PACKAGEMANAGEROPTIONS=""
 PREDOWNLOADUPDATES="yes"
-USETRANSACTIONS="no"
+ONLYINSTALLFROMPREP="no"
 CONFIGFILE="/etc/auter/auter.conf"
 DOWNLOADDIR="/var/cache/auter/"
 MAXDELAY=3600
@@ -107,8 +107,8 @@ function prepare_updates() {
       # If check-update has an exit code of 100, updates are available.
       if [[ "${RC}" -eq 100 ]]; then
         sleep $(($RANDOM % ${MAXDELAY}))
-        # If USETRANSACTIONS is set then confirm the directory exists and clear existing rpms.
-        if [[ "${USETRANSACTIONS}" == "yes" ]]; then
+        # If ONLYINSTALLFROMPREP is set then confirm the directory exists and clear existing rpms.
+        if [[ "${ONLYINSTALLFROMPREP}" == "yes" ]]; then
           if [[ -d ${DOWNLOADDIR}/${CONFIGSET} ]]; then
             rm -f ${DOWNLOADDIR}/${CONFIGSET}/*.rpm
           else
@@ -133,14 +133,14 @@ function prepare_updates() {
 }
 
 function apply_updates() {
-  # Set the rpm directory for if USETRANSACTIONS is set to yes
-  TRANSACTIONDIR=""
-  if [[ "${USETRANSACTIONS}" == "yes" ]]; then
+  # Set the list of rpms to be installed
+  RPMS=""
+  if [[ "${ONLYINSTALLFROMPREP}" == "yes" ]]; then
     if [[ -d ${DOWNLOADDIR}/${CONFIGSET} ]]; then
       if [[ $(stat -c %G%U%a auter) == rootroot[0-9][0-9][0,1,4,5] ]]; then
         RC=0
         if [[ $( ls -1 ${DOWNLOADDIR}/${CONFIGSET}/*.rpm | wc -l) -gt 0 ]]; then
-          TRANSACTIONDIR="${DOWNLOADDIR}/${CONFIGSET}/*.rpm"
+          RPMS="${DOWNLOADDIR}/${CONFIGSET}/*.rpm"
           RC=100
         fi
       else
@@ -164,7 +164,7 @@ function apply_updates() {
 
     # We don't want to allow the user to interrupt a yum/dnf transaction or Bad Things Happen.
     trap '' SIGINT SIGTERM
-    ${PACKAGE_MANAGER} update -y ${PACKAGEMANAGEROPTIONS} &>/dev/null
+    ${PACKAGE_MANAGER} update -y ${PACKAGEMANAGEROPTIONS} ${RPMS} &>/dev/null
     ${PACKAGE_MANAGER} history info > ${DATADIR}/last-update-${CONFIGSET}
     default_signal_handling
 
@@ -328,7 +328,7 @@ if [[ -z "${CONFIGSET}" ]]; then
   quit 5
 fi
 
-if [[ "${USETRANSACTIONS}" == "yes" ]]; then
+if [[ "${ONLYINSTALLFROMPREP}" == "yes" ]]; then
   PACKAGEMANAGEROPTIONS+=" --downloaddir=${DOWNLOADDIR}/${CONFIGSET}"
 fi
 
