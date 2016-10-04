@@ -28,7 +28,7 @@
   Directories containing scripts to run before/after updates are applied, and before/after the server is rebooted (if applicable). Default locations are above, but also customizable in the config file. If any scripts in the pre/post hook directories are not executable a warning will be logged with the filename but auter will continue. If any scripts in the pre-post hook directories exit with a non-zero exit code an error will be logged with the filename and exit code, and auter will abort. Post reboot, there is a delay of 5 mins before the post-reboot script is run to allow the system to become fully ready.
 
 \//var/cache/auter/
-  Will be created during the prep stage if ONLYINSTALLFROMPREP is set to 'yes'. A configset sub-directory will be created which will hold the updates that were downloaded from the most recent --prep execution. Any existing rpm files will be deleted as part of the following --prep execution. The directories for each profile must have owner and group set to root and must NOT be writable by other.
+  Will be created during the during install but is also checked (and created if it does not exist) during the prep stage if ONLYINSTALLFROMPREP is set to 'yes'. A configset sub-directory will be created which will hold the updates that were downloaded from the most recent --prep execution. Any existing rpm files will be deleted as part of the following --prep execution. The directories for each profile must have owner and group set to root and must NOT be writable by other.
 
 [Enable/Disable]
 

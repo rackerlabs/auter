@@ -108,7 +108,8 @@ function prepare_updates() {
       if [[ "${RC}" -eq 100 ]]; then
         sleep $(($RANDOM % ${MAXDELAY}))
         if [[ "${ONLYINSTALLFROMPREP}" == "yes" ]]; then
-          rm -f ${DOWNLOADDIR}/${CONFIGSET}/*.rpm
+          DOWNLOADOPTION="--downloaddir=${DOWNLOADDIR}/${CONFIGSET}"
+          rm -f "${DOWNLOADDIR}"/"${CONFIGSET}"/*.rpm
           # DNF doesn't support downloaddir, so instead we download to the default
           # location and copy out the way
           if [[ "${PACKAGE_MANAGER}" == "dnf" ]]; then
@@ -143,8 +144,12 @@ function apply_updates() {
       RPMS="${DOWNLOADDIR}/${CONFIGSET}/*.rpm"
       RC=100
     fi
+    # When passing RPMs to dnf/yum, the update verb won't install any that aren't already
+    # installed (i.e. dependencies of other packages). Instead we need to use install.
+    UPDATEACTION="install"
   else
     local RC=$(${PACKAGE_MANAGER} check-update ${PACKAGEMANAGEROPTIONS} &>/dev/null; echo $?)
+    UPDATEACTION="update"
   fi
 
   # If check-update has an exit code of 100, updates are available.
@@ -330,12 +335,6 @@ if [[ "${ONLYINSTALLFROMPREP}" == "yes" ]]; then
     logit "ERROR: ${DOWNLOADDIR}/${CONFIGSET} does not have the correct permissions."
     quit 3
   fi
-  DOWNLOADOPTION="--downloaddir=${DOWNLOADDIR}/${CONFIGSET}"
-  # When passing RPMs to dnf/yum, the update verb won't install any that aren't already
-  # installed (i.e. dependencies of other packages). Instead we need to use install.
-  UPDATEACTION="install"
-else
-  UPDATEACTION="update"
 fi
 
 logit "INFO: Running with: $0 ${ARGS}"
