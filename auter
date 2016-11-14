@@ -1,7 +1,7 @@
 #!/bin/bash 
 #
-# auter is a yum-cron type package which will implement automatic updates on an
-# individual server with features such as predownloading packages & reboots. 
+# auter is a yum-cron type package which implements automatic updates on an
+# individual server with features such as predownloading packages and reboots. 
 #
 #
 # Copyright 2016 Rackspace, Inc.
@@ -19,7 +19,7 @@
 #
 
 
-readonly AUTERVERSION="0.7"
+readonly AUTERVERSION="0.8"
 readonly SCRIPTDIR="/etc/auter"
 readonly DATADIR="/var/lib/auter"
 readonly LOCKFILE="${DATADIR}/enabled"

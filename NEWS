@@ -1,5 +1,8 @@
 Auter NEWS
 
+0.8
+ * Added ONLYINSTALLFROMPREP option
+
 0.7
  * Updated the .spec file according to Fedora's guidelines
  * Moved scriptdir from /var/lib/auter to /etc/auter

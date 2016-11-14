@@ -32,18 +32,18 @@ Now there will be at least one update:
 ```
 auter --prep
     prints "INFO: Running with: ./auter --prep Updates downloaded", /var/lib/auter/last-prep-auter
-    /var/lib/auter/last-prep-auter contains update info
+    /var/lib/auter/last-prep-default contains update info
 
 auter --apply
     prints "INFO: Running with: /usr/bin/auter --apply; Applying updates; Updates complete, you may need to reboot for some updates to take effect
     Run 'yum history info' or 'dnf history info' and verify that update was applied
-    /var/lib/auter/last-update-auter contains update info
+    /var/lib/auter/last-update-default contains update info
 
 auter --reboot
     prints "INFO: Running with: ./auter --reboot; Rebooting server" followed by shutdown message
     tail /var/log/messages should include text "root: custom pre reboot script ran"
     cat /etc/cron.d/auter-postreboot-auter should show "@reboot root /usr/bin/auter --postreboot --config auter"
-    After the reboot, tail /var/log/messages should include text "root: custom post reboot script ran"
+    5 mins after the reboot, tail /var/log/messages should include text "root: custom post reboot script ran"
 ```
 
 **Documentation**
