@@ -1,5 +1,5 @@
 Name:           auter
-Version:        0.7
+Version:        0.8
 Release:        1%{?dist}
 Summary:        Prepare and apply updates
 License:        ASL 2.0
@@ -95,6 +95,10 @@ exit 0
 %endif
 
 %changelog
+* Mon Nov 14 2016 Piers Cornwell <piers.cornwell@rackspace.co.uk> 0.8-1
+- Release version 0.8
+- Added ONLYINSTALLFROMPREP option
+
 * Thu Aug 04 2016 Piers Cornwell <piers.cornwell@rackspace.co.uk> 0.7-1
 - Release version 0.7
 - Updated the .spec file according to Fedora's guidelines
