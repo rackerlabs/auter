@@ -29,14 +29,15 @@ readonly PIDFILE="/var/run/auter/auter.pid"
 AUTOREBOOT="no"
 PACKAGEMANAGEROPTIONS=""
 PREDOWNLOADUPDATES="yes"
+ONLYINSTALLFROMPREP="no"
 CONFIGFILE="/etc/auter/auter.conf"
+DOWNLOADDIR="/var/cache/auter"
 MAXDELAY=3600
 CONFIGSET="default"
 PREAPPLYSCRIPTDIR="${SCRIPTDIR}/pre-apply.d"
 POSTAPPLYSCRIPTDIR="${SCRIPTDIR}/post-apply.d"
 PREREBOOTSCRIPTDIR="${SCRIPTDIR}/pre-reboot.d"
 POSTREBOOTSCRIPTDIR="${SCRIPTDIR}/post-reboot.d"
-
 
 function default_signal_handling() {
   trap 'rm -f "${PIDFILE}"' SIGINT SIGTERM
@@ -106,10 +107,23 @@ function prepare_updates() {
       # If check-update has an exit code of 100, updates are available.
       if [[ "${RC}" -eq 100 ]]; then
         sleep $(($RANDOM % ${MAXDELAY}))
-        PREPOUTPUT=$(${PACKAGE_MANAGER} ${PACKAGEMANAGEROPTIONS} update --downloadonly -y)
-        logit "INFO: Updates downloaded"
+        if [[ "${ONLYINSTALLFROMPREP}" == "yes" ]]; then
+          DOWNLOADOPTION="--downloaddir=${DOWNLOADDIR}/${CONFIGSET}"
+          rm -f "${DOWNLOADDIR}"/"${CONFIGSET}"/*.rpm
+          # DNF doesn't support downloaddir, so instead we download to the default
+          # location and copy out the way
+          if [[ "${PACKAGE_MANAGER}" == "dnf" ]]; then
+            find /var/cache/dnf -name *.rpm -exec rm -f {} \;
+            DOWNLOADOPTION=""
+          fi
+          DOWNLOADLOGMSG=" to ${DOWNLOADDIR}/${CONFIGSET}"
+        fi
+        PREPOUTPUT=$(${PACKAGE_MANAGER} ${PACKAGEMANAGEROPTIONS} ${DOWNLOADOPTION} update --downloadonly -y)
+        [[ "${PACKAGE_MANAGER}" == "dnf" ]] && find /var/cache/dnf -name *.rpm -exec mv {} ${DOWNLOADDIR}/${CONFIGSET} \;
+
+        logit "INFO: Updates downloaded${DOWNLOADLOGMSG}"
       elif [[ "${RC}" -eq 1 ]]; then
-        logit "ERROR: Exit status ${RC} returned by \`${PACKAGE_MANAGER} ${PACKAGEMANAGEROPTIONS} update --downloadonly -y\`. Exiting."
+        logit "ERROR: Exit status ${RC} returned by \`${PACKAGE_MANAGER} ${PACKAGEMANAGEROPTIONS} ${DOWNLOADOPTION} update --downloadonly -y\`. Exiting."
       else
         logit "INFO: No updates are available to be downloaded."
       fi
@@ -123,7 +137,20 @@ function prepare_updates() {
 }
 
 function apply_updates() {
-  local RC=$(${PACKAGE_MANAGER} check-update ${PACKAGEMANAGEROPTIONS} &>/dev/null; echo $?)
+  # Set the list of rpms to be installed
+  if [[ "${ONLYINSTALLFROMPREP}" == "yes" ]]; then
+    RC=0
+    if [[ $(ls -1 ${DOWNLOADDIR}/${CONFIGSET}/*.rpm | wc -l) -gt 0 ]]; then
+      RPMS="${DOWNLOADDIR}/${CONFIGSET}/*.rpm"
+      RC=100
+    fi
+    # When passing RPMs to dnf/yum, the update verb won't install any that aren't already
+    # installed (i.e. dependencies of other packages). Instead we need to use install.
+    UPDATEACTION="install"
+  else
+    local RC=$(${PACKAGE_MANAGER} check-update ${PACKAGEMANAGEROPTIONS} &>/dev/null; echo $?)
+    UPDATEACTION="update"
+  fi
 
   # If check-update has an exit code of 100, updates are available.
   if [[ "${RC}" -eq 100 ]]; then
@@ -137,7 +164,7 @@ function apply_updates() {
 
     # We don't want to allow the user to interrupt a yum/dnf transaction or Bad Things Happen.
     trap '' SIGINT SIGTERM
-    ${PACKAGE_MANAGER} update -y ${PACKAGEMANAGEROPTIONS} &>/dev/null
+    ${PACKAGE_MANAGER} ${UPDATEACTION} -y ${PACKAGEMANAGEROPTIONS} ${RPMS} &>/dev/null
     ${PACKAGE_MANAGER} history info > ${DATADIR}/last-update-${CONFIGSET}
     default_signal_handling
 
@@ -299,6 +326,15 @@ fi
 if [[ -z "${CONFIGSET}" ]]; then
   logit "ERROR: You must specify the CONFIGSET variable in custom config file ${CONFIGFILE} to avoid naming collisions"
   quit 5
+fi
+
+if [[ "${ONLYINSTALLFROMPREP}" == "yes" ]]; then
+  if [[ ! -d "${DOWNLOADDIR}/${CONFIGSET}" ]]; then
+    install -m 755 -o root -g root -d ${DOWNLOADDIR}/${CONFIGSET}
+  elif [[ $(stat -c %G%U%a "${DOWNLOADDIR}") != rootroot[0-9][0-9][0,1,4,5] ]]; then
+    logit "ERROR: ${DOWNLOADDIR}/${CONFIGSET} does not have the correct permissions."
+    quit 3
+  fi
 fi
 
 logit "INFO: Running with: $0 ${ARGS}"
