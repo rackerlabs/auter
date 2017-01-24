@@ -119,7 +119,9 @@ function prepare_updates() {
           DOWNLOADLOGMSG=" to ${DOWNLOADDIR}/${CONFIGSET}"
         fi
         PREPOUTPUT=$(${PACKAGE_MANAGER} ${PACKAGEMANAGEROPTIONS} ${DOWNLOADOPTION} update --downloadonly -y)
-        [[ "${PACKAGE_MANAGER}" == "dnf" ]] && find /var/cache/dnf -name *.rpm -exec mv {} ${DOWNLOADDIR}/${CONFIGSET} \;
+        if [[ "${ONLYINSTALLFROMPREP}" == "yes" && "${PACKAGE_MANAGER}" == "dnf" ]]; then
+          find /var/cache/dnf -name *.rpm -exec mv {} ${DOWNLOADDIR}/${CONFIGSET} \;
+        fi
 
         logit "INFO: Updates downloaded${DOWNLOADLOGMSG}"
       elif [[ "${RC}" -eq 1 ]]; then
