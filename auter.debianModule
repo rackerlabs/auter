@@ -1,0 +1,124 @@
+#!/bin/bash
+# This is a script that is intended to only be called by /usr/bin/auter and 
+# contains linux distribution specifc code for auter. 
+
+#  echo -e "----------------------\nMODULE VARIABLES:"
+#  echo "PREDOWNLOADUPDATES = ${PREDOWNLOADUPDATES}"
+#  echo "PACKAGE_MANAGER = ${PACKAGE_MANAGER}"
+#  echo "PACKAGEMANAGEROPTIONS = ${PACKAGEMANAGEROPTIONS}"
+#  echo "RC = ${RC}"
+#  echo "MAXDELAY = ${MAXDELAY}"
+#  echo "ONLYINSTALLFROMPREP = ${ONLYINSTALLFROMPREP}"
+#  echo "DOWNLOADDIR = ${DOWNLOADDIR}"
+#  echo "CONFIGSET = ${CONFIGSET}"
+#  echo "DOWNLOADOPTION = ${DOWNLOADOPTION}"
+#  echo "DOWNLOADLOGMSG = ${DOWNLOADLOGMSG}"
+#  echo "--------------------------"
+
+# This is the Debian/Ubuntu version of this script
+
+function prepare_updates() {
+  if [[ "${PREDOWNLOADUPDATES}" == "yes" ]]; then
+    if [[ $(man ${PACKAGE_MANAGER} | grep -c download-only) -gt 0 ]]; then
+      ${PACKAGE_MANAGER} update &>/dev/null
+      # Check if there are any errors when checking for updates
+      local ERROR_COUNT=$(${PACKAGE_MANAGER} -u upgrade --assume-no ${PACKAGEMANAGEROPTIONS} | grep -c '^[WE]:')
+      local AVAILABLE_PACKAGE_COUNT=$(${PACKAGE_MANAGER} -u upgrade --assume-no ${PACKAGEMANAGEROPTIONS} | awk '/upgraded,.*newly installed,/ {sum=$1+$3} END {print sum}')
+
+      if [[ ${ERROR_COUNT} -eq 0 ]]; then
+        # If there are packages to be installed then download them.
+        if [[ "${AVAILABLE_PACKAGE_COUNT}" -gt 0 ]]; then
+          sleep $(($RANDOM % ${MAXDELAY}))
+          if [[ "${ONLYINSTALLFROMPREP}" == "yes" ]]; then
+            [[ -d "${DOWNLOADDIR}/${CONFIGSET}" ]] || mkdir -p "${DOWNLOADDIR}/${CONFIGSET}"
+            DOWNLOADOPTION="-o dir::cache::archives=${DOWNLOADDIR}/${CONFIGSET}"
+            rm -f "${DOWNLOADDIR}"/"${CONFIGSET}"/*.deb
+            DOWNLOADLOGMSG=" to ${DOWNLOADDIR}/${CONFIGSET}"
+          fi
+          DEBIAN_FRONTEND=noninteractive
+          echo "Line 40 ${PACKAGE_MANAGER} ${PACKAGEMANAGEROPTIONS} ${DOWNLOADOPTION} --download-only dist-upgrade -y 2>&1)"
+          PREPOUTPUT=$(${PACKAGE_MANAGER} ${PACKAGEMANAGEROPTIONS} ${DOWNLOADOPTION} --download-only dist-upgrade -y 2>&1)
+          if [[ $(echo ${PREPOUTPUT} | grep -c '^[WE]:') -gt 0 ]]; then
+            logit "ERROR: There were errors returned by \`${PACKAGE_MANAGER} ${PACKAGEMANAGEROPTIONS} ${DOWNLOADOPTION} --download-only dist-upgrade -y\`. Exiting."
+          else
+            logit "INFO: Updates downloaded${DOWNLOADLOGMSG}"
+          fi
+        else [[ "${AVAILABLE_PACKAGE_COUNT}" -eq 0 ]]
+          logit "INFO: No updates are available to be downloaded."
+        fi
+      else
+        logit "ERROR: There were errors returned by \`${PACKAGE_MANAGER} -u upgrade --assume-no ${PACKAGEMANAGEROPTIONS}\`. Exiting."
+      fi
+    else
+      logit "WARNING: downloadonly option is not available"
+    fi
+  else
+    PREPOUTPUT=$(${PACKAGE_MANAGER} ${PACKAGEMANAGEROPTIONS} -s dist-upgrade)
+  fi
+  [[ "${PREPOUTPUT}" ]] && echo "${PREPOUTPUT}" > ${DATADIR}/last-prep-${CONFIGSET}
+}
+
+function apply_updates() {
+  # Set the list of debs to be installed
+  if [[ "${ONLYINSTALLFROMPREP}" == "yes" ]]; then
+    if [[ $(ls -1 ${DOWNLOADDIR}/${CONFIGSET}/*.deb 2>/dev/null | wc -l) -gt 0 ]]; then
+      AVAILABLE_PACKAGE_COUNT=$(${PACKAGE_MANAGER} -u --just-print install --assume-no ${PACKAGEMANAGEROPTIONS} ${DOWNLOADDIR}/${CONFIGSET}/*.deb | awk '/upgraded,.*newly installed,/ {sum=$1+$3} END {print sum}')
+      DEBS="${DOWNLOADDIR}/${CONFIGSET}/*.deb"
+    else
+      AVAILABLE_PACKAGE_COUNT=0
+    fi
+
+    # When passing DEBs to apt-get, the update verb won't install any that aren't already
+    # installed (i.e. dependencies of other packages). Instead we need to use install.
+    UPDATEACTION="install"
+  else
+    local ERROR_COUNT=$(${PACKAGE_MANAGER} -u upgrade --assume-no ${PACKAGEMANAGEROPTIONS} | grep -c '^[WE]:')
+    local AVAILABLE_PACKAGE_COUNT=$(${PACKAGE_MANAGER} -u upgrade --assume-no ${PACKAGEMANAGEROPTIONS} | awk '/upgraded,.*newly installed,/ {sum=$1+$3} END {print sum}')
+    UPDATEACTION="upgrade"
+  fi
+  if [[ ${ERROR_COUNT} -eq 0 ]]; then
+    if [[ "${AVAILABLE_PACKAGE_COUNT}" -gt 0 ]]; then
+      for SCRIPT in "${PREAPPLYSCRIPTDIR}"/*; do
+        run_script "${SCRIPT}" "Pre-Apply"
+      done
+
+echo "This message should not print"
+      sleep $(($RANDOM % ${MAXDELAY}))
+      logit "INFO: Applying updates"
+      local PACKAGES_BEFORE=$(dpkg --list)
+
+      # We don't want to allow the user to interrupt a yum/dnf transaction or Bad Things Happen.
+      echo "Trying to update"
+      trap '' SIGINT SIGTERM
+      RUN_OUTPUT=$(${PACKAGE_MANAGER} ${UPDATEACTION} ${PACKAGEMANAGEROPTIONS} ${DEBS})
+      default_signal_handling
+
+      local PACKAGES_AFTER=$(dpkg --list)
+
+      if [[ "${PACKAGES_BEFORE}" == "${PACKAGES_AFTER}" ]]; then
+        logit "WARNING: No updates were applied. $(echo "${RUN_OUTPUT}" | grep 'upgraded,.*installed,')"
+        quit 3
+      fi
+
+      logit "INFO: Updates complete (${PACKAGE_MANAGER} ${TRANSACTIONID}). You may need to reboot for some updates to take effect"
+
+      for SCRIPT in "${POSTAPPLYSCRIPTDIR}"/*; do
+        run_script "${SCRIPT}" "Post-Apply"
+      done
+
+      [[ "${AUTOREBOOT}" == "yes" ]] && reboot_server
+
+    else
+      logit "INFO: No updates are available to be applied."
+      quit 0
+    fi
+  else
+      logit "ERROR: Exit status ${RC} returned by \`${PACKAGE_MANAGER} -u upgrade --assume-no ${PACKAGEMANAGEROPTIONS}\`. Exiting."
+      quit 3
+  fi
+}
+
+[[ ! $1 ]] && exit 1
+[[ $1 == "prepare_updates" ]] && prepare_updates
+[[ $1 == "apply_updates" ]] && apply_updates
+
