@@ -15,9 +15,17 @@
 # downtime on servers which serve the same function, e.g. if you dont want to 
 # update all your web servers at the same time.
 
-# 30 1 14 * *    root /usr/bin/auter --apply                             # On the 14th of every month
+# 30 1 14 * *    root /usr/bin/auter --apply                              # On the 14th of every month
 # 30 1 1-7 * *   root [ $(date +\%a) = "Tue" ] && /usr/bin/auter --apply  # Another way for first Tuesday
 # 30 1 15-21 * * root [ $(date +\%a) = "Sun" ] && /usr/bin/auter --apply  # Third Sunday
+# 30 2 * * *    root /usr/bin/auter --apply                               # Every day at 2.30am
+
+# Example of executing updates when AUTOREBOOT is set to no in /etc/auter.conf.
+# In this example the prep, apply and reboot all occur on different days
+
+# 0 22 * * Fri root /usr/bin/auter --prep                              # Prep Every Friday at 22:00
+# 0 23 * * Sat root /usr/bin/auter --apply                             # Apply Every Saturday at 23:00
+# 0 10 * * Sun root /usr/bin/auter --reboot                            # Reboot Every Sunday at 10:00
 
 # Running at boot time:
 # You can schedule auter to run at boot time using a @reboot cron job. An 
