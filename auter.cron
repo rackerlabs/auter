@@ -21,7 +21,9 @@
 # 30 2 * * *    root /usr/bin/auter --apply                               # Every day at 2.30am
 
 # Example of executing updates when AUTOREBOOT is set to no in /etc/auter.conf.
-# In this example the prep, apply and reboot all occur on different days
+# In this example the prep is run every Fridat, apply is run every Saturday and
+# reboot is run every Sunday. Note that the reboot will run the auter pre-reboot
+# and post-reboot scripts (See man page for more details).
 
 # 0 22 * * Fri root /usr/bin/auter --prep                              # Prep Every Friday at 22:00
 # 0 23 * * Sat root /usr/bin/auter --apply                             # Apply Every Saturday at 23:00
