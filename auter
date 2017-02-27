@@ -118,12 +118,17 @@ function prepare_updates() {
           fi
           DOWNLOADLOGMSG=" to ${DOWNLOADDIR}/${CONFIGSET}"
         fi
+
         ${PACKAGE_MANAGER} ${PACKAGEMANAGEROPTIONS} ${DOWNLOADOPTION} update --downloadonly -y &>${DATADIR}/last-prep-yum-output-${CONFIGSET}
-        if [[ "${ONLYINSTALLFROMPREP}" == "yes" && "${PACKAGE_MANAGER}" == "dnf" ]]; then
-          find /var/cache/dnf -name *.rpm -exec mv {} ${DOWNLOADDIR}/${CONFIGSET} \;
+        if [[ $? -eq 0 ]]; then
+          if [[ "${ONLYINSTALLFROMPREP}" == "yes" && "${PACKAGE_MANAGER}" == "dnf" ]]; then
+            find /var/cache/dnf -name *.rpm -exec mv {} ${DOWNLOADDIR}/${CONFIGSET} \;
+          fi
+          logit "INFO: Updates downloaded${DOWNLOADLOGMSG}"
+        else
+          logit "ERROR: Updates could not be pre-downloaded${DOWNLOADLOGMSG}. See the ${DATADIR}/last-prep-yum-output-${CONFIGSET} file for details."
         fi
 
-        logit "INFO: Updates downloaded${DOWNLOADLOGMSG}"
       elif [[ "${RC}" -eq 1 ]]; then
         logit "ERROR: Exit status ${RC} returned by \`${PACKAGE_MANAGER} ${PACKAGEMANAGEROPTIONS} ${DOWNLOADOPTION} update --downloadonly -y\`. Exiting."
       else
