@@ -41,6 +41,7 @@ touch %{buildroot}%{_localstatedir}/run/%{name}/%{name}.pid
 mkdir -p %{buildroot}%{_bindir} %{buildroot}%{_sharedstatedir}/%{name} \
   %{buildroot}%{_sysconfdir}/cron.d %{buildroot}%{_sysconfdir}/%{name} \
   %{buildroot}%{_var}/cache/auter \
+  %{buildroot}%{_usr}/lib/%{name} \
   %{buildroot}%{_mandir}/man1 \
   %{buildroot}%{_sysconfdir}/%{name}/pre-reboot.d \
   %{buildroot}%{_sysconfdir}/%{name}/post-reboot.d \
@@ -48,6 +49,7 @@ mkdir -p %{buildroot}%{_bindir} %{buildroot}%{_sharedstatedir}/%{name} \
   %{buildroot}%{_sysconfdir}/%{name}/post-apply.d
 
 install -p -m 0755 %{name} %{buildroot}%{_bindir}
+install -p -m 0755 %{name}.redhatModule %{buildroot}%{_usr}/lib/%{name}.module
 install -p -m 0644 %{name}.cron %{buildroot}%{_sysconfdir}/cron.d/%{name}
 install -p -m 0644 %{name}.conf %{buildroot}%{_sysconfdir}/%{name}/%{name}.conf
 install -p -m 0644 %{name}.man %{buildroot}%{_mandir}/man1/%{name}.1
@@ -82,9 +84,11 @@ exit 0
 %dir %{_sysconfdir}/%{name}/post-reboot.d
 %dir %{_sysconfdir}/%{name}/pre-apply.d
 %dir %{_sysconfdir}/%{name}/post-apply.d
+%dir %{_usr}/lib/%{name}
 %config(noreplace) %{_sysconfdir}/%{name}/%{name}.conf
 %config(noreplace) %{_sysconfdir}/cron.d/%{name}
 %{_bindir}/%{name}
+%{_usr}/lib/%{name}.module
 %if 0%{?el6}
 %dir %{_localstatedir}/run/%{name}/
 %ghost %{_localstatedir}/run/%{name}/%{name}.pid
@@ -95,6 +99,11 @@ exit 0
 %endif
 
 %changelog
+* Mon Jan 30 2017 Paolo Gigante <paolo.gigante@rackspace.co.uk> 0.1-1
+- Release version 0.9
+- Moved prep and apply functions to separate script /usr/lib/auter/auter.module
+- 
+
 * Mon Nov 14 2016 Piers Cornwell <piers.cornwell@rackspace.co.uk> 0.8-1
 - Release version 0.8
 - Added ONLYINSTALLFROMPREP option
