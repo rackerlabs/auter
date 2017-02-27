@@ -15,11 +15,14 @@
 \//etc/cron.d/auter-postreboot-CONFIGSET
   On reboot, auter will add a call to auter --postreboot via an @reboot cron job. The CONFIGSET part of the filename is defined in the auter config file by setting a variable of the same name, and if not defined is set to "default".
 
-\//var/lib/auter/last-prep-CONFIGSET
-  These files contain the list of packages to be updated according to the last time --prep was run. There may be multiple logs if different config files are used. This file will not be updated/created if there are no new updates to be applied. The CONFIGSET part of the filename is defined in the auter config file by setting a variable of the same name, and if not defined is set to "default".
+\//var/lib/auter/last-prep-yum-output-CONFIGSET
+  This file contains the output from the yum command that was run during the last time auter was invoked with --prep. There may be multiple logs if different config files are used. This file will be updated/created every time auter --prep is run. The CONFIGSET part of the filename is defined in the auter config file by setting a variable of the same name, and if not defined is set to "default". 
+
+\//var/lib/auter/last-apply-yum-output-CONFIGSET
+  This file contains the output from the yum command that was run during the last time auter was invoked with --apply. There may be multiple logs if different config files are used. This file will be updated/created every time auter --apply is run. The CONFIGSET part of the filename is defined in the auter config file by setting a variable of the same name, and if not defined is set to "default".
 
 \//var/lib/auter/last-update-CONFIGSET
-  This file contains the updates that were last applied by auter. The CONFIGSET part of the filename is defined in the auter config file by setting a variable of the same name, and if not defined is set to "default".
+  This file contains the output from the last successful yum update which was run on the machine (whether applied by auter or not). The CONFIGSET part of the filename is defined in the auter config file by setting a variable of the same name, and if not defined is set to "default".
 
 \//etc/auter/pre-apply.d/
 \//etc/auter/post-apply.d/

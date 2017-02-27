@@ -118,7 +118,7 @@ function prepare_updates() {
           fi
           DOWNLOADLOGMSG=" to ${DOWNLOADDIR}/${CONFIGSET}"
         fi
-        PREPOUTPUT=$(${PACKAGE_MANAGER} ${PACKAGEMANAGEROPTIONS} ${DOWNLOADOPTION} update --downloadonly -y)
+        ${PACKAGE_MANAGER} ${PACKAGEMANAGEROPTIONS} ${DOWNLOADOPTION} update --downloadonly -y &>${DATADIR}/last-prep-yum-output-${CONFIGSET}
         if [[ "${ONLYINSTALLFROMPREP}" == "yes" && "${PACKAGE_MANAGER}" == "dnf" ]]; then
           find /var/cache/dnf -name *.rpm -exec mv {} ${DOWNLOADDIR}/${CONFIGSET} \;
         fi
@@ -133,9 +133,8 @@ function prepare_updates() {
       logit "WARNING: downloadonly option is not available"
     fi
   else
-    PREPOUTPUT=$(${PACKAGE_MANAGER} ${PACKAGEMANAGEROPTIONS} check-update)
+    ${PACKAGE_MANAGER} ${PACKAGEMANAGEROPTIONS} check-update &>${DATADIR}/last-prep-yum-output-${CONFIGSET}
   fi
-  [[ "${PREPOUTPUT}" ]] && echo "${PREPOUTPUT}" > ${DATADIR}/last-prep-${CONFIGSET}
 }
 
 function apply_updates() {
