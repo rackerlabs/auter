@@ -24,7 +24,6 @@ readonly SCRIPTDIR="/etc/auter"
 readonly DATADIR="/var/lib/auter"
 readonly LOCKFILE="${DATADIR}/enabled"
 readonly PIDFILE="/var/run/auter/auter.pid"
-readonly FUNCTIONDIR="/usr/lib/auter"
 
 # Set default options - these can be overridden in the config file or with a command line argument
 AUTOREBOOT="no"
@@ -94,20 +93,10 @@ function check_package_manager() {
     echo dnf
   elif [[ -x /usr/bin/yum ]]; then
     echo yum
-  elif [[ -x /usr/bin/apt-get ]]; then
-    echo apt-get
   else
-    logit "ERROR: Cannot find yum, dnf or apt-get"
+    logit "ERROR: Cannot find yum or dnf"
     exit 7
   fi
-}
-
-function prepare_updates() {
-  . ${FUNCTIONDIR}/auter.module prepare_updates
-}
-
-function apply_updates() {
-  . ${FUNCTIONDIR}/auter.module apply_updates
 }
 
 function reboot_server() {
@@ -262,8 +251,12 @@ $(tty -s) && MAXDELAY=1 && logit "INFO: Running in an interactive shell, disabli
 
 [[ "${POSTREBOOT}" ]] && post_reboot && quit 0
 
+# Source the module for the specific OS distribution
+. /usr/lib/auter/auter.module
+# The following 2 functions are provided by the previously sourced /usr/lib/auter/auter.module
 [[ "${PREP}" ]] && prepare_updates
 [[ "${APPLY}" ]] && apply_updates
+
 [[ "${REBOOTCALL}" ]] && reboot_server
 
 quit 0

@@ -1,10 +1,13 @@
-#!/bin/bash
-
 # This is a script that is intended to only be called by /usr/bin/auter and 
 # contains linux distribution specifc code for auter. 
 
 
 # This is the redhat/fedora/CentOS version of this script
+
+# Exit if this script is executed directly
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+  echo "ERROR: This script is used by auter and should not be executed directly. Exiting"
+fi
 
 function prepare_updates() {
   if [[ "${PREDOWNLOADUPDATES}" == "yes" ]]; then
@@ -87,7 +90,7 @@ function apply_updates() {
       quit 3
     fi
 
-    local TRANSACTIONID=$(yum history info 2>&1 | grep "Transaction ID")
+    local TRANSACTIONID=$(${PACKAGE_MANAGER} history info 2>&1 | grep "Transaction ID")
     logit "INFO: Updates complete (${PACKAGE_MANAGER} ${TRANSACTIONID}). You may need to reboot for some updates to take effect"
 
     for SCRIPT in "${POSTAPPLYSCRIPTDIR}"/*; do
@@ -104,7 +107,3 @@ function apply_updates() {
     quit 3
   fi
 }
-
-[[ ! $1 ]] && exit 1
-[[ $1 == "prepare_updates" ]] && prepare_updates
-[[ $1 == "apply_updates" ]] && prepare_updates
