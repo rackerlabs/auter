@@ -251,7 +251,7 @@ $(tty -s) && MAXDELAY=1 && logit "INFO: Running in an interactive shell, disabli
 
 [[ "${POSTREBOOT}" ]] && post_reboot && quit 0
 
-# Source the module for the specific OS distribution
+# Source the module for the specific package manager.
 . /usr/lib/auter/auter.module
 # The following 2 functions are provided by the previously sourced /usr/lib/auter/auter.module
 [[ "${PREP}" ]] && prepare_updates
