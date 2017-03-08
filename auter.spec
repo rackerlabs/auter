@@ -99,11 +99,6 @@ exit 0
 %endif
 
 %changelog
-* Mon Jan 30 2017 Paolo Gigante <paolo.gigante@rackspace.co.uk> 0.1-1
-- Release version 0.9
-- Moved prep and apply functions to separate script /usr/lib/auter/auter.module
-- 
-
 * Mon Nov 14 2016 Piers Cornwell <piers.cornwell@rackspace.co.uk> 0.8-1
 - Release version 0.8
 - Added ONLYINSTALLFROMPREP option
