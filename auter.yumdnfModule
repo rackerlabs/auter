@@ -1,0 +1,109 @@
+# This is a script that is intended to only be called by /usr/bin/auter and 
+# contains linux pagage manager specifc code for auter. 
+
+
+# This is the yum/dnf version of this script intended for redhat/fedora/CentOS 
+
+# Exit if this script is executed directly
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+  echo "ERROR: This script is used by auter and should not be executed directly. Exiting"
+fi
+
+function prepare_updates() {
+  if [[ "${PREDOWNLOADUPDATES}" == "yes" ]]; then
+    if [[ $(${PACKAGE_MANAGER} --help | grep -c downloadonly) -gt 0 ]]; then
+      local RC=$(${PACKAGE_MANAGER} check-update ${PACKAGEMANAGEROPTIONS} &>/dev/null; echo $?)
+
+      # If check-update has an exit code of 100, updates are available.
+      if [[ "${RC}" -eq 100 ]]; then
+        sleep $(($RANDOM % ${MAXDELAY}))
+        if [[ "${ONLYINSTALLFROMPREP}" == "yes" ]]; then
+          DOWNLOADOPTION="--downloaddir=${DOWNLOADDIR}/${CONFIGSET}"
+          rm -f "${DOWNLOADDIR}"/"${CONFIGSET}"/*.rpm
+          # DNF doesn't support downloaddir, so instead we download to the default
+          # location and copy out the way
+          if [[ "${PACKAGE_MANAGER}" == "dnf" ]]; then
+            find /var/cache/dnf -name *.rpm -exec rm -f {} \;
+            DOWNLOADOPTION=""
+          fi
+          DOWNLOADLOGMSG=" to ${DOWNLOADDIR}/${CONFIGSET}"
+        fi
+
+        ${PACKAGE_MANAGER} ${PACKAGEMANAGEROPTIONS} ${DOWNLOADOPTION} update --downloadonly -y &>${DATADIR}/last-prep-yum-output-${CONFIGSET}
+        if [[ $? -eq 0 ]]; then
+          if [[ "${ONLYINSTALLFROMPREP}" == "yes" && "${PACKAGE_MANAGER}" == "dnf" ]]; then
+            find /var/cache/dnf -name *.rpm -exec mv {} ${DOWNLOADDIR}/${CONFIGSET} \;
+          fi
+          logit "INFO: Updates downloaded${DOWNLOADLOGMSG}"
+        else
+          logit "ERROR: Updates could not be pre-downloaded${DOWNLOADLOGMSG}. See the ${DATADIR}/last-prep-yum-output-${CONFIGSET} file for details."
+        fi
+
+      elif [[ "${RC}" -eq 1 ]]; then
+        logit "ERROR: Exit status ${RC} returned by \`${PACKAGE_MANAGER} ${PACKAGEMANAGEROPTIONS} ${DOWNLOADOPTION} update --downloadonly -y\`. Exiting."
+      else
+        logit "INFO: No updates are available to be downloaded."
+      fi
+    else
+      logit "WARNING: downloadonly option is not available"
+    fi
+  else
+    ${PACKAGE_MANAGER} ${PACKAGEMANAGEROPTIONS} check-update &>${DATADIR}/last-prep-yum-output-${CONFIGSET}
+  fi
+}
+
+function apply_updates() {
+  # Set the list of rpms to be installed
+  if [[ "${ONLYINSTALLFROMPREP}" == "yes" ]]; then
+    RC=0
+    if [[ $(ls -1 ${DOWNLOADDIR}/${CONFIGSET}/*.rpm | wc -l) -gt 0 ]]; then
+      RPMS="${DOWNLOADDIR}/${CONFIGSET}/*.rpm"
+      RC=100
+    fi
+    # When passing RPMs to dnf/yum, the update verb won't install any that aren't already
+    # installed (i.e. dependencies of other packages). Instead we need to use install.
+    UPDATEACTION="install"
+  else
+    local RC=$(${PACKAGE_MANAGER} check-update ${PACKAGEMANAGEROPTIONS} &>/dev/null; echo $?)
+    UPDATEACTION="update"
+  fi
+
+  # If check-update has an exit code of 100, updates are available.
+  if [[ "${RC}" -eq 100 ]]; then
+    for SCRIPT in "${PREAPPLYSCRIPTDIR}"/*; do
+      run_script "${SCRIPT}" "Pre-Apply"
+    done
+
+    sleep $(($RANDOM % ${MAXDELAY}))
+    logit "INFO: Applying updates"
+    local HISTORY_BEFORE=$(${PACKAGE_MANAGER} history list)
+
+    # We don't want to allow the user to interrupt a yum/dnf transaction or Bad Things Happen.
+    trap '' SIGINT SIGTERM
+    ${PACKAGE_MANAGER} ${UPDATEACTION} -y ${PACKAGEMANAGEROPTIONS} ${RPMS} &>${DATADIR}/last-apply-yum-output-${CONFIGSET}
+    default_signal_handling
+
+    local HISTORY_AFTER=$(${PACKAGE_MANAGER} history list)
+
+    if [[ "${HISTORY_BEFORE}" == "${HISTORY_AFTER}" ]]; then
+      logit "ERROR: Updates failed. Exiting."
+      quit 3
+    fi
+
+    local TRANSACTIONID=$(${PACKAGE_MANAGER} history info 2>&1 | grep "Transaction ID")
+    logit "INFO: Updates complete (${PACKAGE_MANAGER} ${TRANSACTIONID}). You may need to reboot for some updates to take effect"
+
+    for SCRIPT in "${POSTAPPLYSCRIPTDIR}"/*; do
+      run_script "${SCRIPT}" "Post-Apply"
+    done
+
+    [[ "${AUTOREBOOT}" == "yes" ]] && reboot_server
+
+  elif [[ "${RC}" -eq 0 ]]; then
+    logit "INFO: No updates are available to be applied."
+    quit 0
+  else
+    logit "ERROR: Exit status ${RC} returned by \`${PACKAGE_MANAGER} check-update ${PACKAGEMANAGEROPTIONS}\`. Exiting."
+    quit 3
+  fi
+}
