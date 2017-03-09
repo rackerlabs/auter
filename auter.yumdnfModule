@@ -23,7 +23,7 @@ function prepare_updates() {
           # DNF doesn't support downloaddir, so instead we download to the default
           # location and copy out the way
           if [[ "${PACKAGE_MANAGER}" == "dnf" ]]; then
-            find /var/cache/dnf -name *.rpm -exec rm -f {} \;
+            find /var/cache/dnf -name "*.rpm" -exec rm -f {} \;
             DOWNLOADOPTION=""
           fi
           DOWNLOADLOGMSG=" to ${DOWNLOADDIR}/${CONFIGSET}"
@@ -32,7 +32,7 @@ function prepare_updates() {
         ${PACKAGE_MANAGER} ${PACKAGEMANAGEROPTIONS} ${DOWNLOADOPTION} update --downloadonly -y &>${DATADIR}/last-prep-output-${CONFIGSET}
         if [[ $? -eq 0 ]]; then
           if [[ "${ONLYINSTALLFROMPREP}" == "yes" && "${PACKAGE_MANAGER}" == "dnf" ]]; then
-            find /var/cache/dnf -name *.rpm -exec mv {} ${DOWNLOADDIR}/${CONFIGSET} \;
+            find /var/cache/dnf -name "*.rpm" -exec mv {} ${DOWNLOADDIR}/${CONFIGSET} \;
           fi
           logit "INFO: Updates downloaded${DOWNLOADLOGMSG}"
         else
