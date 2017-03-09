@@ -1,5 +1,5 @@
 Name:           auter
-Version:        0.8
+Version:        0.9
 Release:        1%{?dist}
 Summary:        Prepare and apply updates
 License:        ASL 2.0
@@ -99,6 +99,15 @@ exit 0
 %endif
 
 %changelog
+
+* Thu Mar 09 2017 Piers Cornwell <piers.cornwell@rackspace.co.uk> 0.9-1
+- Capture package manager output
+- Document the auter --reboot cron job
+- Remove last-update file
+- Add description text to the lock file
+- Add error checking during prep
+- Split out package manager specific code
+
 * Mon Nov 14 2016 Piers Cornwell <piers.cornwell@rackspace.co.uk> 0.8-1
 - Release version 0.8
 - Added ONLYINSTALLFROMPREP option
