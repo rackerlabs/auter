@@ -19,7 +19,7 @@
 #
 
 
-readonly AUTERVERSION="0.8"
+readonly AUTERVERSION="0.9"
 readonly SCRIPTDIR="/etc/auter"
 readonly DATADIR="/var/lib/auter"
 readonly LOCKFILE="${DATADIR}/enabled"

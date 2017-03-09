@@ -1,5 +1,13 @@
 Auter NEWS
 
+0.9
+ * Capture package manager output
+ * Document the auter --reboot cron job
+ * Remove last-update file
+ * Add description text to the lock file
+ * Add error checking during prep
+ * Split out package manager specific code
+
 0.8
  * Added ONLYINSTALLFROMPREP option
 
