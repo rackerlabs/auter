@@ -58,7 +58,7 @@ function apply_updates() {
     RC=0
     if [[ $(ls -1 ${DOWNLOADDIR}/${CONFIGSET}/*.rpm | wc -l) -gt 0 ]]; then
       RPMS="${DOWNLOADDIR}/${CONFIGSET}/*.rpm"
-      RC=100
+      RC=$("${PACKAGE_MANAGER}" check-update $(find "${DOWNLOADDIR}"/"${CONFIGSET}"/*.rpm -printf "%f\n" | sed 's/.rpm$//g') &>/dev/null;echo $?)
     fi
     # When passing RPMs to dnf/yum, the update verb won't install any that aren't already
     # installed (i.e. dependencies of other packages). Instead we need to use install.
