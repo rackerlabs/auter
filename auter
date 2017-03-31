@@ -148,7 +148,7 @@ function quit() {
 # Make sure we trap signals and clean up the PID before exiting
 default_signal_handling
 
-([[ ! $1 ]] || [[ ! $1 =~ "--" ]]) && print_help && exit 0
+([[ ! $1 ]] || [[ ! $1 =~ "-" ]]) && print_help && exit 0
 
 ARGS=$@
 OPTS=$(getopt -n "$0" -o h,v --long prep,apply,enable,disable,reboot,postreboot,version,help,status,config: -- "$@")
