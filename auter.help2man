@@ -80,7 +80,7 @@ Config options are set in /etc/auter/auter.conf, or in the file referenced by th
  POSTAPPLYSCRIPTDIR
  Valid options: path to directory containing executable scripts
  Default: "/etc/auter/post-apply.d"
- Custom scripts to be run after applying updates. If any of the scripts in this directory exit with a non-zero exit code, auter will exit immediately before triggering a reboot.
+ Custom scripts to be run after applying updates. Scripts in this directory will run regardless of whether updates were applied successfully or not.  If any of the scripts in this directory exit with a non-zero exit code, auter will exit immediately before triggering a reboot.
 
  PREREBOOTSCRIPTDIR
  Valid options: path to directory containing executable scripts
