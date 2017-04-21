@@ -85,12 +85,12 @@ Config options are set in /etc/auter/auter.conf, or in the file referenced by th
  PREREBOOTSCRIPTDIR
  Valid options: path to directory containing executable scripts
  Default: "/etc/auter/pre-reboot.d"
- Custom scripts to be run before rebooting. These will only run if AUTOREBOOT="yes" or auter is run with the --reboot option. If any of the scripts in this directory exit with a non-zero exit code, auter will exit immediately before triggering a reboot.
+ Custom scripts to be run before rebooting. These will only run if updates are applied successfully, and either AUTOREBOOT="yes" or auter is run with the --reboot option. If any of the scripts in this directory exit with a non-zero exit code, auter will exit immediately before triggering a reboot.
 
  POSTREBOOTSCRIPTDIR
  Valid options: path to directory containing executable scripts
  Default: "/etc/auter/post-reboot.d"
- Custom scripts to be run after rebooting. These will only run if AUTOREBOOT="yes" or auter is run with the --reboot option
+ Custom scripts to be run after rebooting. These will run after an auter-initiated reboot if AUTOREBOOT="yes" or auter is run with the --reboot option
 
 [Exit Codes]
 
