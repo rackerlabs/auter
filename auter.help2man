@@ -50,7 +50,7 @@ Config options are set in /etc/auter/auter.conf, or in the file referenced by th
  AUTOREBOOT
  Valid options: "yes" or "no"
  Default: "no"
- If set to "yes" the server will be rebooted 2 minutes after applying updates
+ If set to "yes" the server will be rebooted 2 minutes after successfully applying updates. If updates are not applied successfully, auter will exit and a reboot will NOT occur.
 
  PACKAGEMANAGEROPTIONS
  Valid options: Any valid yum or dnf options can be specified (including dashes). This is passed directly to the package manager.
@@ -73,22 +73,22 @@ Config options are set in /etc/auter/auter.conf, or in the file referenced by th
  This is the upper limit in seconds of a random time to wait before querying repositories.
 
  PREAPPLYSCRIPTDIR
- Valid options: path to directory containing scripts
+ Valid options: path to directory containing executable scripts
  Default: "/etc/auter/pre-apply.d"
- Custom scripts to be run before applying updates
+ Custom scripts to be run before applying updates. If any of the scripts in this directory exit with a non-zero error code, auter will exit immediately before applying updates.
 
  POSTAPPLYSCRIPTDIR
- Valid options: path to directory containing scripts
+ Valid options: path to directory containing executable scripts
  Default: "/etc/auter/post-apply.d"
- Custom scripts to be run after applying updates
+ Custom scripts to be run after applying updates. If any of the scripts in this directory exit with a non-zero exit code, auter will exit immediately before triggering a reboot.
 
  PREREBOOTSCRIPTDIR
- Valid options: path to directory containing scripts
+ Valid options: path to directory containing executable scripts
  Default: "/etc/auter/pre-reboot.d"
- Custom scripts to be run before rebooting. These will only run if AUTOREBOOT="yes" or auter is run with the --reboot option
+ Custom scripts to be run before rebooting. These will only run if AUTOREBOOT="yes" or auter is run with the --reboot option. If any of the scripts in this directory exit with a non-zero exit code, auter will exit immediately before triggering a reboot.
 
  POSTREBOOTSCRIPTDIR
- Valid options: path to directory containing scripts
+ Valid options: path to directory containing executable scripts
  Default: "/etc/auter/post-reboot.d"
  Custom scripts to be run after rebooting. These will only run if AUTOREBOOT="yes" or auter is run with the --reboot option
 
