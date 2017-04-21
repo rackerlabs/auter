@@ -85,6 +85,10 @@ function apply_updates() {
 
     local HISTORY_AFTER=$(${PACKAGE_MANAGER} history list)
 
+    for SCRIPT in "${POSTAPPLYSCRIPTDIR}"/*; do
+      run_script "${SCRIPT}" "Post-Apply"
+    done
+
     if [[ "${HISTORY_BEFORE}" == "${HISTORY_AFTER}" ]]; then
       logit "ERROR: Updates failed. Exiting."
       quit 3
@@ -92,10 +96,6 @@ function apply_updates() {
 
     local TRANSACTIONID=$(${PACKAGE_MANAGER} history info 2>&1 | grep "Transaction ID")
     logit "INFO: Updates complete (${PACKAGE_MANAGER} ${TRANSACTIONID}). You may need to reboot for some updates to take effect"
-
-    for SCRIPT in "${POSTAPPLYSCRIPTDIR}"/*; do
-      run_script "${SCRIPT}" "Post-Apply"
-    done
 
     [[ "${AUTOREBOOT}" == "yes" ]] && reboot_server
 
