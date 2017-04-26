@@ -90,7 +90,8 @@ function apply_updates() {
     done
 
     if [[ "${HISTORY_BEFORE}" == "${HISTORY_AFTER}" ]]; then
-      logit "ERROR: Updates failed. Exiting."
+      logit "ERROR: Updates failed. See the ${DATADIR}/last-prep-output-${CONFIGSET}-$(date +\%F) file for details. Exiting."
+      cp ${DATADIR}/last-apply-output-${CONFIGSET} ${DATADIR}/last-apply-output-${CONFIGSET}-$(date +\%F)
       quit 3
     fi
 
