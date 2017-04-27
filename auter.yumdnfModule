@@ -62,7 +62,8 @@ function apply_updates() {
       # Save the staged rpms to a variable
       RPMS="${DOWNLOADDIR}/${CONFIGSET}/*.rpm"
       # Check if the updates staged are still required
-      local RC=$("${PACKAGE_MANAGER}" check-update $(rpm -qp ${RPMS}) &>/dev/null;echo $?)
+      "${PACKAGE_MANAGER}" check-update $(rpm -qp ${RPMS}) &>/dev/null
+      local RC=$?
     fi
     # When passing RPM files to dnf/yum, the update verb won't install any that aren't already
     # installed (i.e. dependencies of other packages). Instead we need to use install.
