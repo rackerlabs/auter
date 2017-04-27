@@ -55,12 +55,16 @@ function prepare_updates() {
 function apply_updates() {
   # Set the list of rpms to be installed
   if [[ "${ONLYINSTALLFROMPREP}" == "yes" ]]; then
-    RC=0
+    # Default RC to 0 which means no updates are available
+    local RC=0
+    # Check if there are updates staged for this configset
     if [[ $(ls -1 ${DOWNLOADDIR}/${CONFIGSET}/*.rpm | wc -l) -gt 0 ]]; then
+      # Save the staged rpms to a variable
       RPMS="${DOWNLOADDIR}/${CONFIGSET}/*.rpm"
-      RC=$("${PACKAGE_MANAGER}" check-update $(find "${DOWNLOADDIR}"/"${CONFIGSET}"/*.rpm -printf "%f\n" | sed 's/.rpm$//g') &>/dev/null;echo $?)
+      # Check if the updates staged are still required
+      local RC=$("${PACKAGE_MANAGER}" check-update $(rpm -qp ${RPMS}) &>/dev/null;echo $?)
     fi
-    # When passing RPMs to dnf/yum, the update verb won't install any that aren't already
+    # When passing RPM files to dnf/yum, the update verb won't install any that aren't already
     # installed (i.e. dependencies of other packages). Instead we need to use install.
     UPDATEACTION="install"
   else
