@@ -21,6 +21,8 @@
 \//var/lib/auter/last-apply-output-CONFIGSET
   This file contains the output from the yum command that was run during the last time auter was invoked with --apply. There may be multiple logs if different config files are used. This file will be updated/created every time auter --apply is run. The CONFIGSET part of the filename is defined in the auter config file by setting a variable of the same name, and if not defined is set to "default".
 
+\//etc/auter/pre-prep.d/
+\//etc/auter/post-prep.d/
 \//etc/auter/pre-apply.d/
 \//etc/auter/post-apply.d/
 \//etc/auter/pre-reboot.d/
@@ -71,6 +73,16 @@ Config options are set in /etc/auter/auter.conf, or in the file referenced by th
  Valid options: Any positive number above 0
  Default: "3600"
  This is the upper limit in seconds of a random time to wait before querying repositories.
+
+ PREPREPSCRIPTDIR
+ Valid options: path to directory containing executable scripts
+ Default: "/etc/auter/pre-prep.d"
+ Custom scripts to be run before pre-downloading updates. If any of the scripts in this directory exit with a non-zero error code, auter will exit immediately before downloading updates.
+
+ POSTPREPSCRIPTDIR
+ Valid options: path to directory containing executable scripts
+ Default: "/etc/auter/pre-apply.d"
+ Custom scripts to be run after pre-downloading updates. If any of the scripts in this directory exit with a non-zero error code, auter will exit immediately.
 
  PREAPPLYSCRIPTDIR
  Valid options: path to directory containing executable scripts
