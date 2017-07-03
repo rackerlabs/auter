@@ -81,7 +81,7 @@ Config options are set in /etc/auter/auter.conf, or in the file referenced by th
 
  POSTPREPSCRIPTDIR
  Valid options: path to directory containing executable scripts
- Default: "/etc/auter/pre-apply.d"
+ Default: "/etc/auter/post-prep.d"
  Custom scripts to be run after pre-downloading updates. If any of the scripts in this directory exit with a non-zero error code, auter will exit immediately.
 
  PREAPPLYSCRIPTDIR
