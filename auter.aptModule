@@ -9,6 +9,11 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
 fi
 
 function prepare_updates() {
+  # Run any pre-prep scripts
+  for SCRIPT in "${PREPREPSCRIPTDIR}"/*; do
+    run_script "${SCRIPT}" "Pre-Prep"
+  done
+
   if [[ "${PREDOWNLOADUPDATES}" == "yes" ]]; then
     if [[ $(man ${PACKAGE_MANAGER} | grep -c download-only) -gt 0 ]]; then
       ${PACKAGE_MANAGER} update &>/dev/null
@@ -17,11 +22,6 @@ function prepare_updates() {
       local AVAILABLE_PACKAGE_COUNT=$(${PACKAGE_MANAGER} -u upgrade --assume-no ${PACKAGEMANAGEROPTIONS} | awk '/upgraded,.*newly installed,/ {sum=$1+$3} END {print sum}')
 
       if [[ ${ERROR_COUNT} -eq 0 ]]; then
-        # Run any pre-prep scripts
-        for SCRIPT in "${PREPREPSCRIPTDIR}"/*; do
-          run_script "${SCRIPT}" "Pre-Prep"
-        done
-
         # If there are packages to be installed then download them.
         if [[ "${AVAILABLE_PACKAGE_COUNT}" -gt 0 ]]; then
           sleep $(($RANDOM % ${MAXDELAY}))
@@ -52,6 +52,8 @@ function prepare_updates() {
     PREPOUTPUT=$(${PACKAGE_MANAGER} ${PACKAGEMANAGEROPTIONS} -s dist-upgrade)
   fi
   [[ "${PREPOUTPUT}" ]] && echo "${PREPOUTPUT}" > ${DATADIR}/last-prep-${CONFIGSET}
+
+  # Run any post-prep scripts
   for SCRIPT in "${POSTPREPSCRIPTDIR}"/*; do
     run_script "${SCRIPT}" "Post-Prep"
   done

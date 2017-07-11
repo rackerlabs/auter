@@ -46,7 +46,7 @@ mkdir -p %{buildroot}%{_bindir} %{buildroot}%{_sharedstatedir}/%{name} \
   %{buildroot}%{_sysconfdir}/%{name}/pre-reboot.d \
   %{buildroot}%{_sysconfdir}/%{name}/post-reboot.d \
   %{buildroot}%{_sysconfdir}/%{name}/pre-apply.d \
-  %{buildroot}%{_sysconfdir}/%{name}/post-apply.d
+  %{buildroot}%{_sysconfdir}/%{name}/post-apply.d \
   %{buildroot}%{_sysconfdir}/%{name}/pre-prep.d \
   %{buildroot}%{_sysconfdir}/%{name}/post-prep.d
 
