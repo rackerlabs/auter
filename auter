@@ -249,7 +249,7 @@ logit "INFO: Running with: $0 ${ARGS}"
 [[ "${MAXDELAY}" -lt 1 ]] && MAXDELAY=1
 $(tty -s) && MAXDELAY=1 && logit "INFO: Running in an interactive shell, disabling all random sleeps"
 
-# There is an explicit quit here to avoid an auter automatically running any
+# There is an explicit quit here to avoid auter automatically running any
 # other unexpected functions.
 [[ "${POSTREBOOT}" ]] && post_reboot && quit 0
 
