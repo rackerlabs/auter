@@ -34,6 +34,8 @@ CONFIGFILE="/etc/auter/auter.conf"
 DOWNLOADDIR="/var/cache/auter"
 MAXDELAY=3600
 CONFIGSET="default"
+PREPREPSCRIPTDIR="${SCRIPTDIR}/pre-prep.d"
+POSTPREPSCRIPTDIR="${SCRIPTDIR}/post-prep.d"
 PREAPPLYSCRIPTDIR="${SCRIPTDIR}/pre-apply.d"
 POSTAPPLYSCRIPTDIR="${SCRIPTDIR}/post-apply.d"
 PREREBOOTSCRIPTDIR="${SCRIPTDIR}/pre-reboot.d"
@@ -93,6 +95,8 @@ function check_package_manager() {
     echo dnf
   elif [[ -x /usr/bin/yum ]]; then
     echo yum
+  elif [[ -x /usr/bin/apt-get ]]; then
+    echo apt-get
   else
     logit "ERROR: Cannot find yum or dnf"
     exit 7

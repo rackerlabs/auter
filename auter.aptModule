@@ -9,6 +9,11 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
 fi
 
 function prepare_updates() {
+  # Run any pre-prep scripts
+  for SCRIPT in "${PREPREPSCRIPTDIR}"/*; do
+    run_script "${SCRIPT}" "Pre-Prep"
+  done
+
   if [[ "${PREDOWNLOADUPDATES}" == "yes" ]]; then
     if [[ $(man ${PACKAGE_MANAGER} | grep -c download-only) -gt 0 ]]; then
       ${PACKAGE_MANAGER} update &>/dev/null
@@ -47,6 +52,12 @@ function prepare_updates() {
     PREPOUTPUT=$(${PACKAGE_MANAGER} ${PACKAGEMANAGEROPTIONS} -s dist-upgrade)
   fi
   [[ "${PREPOUTPUT}" ]] && echo "${PREPOUTPUT}" > ${DATADIR}/last-prep-${CONFIGSET}
+
+  # Run any post-prep scripts
+  for SCRIPT in "${POSTPREPSCRIPTDIR}"/*; do
+    run_script "${SCRIPT}" "Post-Prep"
+  done
+
 }
 
 function apply_updates() {

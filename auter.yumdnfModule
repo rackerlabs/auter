@@ -10,12 +10,18 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
 fi
 
 function prepare_updates() {
+  # Run any pre-prep scripts
+  for SCRIPT in "${PREPREPSCRIPTDIR}"/*; do
+    run_script "${SCRIPT}" "Pre-Prep"
+  done
+
   if [[ "${PREDOWNLOADUPDATES}" == "yes" ]]; then
     if [[ $(${PACKAGE_MANAGER} --help | grep -c downloadonly) -gt 0 ]]; then
       local RC=$(${PACKAGE_MANAGER} check-update ${PACKAGEMANAGEROPTIONS} &>/dev/null; echo $?)
 
       # If check-update has an exit code of 100, updates are available.
       if [[ "${RC}" -eq 100 ]]; then
+        # Run any pre-prep scripts
         sleep $(($RANDOM % ${MAXDELAY}))
         if [[ "${ONLYINSTALLFROMPREP}" == "yes" ]]; then
           DOWNLOADOPTION="--downloaddir=${DOWNLOADDIR}/${CONFIGSET}"
@@ -50,6 +56,11 @@ function prepare_updates() {
   else
     ${PACKAGE_MANAGER} ${PACKAGEMANAGEROPTIONS} check-update &>${DATADIR}/last-prep-output-${CONFIGSET}
   fi
+
+  # Run any post-prep scripts
+  for SCRIPT in "${POSTPREPSCRIPTDIR}"/*; do
+    run_script "${SCRIPT}" "Post-Prep"
+  done
 }
 
 function apply_updates() {

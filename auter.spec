@@ -46,7 +46,9 @@ mkdir -p %{buildroot}%{_bindir} %{buildroot}%{_sharedstatedir}/%{name} \
   %{buildroot}%{_sysconfdir}/%{name}/pre-reboot.d \
   %{buildroot}%{_sysconfdir}/%{name}/post-reboot.d \
   %{buildroot}%{_sysconfdir}/%{name}/pre-apply.d \
-  %{buildroot}%{_sysconfdir}/%{name}/post-apply.d
+  %{buildroot}%{_sysconfdir}/%{name}/post-apply.d \
+  %{buildroot}%{_sysconfdir}/%{name}/pre-prep.d \
+  %{buildroot}%{_sysconfdir}/%{name}/post-prep.d
 
 install -p -m 0755 %{name} %{buildroot}%{_bindir}
 install -p -m 0755 %{name}.yumdnfModule %{buildroot}%{_usr}/lib/%{name}/auter.module
@@ -84,6 +86,8 @@ exit 0
 %dir %{_sysconfdir}/%{name}/post-reboot.d
 %dir %{_sysconfdir}/%{name}/pre-apply.d
 %dir %{_sysconfdir}/%{name}/post-apply.d
+%dir %{_sysconfdir}/%{name}/pre-prep.d
+%dir %{_sysconfdir}/%{name}/post-prep.d
 %dir %{_usr}/lib/%{name}
 %config(noreplace) %{_sysconfdir}/%{name}/%{name}.conf
 %config(noreplace) %{_sysconfdir}/cron.d/%{name}
