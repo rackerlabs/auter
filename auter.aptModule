@@ -103,6 +103,7 @@ echo "This message should not print"
       fi
 
       logit "INFO: Updates complete (${PACKAGE_MANAGER} ${TRANSACTIONID}). You may need to reboot for some updates to take effect"
+      log_last_run
 
       for SCRIPT in "${POSTAPPLYSCRIPTDIR}"/*; do
         run_script "${SCRIPT}" "Post-Apply"
@@ -112,6 +113,7 @@ echo "This message should not print"
 
     else
       logit "INFO: No updates are available to be applied."
+      log_last_run
     fi
   else
     logit "ERROR: Exit status ${RC} returned by \`${PACKAGE_MANAGER} -u upgrade --assume-no ${PACKAGEMANAGEROPTIONS}\`. Exiting."
