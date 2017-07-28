@@ -147,7 +147,7 @@ function quit() {
 
 function log_last_run() {
     local LASTRUNTIME=$(date -Iseconds)
-    logit "INFO: Auter last run time: ${LASTRUNTIME}"
+    logit "INFO: Auter successfully ran at ${LASTRUNTIME}"
 }
 
 
