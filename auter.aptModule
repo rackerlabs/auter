@@ -113,6 +113,7 @@ echo "This message should not print"
 
     else
       logit "INFO: No updates are available to be applied."
+      log_last_run
     fi
   else
     logit "ERROR: Exit status ${RC} returned by \`${PACKAGE_MANAGER} -u upgrade --assume-no ${PACKAGEMANAGEROPTIONS}\`. Exiting."
