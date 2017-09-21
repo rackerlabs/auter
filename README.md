@@ -15,7 +15,7 @@ Here's some cases where other options may be better:
 
 **Enable/Disable**
 
-Adds or removes a lockfile that auter will check the presence of to see whether to do anything:
+Adds or removes a lockfile that auter will check the presence of to see whether to do anything. This will also remove the pidfile if the process is no longer running:
 ```
 auter --enable
 auter --disable
@@ -56,11 +56,12 @@ To apply updates on every boot, set a cron job in /etc/cron.d/auter:
 
 **Manual Run**
 
-You'll usually want everything to run via cron, but you can also run auter manually should you wish to, for example for debugging:
-
+You'll usually want everything to run via cron, but you can also run auter manually should you wish to. Please review the documentation for each phase. Example for debugging:
+note: If you are wanting to manually run the reboot phase, ensure that the AUTOREBOOT option is set to "no"
 ```
 auter --prep
 auter --apply
+auter --reboot
 ```
 
 **RPM Packages**

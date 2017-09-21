@@ -53,7 +53,7 @@ Usage: auter [--enable|--disable|--status] [--prep] [--apply] [--reboot] [--post
 
 Actions:
   --enable      Enable auter
-  --disable     Disable auter
+  --disable     Disable auter. Also deletes unused pidfile if it exists
   --status      Show whether enabled or disabled
   --prep        Pre-download updates before applying
   --apply       Apply updates, and reboot if AUTOREBOOT=yes
@@ -129,7 +129,11 @@ function post_reboot() {
 
 function print_status() {
   if [[ -f "${LOCKFILE}" ]] && [[ -f "${PIDFILE}" ]]; then
-    echo "auter is currently enabled and running"
+    if [[ $(kill -0 `cat ${PIDFILE}` &>/dev/null; echo $?) -eq 0 ]]; then
+      echo "auter is currently enabled and running"
+    else
+      echo "auter is currently enabled and pid file exists but process is dead"
+    fi
   elif [[ -f "${LOCKFILE}" ]] && [[ ! -f "${PIDFILE}" ]]; then
     echo "auter is currently enabled and not running"
   else
@@ -206,7 +210,12 @@ fi
 
 if [[ "${DISABLE}" ]] ; then
   rm -f "${LOCKFILE}"
-  logit "INFO: auter disabled"
+  if [[ -f "${PIDFILE}" ]] && [[ $(kill -0 `cat ${PIDFILE}` &>/dev/null; echo $?) -ne 0 ]]; then
+      rm -f "${PIDFILE}"
+      logit "INFO: auter disabled and cleared pid file"
+  else
+    logit "INFO: auter disabled"
+  fi
   exit 0
 fi
 
