@@ -57,7 +57,7 @@ Actions:
   --status      Show whether enabled or disabled
   --prep        Pre-download updates before applying
   --apply       Apply updates, and reboot if AUTOREBOOT=yes
-  --reboot      Reboot system
+  --reboot      Reboot system including pre/post reboot scripts
   --postreboot  Run post reboot script
  
 Options:
