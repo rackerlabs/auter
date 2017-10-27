@@ -129,7 +129,7 @@ function post_reboot() {
 
 function print_status() {
   if [[ -f "${LOCKFILE}" ]] && [[ -f "${PIDFILE}" ]]; then
-    if [[ $(kill -0 `cat ${PIDFILE}` &>/dev/null; echo $?) -eq 0 ]]; then
+    if kill -0 $(cat ${PIDFILE}) &>/dev/null; then
       echo "auter is currently enabled and running"
     else
       echo "auter is currently enabled and pid file exists but process is dead"
