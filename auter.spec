@@ -1,5 +1,5 @@
 Name:           auter
-Version:        0.9
+Version:        0.10
 Release:        1%{?dist}
 Summary:        Prepare and apply updates
 License:        ASL 2.0
@@ -103,6 +103,13 @@ exit 0
 %endif
 
 %changelog
+
+* Mon Oct 30 2017 Paolo Gigante <paolo.gigante@rackspace.co.uk> 0.10-1
+- Added pre and post prep script hooks
+- Added a pidfile and process check to --status
+- Added a auter success log with a last run timestamp
+- Clear pidfile if the process is no longer running when disabling auter
+- Added auter.aptModule for ubuntu/debian support
 
 * Thu Mar 09 2017 Piers Cornwell <piers.cornwell@rackspace.co.uk> 0.9-1
 - Capture package manager output

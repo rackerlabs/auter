@@ -1,5 +1,13 @@
 Auter NEWS
 
+0.10
+ * Added pre and post prep script hooks
+ * Added a pidfile and process check to --status
+ * Added a auter success log with a last run timestamp
+ * Clear pidfile if the process is no longer running when disabling auter
+ * Added auter.aptModule for ubuntu/debian support
+ * Added checks to confirm updates that were staged are still pending
+
 0.9
  * Capture package manager output
  * Document the auter --reboot cron job
