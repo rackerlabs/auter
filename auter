@@ -210,7 +210,7 @@ fi
 
 if [[ "${DISABLE}" ]] ; then
   rm -f "${LOCKFILE}"
-  if [[ -f "${PIDFILE}" ]] && kill -0 $(cat ${PIDFILE}) &>/dev/null; then
+  if [[ -f "${PIDFILE}" ]] && [[ $(kill -0 $(cat ${PIDFILE}) &>/dev/null; echo $?) -ne 0 ]]; then
       rm -f "${PIDFILE}"
       logit "INFO: auter disabled and cleared pid file"
   else
