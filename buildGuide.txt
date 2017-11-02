@@ -1,0 +1,25 @@
+Steps to build .deb from auter source:
+1) Build a debian 9 cloud server
+
+2) Update the system and reboot:
+  # apt-get update && apt-get upgrade
+  # reboot
+
+3) Install the required tools:
+  # apt-get update && apt install debhelper devscripts build-essential vim dh-make help2man
+
+4) Create a build user and switch to that account
+  # adduser builder		<-- Note 'adduser' NOT 'useradd' <<-- Use a valid password but the other details can be blanks
+  # su - builder
+
+5) Clone the auter repo and switch to the required tagged version:
+  # git clone git@github.com:rackerlabs/auter.git
+  # cd auter
+  # git checkout <TAG> 		eg: git checkout 0.10
+
+6) Make the sources files
+  # make deb
+
+7) build the package:
+  # cd auter-<TAG>
+  # debuild -us -uc
