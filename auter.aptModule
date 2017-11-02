@@ -32,7 +32,6 @@ function prepare_updates() {
             DOWNLOADLOGMSG=" to ${DOWNLOADDIR}/${CONFIGSET}"
           fi
           DEBIAN_FRONTEND=noninteractive
-          echo "Line 40 ${PACKAGE_MANAGER} ${PACKAGEMANAGEROPTIONS} ${DOWNLOADOPTION} --download-only dist-upgrade -y 2>&1)"
           PREPOUTPUT=$(${PACKAGE_MANAGER} ${PACKAGEMANAGEROPTIONS} ${DOWNLOADOPTION} --download-only dist-upgrade -y 2>&1)
           if [[ $(echo ${PREPOUTPUT} | grep -c '^[WE]:') -gt 0 ]]; then
             logit "ERROR: There were errors returned by \`${PACKAGE_MANAGER} ${PACKAGEMANAGEROPTIONS} ${DOWNLOADOPTION} --download-only dist-upgrade -y\`. Exiting."

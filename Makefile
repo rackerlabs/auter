@@ -29,7 +29,8 @@ deb:
 	@find ${pkg_name}-${version}/ -type f | xargs sed -i 's|/usr/bin/auter|/usr/sbin/auter|g'
 	@rm -f ${pkg_name}-${version}/auter.yumdnfModule
 	@mkdir ${pkg_name}-${version}/docs
-	@/usr/bin/help2man --include=${pkg_name}-${version}/auter.help2man -n auter --no-info ./auter -o ${pkg_name}-${version}/docs/auter.1
+	@/usr/bin/help2man --include=auter.help2man -n auter --no-info ./auter -o ${pkg_name}-${version}/docs/auter.1
 	@echo "auter (${version}) UNRELEASED; urgency=medium" >${pkg_name}-${version}/debian/changelog
 	@echo "  * Release ${version}." >>${pkg_name}-${version}/debian/changelog
+	@/usr/bin/awk '/0.10/,/^$$/' NEWS | sed 's/*/ */g' | grep -v "^[0-9]" >>${pkg_name}-${version}/debian/changelog
 	@echo " -- Paolo Gigante <paolo.gigante.sa@gmail.com>  ${datelong}" >>${pkg_name}-${version}/debian/changelog
