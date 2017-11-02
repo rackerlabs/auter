@@ -92,6 +92,7 @@ echo "This message should not print"
       echo "Trying to update"
       trap '' SIGINT SIGTERM
       RUN_OUTPUT=$(${PACKAGE_MANAGER} ${UPDATEACTION} ${PACKAGEMANAGEROPTIONS} ${DEBS})
+      echo "${RUN_OUTPUT}" &>${DATADIR}/last-apply-output-${CONFIGSET}
       default_signal_handling
 
       local PACKAGES_AFTER=$(dpkg --list)
@@ -101,7 +102,7 @@ echo "This message should not print"
         quit 3
       fi
 
-      logit "INFO: Updates complete (${PACKAGE_MANAGER} ${TRANSACTIONID}). You may need to reboot for some updates to take effect"
+      logit "INFO: Updates complete. You may need to reboot for some updates to take effect"
       log_last_run
 
       for SCRIPT in "${POSTAPPLYSCRIPTDIR}"/*; do

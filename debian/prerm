@@ -1,3 +1,2 @@
-# If this is a complete removal, then remove lockfile
 /usr/sbin/auter --disable
 #DEBHELPER#
