@@ -1,0 +1,7 @@
+/var/lib/auter
+/etc/auter/pre-prep.d
+/etc/auter/post-prep.d
+/etc/auter/pre-apply.d
+/etc/auter/post-apply.d
+/etc/auter/pre-reboot.d
+/etc/auter/post-reboot.d

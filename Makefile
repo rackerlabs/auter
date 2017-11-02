@@ -15,3 +15,13 @@ sources:
 	@rm -rf ${pkg_name}-${version}
 	@sed -r -i "s/^(Name:\s*).*\$$/\1${pkg_name}/g" ${pkg_name}.spec 
 	@sed -r -i "s/^(Version:\s*).*\$$/\1${version}/g" ${pkg_name}.spec
+
+deb:
+	@mkdir -p ${pkg_name}-${version}
+	@cp -pr ${files} ${pkg_name}-${version}
+	@mv ${pkg_name}-${version}/auter.cron ${pkg_name}-${version}/debian/auter.cron.d
+	@mv ${pkg_name}-${version}/auter.aptModule ${pkg_name}-${version}/auter.module
+	@rm -f ${pkg_name}-${version}/auter.yumdnfModule
+	@echo -e "auter (${version}) UNRELEASED; urgency=medium" >${pkg_name}-${version}/debian/changelog
+	@echo -e "\n  Release ${version}." >>${pkg_name}-${version}/debian/changelog
+	@echo -e "\n  -- ${datelong}." >>${pkg_name}-${version}/debian/changelog
