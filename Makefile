@@ -28,6 +28,9 @@ deb:
 	@mv ${pkg_name}-${version}/auter.aptModule ${pkg_name}-${version}/auter.module
 	@find ${pkg_name}-${version}/ -type f | xargs sed -i 's|/usr/bin/auter|/usr/sbin/auter|g'
 	@rm -f ${pkg_name}-${version}/auter.yumdnfModule
+	@rm -f ${pkg_name}-${version}/LICENSE
+	@rm -f ${pkg_name}-${version}/*.md
+	@rm -f ${pkg_name}-${version}/buildguide.txt
 	@mkdir ${pkg_name}-${version}/docs
 	@/usr/bin/help2man --include=auter.help2man -n auter --no-info ./auter -o ${pkg_name}-${version}/docs/auter.1
 	@echo "auter (${version}) UNRELEASED; urgency=medium" >${pkg_name}-${version}/debian/changelog
