@@ -32,7 +32,6 @@ function prepare_updates() {
             DOWNLOADLOGMSG=" to ${DOWNLOADDIR}/${CONFIGSET}"
           fi
           DEBIAN_FRONTEND=noninteractive
-          echo "Line 40 ${PACKAGE_MANAGER} ${PACKAGEMANAGEROPTIONS} ${DOWNLOADOPTION} --download-only dist-upgrade -y 2>&1)"
           PREPOUTPUT=$(${PACKAGE_MANAGER} ${PACKAGEMANAGEROPTIONS} ${DOWNLOADOPTION} --download-only dist-upgrade -y 2>&1)
           if [[ $(echo ${PREPOUTPUT} | grep -c '^[WE]:') -gt 0 ]]; then
             logit "ERROR: There were errors returned by \`${PACKAGE_MANAGER} ${PACKAGEMANAGEROPTIONS} ${DOWNLOADOPTION} --download-only dist-upgrade -y\`. Exiting."
@@ -93,6 +92,7 @@ echo "This message should not print"
       echo "Trying to update"
       trap '' SIGINT SIGTERM
       RUN_OUTPUT=$(${PACKAGE_MANAGER} ${UPDATEACTION} ${PACKAGEMANAGEROPTIONS} ${DEBS})
+      echo "${RUN_OUTPUT}" &>${DATADIR}/last-apply-output-${CONFIGSET}
       default_signal_handling
 
       local PACKAGES_AFTER=$(dpkg --list)
@@ -102,7 +102,7 @@ echo "This message should not print"
         quit 3
       fi
 
-      logit "INFO: Updates complete (${PACKAGE_MANAGER} ${TRANSACTIONID}). You may need to reboot for some updates to take effect"
+      logit "INFO: Updates complete. You may need to reboot for some updates to take effect"
       log_last_run
 
       for SCRIPT in "${POSTAPPLYSCRIPTDIR}"/*; do

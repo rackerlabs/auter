@@ -1,0 +1,3 @@
+auter /usr/sbin
+auter.conf /etc/auter
+auter.module /usr/lib/auter
