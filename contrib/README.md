@@ -47,7 +47,6 @@ This should be a list of files that should be included in the directory and an e
 
 # Git Pull Request guidelines
 
-- Any pull requests for contrib scripts MUST be from a branch with a prefix of "contrib-"
 - Code reviews will be done for all files for all pull requests
   - Take this as constructive feedback and do not be discouraged if changes are requested
   - Code reviews may take a while however feel free to comment on the PR if you want to give it a nudge
