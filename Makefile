@@ -1,11 +1,16 @@
 pkg_name := "auter"
 git_tag := $(shell git describe --exact-match --tags 2>/dev/null | sed "s/^v\?//g")
-version := ${git_tag}
-# This is for testing purposes
-version := 0.10
+git_commit := $(shell git log --pretty=format:'%h' -n 1)
+ifeq ($(strip ${git_tag}),)
+  version := $(shell git describe --tags 2>/dev/null | sed "s/^v\?//g")
+  release := ${date}.git${git_commit}
+else
+  version := ${git_tag}
+  release := "1"
+endif
+version_release := ${version}-${release}
 date := $(shell date +%Y%m%d)
 datelong := $(shell date +"%a, %d %b %Y %T %z")
-
 
 ignore_files_regexp := "^(Makefile|${pkg_name}..*.tar.gz|${pkg_name}.spec.*)$$"
 files := $(shell ls | egrep -ve ${ignore_files_regexp})
@@ -22,6 +27,7 @@ sources:
 	@sed -r -i "s/^(Version:\s*).*\$$/\1${version}/g" ${pkg_name}.spec
 
 deb:
+	@echo ${release} | grep git &>/dev/null && echo "This seems to be an untagged version - ${release}. If this is not for testing you should checkout a tagged version before running make"
 	@mkdir -p ${pkg_name}-${version}
 	@cp -pr ${files} ${pkg_name}-${version}
 	@mv ${pkg_name}-${version}/auter.cron ${pkg_name}-${version}/debian/auter.cron.d
