@@ -43,3 +43,4 @@ deb:
 	@echo "  * Release ${version}." >>${pkg_name}-${version}/debian/changelog
 	@/usr/bin/awk '/0.10/,/^$$/' NEWS | sed 's/*/ */g' | grep -v "^[0-9]" >>${pkg_name}-${version}/debian/changelog
 	@echo " -- Paolo Gigante <paolo.gigante.sa@gmail.com>  ${datelong}" >>${pkg_name}-${version}/debian/changelog
+	@cp -ar ${pkg_name}-${version} ${pkg_name}-${version}.orig
