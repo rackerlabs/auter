@@ -2,8 +2,8 @@ Source: auter
 Maintainer: Paolo Gigante <paolo.gigante.sa@gmail.com>
 Section: misc
 Priority: optional
-Standards-Version: 3.9.8
-Build-Depends: debhelper (>= 10)
+Standards-Version: 3.9.7
+Build-Depends: debhelper (>= 9)
 
 Package: auter
 Architecture: all
