@@ -14,15 +14,14 @@ endif
 version_release := ${version}-${release}
 
 # Build release for debian
-distributionrelease := $(lsb_release -cs)
-ifeq ($(distributionrelease), "Debian")
-  distributionrelease := "unstable"
-else ifeq ($(distributionrelease), "Ubuntu")
-  distributionrelease := $(lsb_release -cs)
+distribution := $(shell lsb_release -is)
+ifeq (${distribution}, Debian)
+  distributionrelease := unstable
+else ifeq (${distribution}, Ubuntu)
+  distributionrelease := $(shell lsb_release -cs)
 else
-  distributionrelease := ""
+  distributionrelease := "FAILED... distribution=${distribution}"
 endif
-#distributionrelease := "vivid wily xenial yakkety zesty artful"
 
 date := $(shell date +%Y%m%d)
 datelong := $(shell date +"%a, %d %b %Y %T %z")
