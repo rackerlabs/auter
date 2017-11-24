@@ -98,7 +98,7 @@ function check_package_manager() {
   elif [[ -x /usr/bin/apt-get ]]; then
     echo apt-get
   else
-    logit "ERROR: Cannot find yum or dnf"
+    logit "ERROR: Cannot find yum, dnf or apt-get"
     exit 7
   fi
 }

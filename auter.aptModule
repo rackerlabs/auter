@@ -83,12 +83,11 @@ function apply_updates() {
         run_script "${SCRIPT}" "Pre-Apply"
       done
 
-echo "This message should not print"
       sleep $(($RANDOM % ${MAXDELAY}))
       logit "INFO: Applying updates"
       local PACKAGES_BEFORE=$(dpkg --list)
 
-      # We don't want to allow the user to interrupt a yum/dnf transaction or Bad Things Happen.
+      # We don't want to allow the user to interrupt a yum/dnf/apt transaction or Bad Things Happen.
       echo "Trying to update"
       trap '' SIGINT SIGTERM
       RUN_OUTPUT=$(${PACKAGE_MANAGER} ${UPDATEACTION} ${PACKAGEMANAGEROPTIONS} ${DEBS})

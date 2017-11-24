@@ -22,9 +22,13 @@ yum downgrade zsh
 Prepare custom scripts:
 
 ```
+echo 'logger custom pre prep script ran' > /etc/auter/pre-prep.d/pre_prep_script
+echo 'logger custom post prep script ran' > /etc/auter/post-prep.d/post_prep_script
+echo 'logger custom pre apply script ran' > /etc/auter/pre-apply.d/pre_apply_script
+echo 'logger custom post apply script ran' > /etc/auter/post-apply.d/pre_apply_script
 echo 'logger custom pre reboot script ran' > /etc/auter/pre-reboot.d/pre_reboot_script
 echo 'logger custom post reboot script ran' > /etc/auter/post-reboot.d/post_reboot_script
-chmod +x /etc/auter/*reboot*/*script
+chmod +x /etc/auter/*.d/*script
 ```
 
 Now there will be at least one update:
