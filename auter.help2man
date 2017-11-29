@@ -16,10 +16,10 @@
   On reboot, auter will add a call to auter --postreboot via an @reboot cron job. The CONFIGSET part of the filename is defined in the auter config file by setting a variable of the same name, and if not defined is set to "default".
 
 \//var/lib/auter/last-prep-output-CONFIGSET
-  This file contains the output from the yum command that was run during the last time auter was invoked with --prep. There may be multiple logs if different config files are used. This file will be updated/created every time auter --prep is run. The CONFIGSET part of the filename is defined in the auter config file by setting a variable of the same name, and if not defined is set to "default". 
+  This file contains the output from the package manager (yum, dnf or apt-get) command that was run during the last time auter was invoked with --prep. There may be multiple logs if different config files are used. This file will be updated/created every time auter --prep is run. The CONFIGSET part of the filename is defined in the auter config file by setting a variable of the same name, and if not defined is set to "default". 
 
 \//var/lib/auter/last-apply-output-CONFIGSET
-  This file contains the output from the yum command that was run during the last time auter was invoked with --apply. There may be multiple logs if different config files are used. This file will be updated/created every time auter --apply is run. The CONFIGSET part of the filename is defined in the auter config file by setting a variable of the same name, and if not defined is set to "default".
+  This file contains the output from the package manager (yum, dnf or apt-get) command that was run during the last time auter was invoked with --apply. There may be multiple logs if different config files are used. This file will be updated/created every time auter --apply is run. The CONFIGSET part of the filename is defined in the auter config file by setting a variable of the same name, and if not defined is set to "default".
 
 \//etc/auter/pre-prep.d/
 \//etc/auter/post-prep.d/
@@ -57,9 +57,9 @@ Config options are set in /etc/auter/auter.conf, or in the file referenced by th
  If set to "yes" the server will be rebooted 2 minutes after successfully applying updates. If updates are not applied successfully, auter will exit and a reboot will NOT occur.
 
  PACKAGEMANAGEROPTIONS
- Valid options: Any valid yum or dnf options can be specified (including dashes). This is passed directly to the package manager.
+ Valid options: Any valid package manager (yum, dnf or apt-get) options can be specified (including dashes). This is passed directly to the package manager.
  Default: ""
- See man pages for yum, or dnf as appropriate for more info. Example: "--disableexcludes=all"
+ See man pages for yum, dnf or apt-get as appropriate for more info. Example: "--disableexcludes=all"
 
  PREDOWNLOADUPDATES
  Valid options: "yes" or "no"
@@ -110,7 +110,7 @@ Config options are set in /etc/auter/auter.conf, or in the file referenced by th
 
 0 = updates successful / no updates available 
 
-3 = issue related to yum / dnf command
+3 = issue related to yum / dnf / apt-get command
 
 4 = auter disabled via lockfile
 
@@ -118,6 +118,6 @@ Config options are set in /etc/auter/auter.conf, or in the file referenced by th
 
 6 = auter is already running / PIDFILE exists
 
-7 = neither yum nor dnf is available
+7 = yum, dnf or apt-get was not found
 
 8 = a pre/post hook exited with a non-zero error code

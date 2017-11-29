@@ -1,12 +1,12 @@
 # auter
 
-Automatic updates for RHEL, CentOS or Fedora Linux servers, with the ability to run pre/post hooks, pre-download packages and reboot after the updates.
+Automatic updates for RHEL, CentOS, Fedora, Ubuntu and Debian Linux servers, with the ability to run pre/post hooks, pre-download packages and reboot after the updates.
 
 **When to use Auter?**
 
 Updates should be applied regularly to Linux systems in order to apply security and bug fixes. For some of those updates, for example the kernel, or a shared library, a system restart is required for those updates to take effect. Whether you apply those updates manually, or automatically will depend on your requirements.
 
-Auter provides a host-based (i.e. installed on the OS) way on systems using yum/dnf (RHEL, CentOS, Fedora, Amazon Linux, etc.) of automatically applying updates and rebooting. For servers, it is often the case that updates and reboots must only happen during defined maintenance windows. Auter provides flexible scheduling to ensure updates and reboots happen when you want them to. Auter allows you to customize how updates run - you can pre-download updates in advance of the window to apply them, and you can run custom scripts before and after the updates.
+Auter provides a host-based (i.e. installed on the OS) way on systems using yum/dnf/apt-get (RHEL, CentOS, Fedora, Amazon Linux, Ubuntu, Debian etc.) for automatically applying updates and rebooting. For servers, it is often the case that updates and reboots must only happen during defined maintenance windows. Auter provides flexible scheduling to ensure updates and reboots happen when you want them to. Auter allows you to customize how updates run - you can pre-download updates in advance of the window to apply them, and you can run custom scripts before and after the updates.
 
 Here's some cases where other options may be better:
 
@@ -23,7 +23,7 @@ auter --disable
 
 **Configure**
 
-Edit /etc/auter/auter.conf. See the comments in that file for help. yum/dnf configuration should be used to configure anything affecting yum/dnf, for example packages to exclude.
+Edit /etc/auter/auter.conf. See the comments in that file for help. yum/dnf/apt-get configuration should be used to configure anything affecting yum/dnf/apt-get, for example packages to exclude.
 
 **Set Regular Schedule**
 
