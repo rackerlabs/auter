@@ -1,5 +1,5 @@
 Name:           auter
-Version:        0.10
+Version:        0.11
 Release:        1%{?dist}
 Summary:        Prepare and apply updates
 License:        ASL 2.0
@@ -103,6 +103,12 @@ exit 0
 %endif
 
 %changelog
+
+* Fri Dec 1 2017 Paolo Gigante <paolo.gigante@rackspace.co.uk> 0.11-1
+- Updated documentation and references to include apt for Ubuntu/debian
+- Removed debugging message that was printed during apt update
+- Added "Valid Options" in auter.conf
+- Added the pre/post prep directories in auter.conf
 
 * Mon Oct 30 2017 Paolo Gigante <paolo.gigante@rackspace.co.uk> 0.10-1
 - Added pre and post prep script hooks

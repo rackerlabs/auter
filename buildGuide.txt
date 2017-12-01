@@ -15,11 +15,15 @@ Steps to build .deb from auter source:
 5) Clone the auter repo and switch to the required tagged version:
   # git clone git@github.com:rackerlabs/auter.git
   # cd auter
-  # git checkout <TAG> 		eg: git checkout 0.10
+  # git checkout <TAG> 		eg: git checkout 0.11
 
 6) Make the sources files
   # make deb
+  # cd auter-<TAG>
 
 7) build the package:
-  # cd auter-<TAG>
-  # debuild -us -uc
+  7.a) To build an unsigned package:
+    # debuild -us -uc
+
+  7.b) To build a gpg signed package:
+    # debuild -S -sa -k$(gpg --list-key --with-colons | awk -F: '/^pub:/ { print $5 }')
