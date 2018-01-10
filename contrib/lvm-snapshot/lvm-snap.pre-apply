@@ -101,6 +101,9 @@ create_snapshot() {
   # Everything checks out
   jnl "Creating snapshot ${LV_SNAP}"
   lvcreate -n $LV_SNAP -l ${MIN_PERC_AVAIL}%ORIGIN -s /dev/${LV_VG}/${LV_ROOT} >> $LOGFILE 1>&1 && jnl "Snaphot created successfully." || { jnl "ERROR: Could not create snapshot.";exit 2; }
+
+  # Write down kernel version in case of a revert is needed, for extra information
+  jnl "Kernel version running: $(uname -r). You should ensure to keep this version installed during snapshot lifespan to be able to revert snapshot and boot to this kernel."
 } 
 
 # Scheduling automatic removal of the snapshot
