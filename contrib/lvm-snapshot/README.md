@@ -46,6 +46,5 @@ lvconvert --mergesnapshot <LV_VG>/<LV_SNAP>
   Can't merge until origin volume is closed.
   Merging of snapshot centos/snap_root_auter_2018-01-08_092517 will occur on next activation of centos/root.
 ```
-1. Update the grub default file to load the second entry (ie '1', should match previously installed kernel, if in doubt look back into the script's log file and compare with list of grub entries in /boot/grub2/grub.conf)
+1. **If** your /boot directory resides on an separate filesystem, you **need** to update the grub default file to load the second entry (ie set up `GRUB_DEFAULT=1` in /etc/default/grub -- this will match previously installed kernel. If in doubt, look back into the script's log file and compare with list of grub entries in /boot/grub2/grub.conf . Keep in mind grub starts numbering at 0.)
 1. Reboot the device to validate.
-

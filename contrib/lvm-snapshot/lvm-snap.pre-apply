@@ -56,34 +56,36 @@ jnl() {
 # Check that root is on an LVM volume and init variables
 check_root_lvm() {
   ROOT_FS=$(findmnt -n -l -o SOURCE /)
-  jnl "Root filesystem info: ${ROOT_FS}"
+  jnl "INFO: Root filesystem info: ${ROOT_FS}"
 
   # Try to get LVM info
-  readonly LV_INFO=$(lvs --noheadings -o lv_name,vg_name,lv_size --units m --nosuffix ${ROOT_FS} 2>/dev/null) || { jnl "The root filesystem is NOT LVM, quitting..."; exit 2; }
+  readonly LV_INFO=$(lvs --noheadings -o lv_name,vg_name,lv_size --units m --nosuffix ${ROOT_FS} 2>/dev/null) || { jnl "ERROR: The root filesystem is NOT LVM, quitting..."; exit 2; }
 
   readonly LV_ROOT=$(echo "$LV_INFO" | awk '{ print $1 }')
   readonly LV_VG=$(echo "$LV_INFO" | awk '{ print $2 }')
   readonly LV_SIZE=$(echo "$LV_INFO" | awk '{ match($3, /(^[0-9]+)\.[0-9]+/, res); print res[1] }')
 
-  jnl "Root filesystem identified on LV ${LV_ROOT} belonging to VG ${LV_VG}"
+  jnl "INFO: Root filesystem identified on LV ${LV_ROOT} belonging to VG ${LV_VG}"
 
   # Is /usr on another FS/LV?
-  USR_FS=$(findmnt -n -l -o SOURCE /usr)
-  readonly USR_LV_INFO=$(lvs --noheadings -o lv_name,vg_name,lv_size --units m --nosuffix ${USR_FS} 2>/dev/null) && jnl "/usr is not on a separate LV, continuing..." || { jnl "/usr is part of a different logical volume, this could be dramatic in cas of a snapshot revert. Aborting!"; exit 2; }
+  USR_FS=$(findmnt -n -l -o SOURCE /usr 2>/dev/null) && { jnl "ERROR: /usr is part of a different filesystem, this could be dramatic in case of a snapshot revert. Aborting!"; exit 2; } || jnl "INFO: /usr is not on a separate filesystem, continuing..."
+
+  # Is /boot on another FS/LV?
+  BOOT_FS=$(findmnt -n -l -o SOURCE /boot 2>/dev/null) && jnl "WARN: /boot is on a different filesystem, you will need to amend grub configuration to point to current kernel in case of a revert LVM snapshot on the root volume." || jnl "INFO: /boot is not on a separate filesystem"
 }
 
 # If conditions are met, creating a new LVM snapshot
 create_snapshot() {
   # Do we have enough space?
   SPACE_LEFT=$(vgs --noheading -o vg_free --units m --nosuffix ${LV_VG} | awk '{ match($1, /(^[0-9]+)\.[0-9]+/, res); print res[1] }') 
-  jnl "There is ${SPACE_LEFT} MB available free space on VG"
+  jnl "INFO: There is ${SPACE_LEFT} MB available free space on VG"
   
   SPACE_NEED=$(expr $MIN_PERC_AVAIL \* $LV_SIZE / 100)
-  jnl "We need ${SPACE_NEED} MB available free space on VG"
+  jnl "INFO: We need ${SPACE_NEED} MB available free space on VG"
 
   if [ $SPACE_LEFT -lt $SPACE_NEED ]
   then
-    jnl "Not enough free space on VG $LV_VG ( $SPACE_LEFT < $SPACE_NEED). Quitting..."
+    jnl "ERROR: Not enough free space on VG $LV_VG ( $SPACE_LEFT < $SPACE_NEED). Quitting..."
     exit 2
   fi
 
@@ -95,24 +97,25 @@ create_snapshot() {
   then
     jnl "WARN: We are authorising multiple snapshots."
   else
-    [[ "${SNAP_LIST}" =~ "${LV_ROOT}" ]] && { jnl "VG ${LV_VG} already contains snapshots on ${SNAP_LIST}. Aborting..."; exit 2; } || jnl "No previous snapshot detected. Steady as she goes..."
+    [[ "${SNAP_LIST}" =~ "${LV_ROOT}" ]] && { jnl "ERROR: VG ${LV_VG} already contains snapshots on ${SNAP_LIST}. Aborting..."; exit 2; } || jnl "INFO: No previous snapshot detected. Steady as she goes..."
   fi
 
   # Everything checks out
-  jnl "Creating snapshot ${LV_SNAP}"
-  lvcreate -n $LV_SNAP -l ${MIN_PERC_AVAIL}%ORIGIN -s /dev/${LV_VG}/${LV_ROOT} >> $LOGFILE 1>&1 && jnl "Snaphot created successfully." || { jnl "ERROR: Could not create snapshot.";exit 2; }
+  jnl "INFO: Creating snapshot ${LV_SNAP}"
+  lvcreate -n $LV_SNAP -l ${MIN_PERC_AVAIL}%ORIGIN -s /dev/${LV_VG}/${LV_ROOT} >> $LOGFILE 1>&1 && jnl "INFO: Snaphot created successfully." || { jnl "ERROR: Could not create snapshot.";exit 2; }
 
   # Write down kernel version in case of a revert is needed, for extra information
-  jnl "Kernel version running: $(uname -r). You should ensure to keep this version installed during snapshot lifespan to be able to revert snapshot and boot to this kernel."
+  jnl "INFO: Kernel version running: $(uname -r)."
+  [ -n "$BOOT_FS" ] && jnl "WARN: You should ensure to keep this version installed during snapshot lifespan to be able to revert snapshot and boot to this kernel."
 } 
 
 # Scheduling automatic removal of the snapshot
 remove_snapshot() {
-  jnl "Setting removal of the snapshot in $DAYS days."
+  jnl "INFO: Setting removal of the snapshot in $DAYS days."
 
   # set up snapshot removal with system logging
   at "now +$DAYS days" <<EOF
-/sbin/lvremove -y ${LV_VG}/${LV_SNAP} && logger "LVM snapshot ${LV_SNAP} has been removed" || { logger "ERROR: LVM snapshot removal of ${LV_SNAP} did not return exit code 0";echo -e "\nWARNING: auter snapshot ${LV_SNAP} could not be removed.\n**Please remove the snapshot manually**.\nOnce ok, please remove this line from /etc/motd" >> /etc/motd; }
+/sbin/lvremove -y ${LV_VG}/${LV_SNAP} && logger "INFO: LVM snapshot ${LV_SNAP} has been removed" || { logger "ERROR: LVM snapshot removal of ${LV_SNAP} did not return exit code 0";echo -e "\nWARNING: auter snapshot ${LV_SNAP} could not be removed.\n**Please remove the snapshot manually**.\nOnce ok, please remove this line from /etc/motd" >> /etc/motd; }
 EOF
 }
 
@@ -123,7 +126,7 @@ EOF
 ##########################################################
 
 # Check for root user
-[ $UID -eq 0 ] || { echo "Requires root privileges"; exit 1; }
+[ $UID -eq 0 ] || { echo "ERROR: Requires root privileges"; exit 1; }
 
 # Create log dir if needed
 [ -d ${LOGDIR} ] || mkdir -p ${LOGDIR}
