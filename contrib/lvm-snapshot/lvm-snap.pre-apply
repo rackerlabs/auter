@@ -53,6 +53,13 @@ jnl() {
   echo "$(date +%c)  $1" | tee -a ${LOGFILE}
 }
 
+# Check if a submitted path is on separate filesystem
+check_fs_separate() {
+  local myfs="$1"
+
+  MY_FS=$(findmnt -n -l -o SOURCE ${myfs} 2>/dev/null) && { jnl "ERROR: ${myfs} is part of a different filesystem, this could be dramatic in case of a snapshot revert. Aborting!"; exit 2; } || jnl "INFO: ${myfs} is not on a separate filesystem, continuing..."
+}
+
 # Check that root is on an LVM volume and init variables
 check_root_lvm() {
   ROOT_FS=$(findmnt -n -l -o SOURCE /)
@@ -67,8 +74,12 @@ check_root_lvm() {
 
   jnl "INFO: Root filesystem identified on LV ${LV_ROOT} belonging to VG ${LV_VG}"
 
-  # Is /usr on another FS/LV?
-  USR_FS=$(findmnt -n -l -o SOURCE /usr 2>/dev/null) && { jnl "ERROR: /usr is part of a different filesystem, this could be dramatic in case of a snapshot revert. Aborting!"; exit 2; } || jnl "INFO: /usr is not on a separate filesystem, continuing..."
+  # Checking for 'core' FHS directories mounted on a separate FS. Halting if found 
+  for i in /etc /lib /lib64 /sbin /usr /var
+  do
+    check_fs_separate ${i}
+  done
+  #USR_FS=$(findmnt -n -l -o SOURCE /usr 2>/dev/null) && { jnl "ERROR: /usr is part of a different filesystem, this could be dramatic in case of a snapshot revert. Aborting!"; exit 2; } || jnl "INFO: /usr is not on a separate filesystem, continuing..."
 
   # Is /boot on another FS/LV?
   BOOT_FS=$(findmnt -n -l -o SOURCE /boot 2>/dev/null) && jnl "WARN: /boot is on a different filesystem, you will need to amend grub configuration to point to current kernel in case of a revert LVM snapshot on the root volume." || jnl "INFO: /boot is not on a separate filesystem"

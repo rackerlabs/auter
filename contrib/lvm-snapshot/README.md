@@ -9,11 +9,15 @@ Supported OS: CENTOS>=6 RHEL>=6 Fedora>=26 Ubuntu>=16.04 Debian>=9
 Additional setup required: NO
 Dependencies: util-linux, lvm2
 
+# Forewords of caution
+This script is not going through each and every possible checks to ensure a snapshot revert will be successful. It was tested in different scenario and will do a reasonable amount of checks, halting on possible issues, but we do not guarantee that a revert will always be successful and/or without issues. We strongly recommand to do your own testing before using this on anything you hold dear.
+
 # Description
 
 This script executes the following steps:
 
 * Check if lvm is in use for the root filesystem
+* Check if /bin, /etc, /lib, /lib64, /sbin, /usr, /var are on a separate filesystem => halt if confirmed
 * Check if there is a reasonable amount of free unallocated space in the VG (default = 20 %)
 * Check if there are already snapshots created (we do not allow multiple snapshots to be created by default)
 * If all checks are passed then create a new snapshot with a descriptive name associating it with auter (format: <snap_root_auter_YYYY-MM-DD_HHMMSS>)
