@@ -35,33 +35,32 @@
 # Minimum free space on the VG in percentage to allow snapshot creation.
 # This will also define maximum snapshot size.
 # If the snapshot consumes all its reserved space, you won't be able to revert, 
-# so please exerce caution when changing this.
+# so please exercise caution when changing this.
 readonly MIN_PERC_AVAIL=20
 # Number of days to keep the LVM snapshot running. The longer we keep it, the more 
-# space it is likely to consume.
+# space it is likely to consume. (cf previous variable MIN_PER_AVAIL)
 readonly DAYS=3
-# Where to log messages
-readonly LOGDIR=/var/log/auter-lvm
-readonly LOGFILE=${LOGDIR}/$(basename $0).log
 # Should we create new snapshot on root logical volume if one already exists? (0 = NO; 1 = YES)
 readonly MULTI_SNAP=0
 # Name of the snapshot
 readonly LV_SNAP="snap_root_auter_$(date +%Y-%m-%d_%H%M%S)"
 
 # Journal fonction
-jnl() {
-  echo "$(date +%c)  $1" | tee -a ${LOGFILE}
+function jnl() {
+  # If running on a tty, print to screen
+  $(tty -s) && echo "$1"
+  logger -p info -t auter "$1"
 }
 
 # Check if a submitted path is on separate filesystem
-check_fs_separate() {
+function check_fs_separate() {
   local myfs="$1"
 
   MY_FS=$(findmnt -n -l -o SOURCE ${myfs} 2>/dev/null) && { jnl "ERROR: ${myfs} is part of a different filesystem, this could be dramatic in case of a snapshot revert. Aborting!"; exit 2; } || jnl "INFO: ${myfs} is not on a separate filesystem, continuing..."
 }
 
 # Check that root is on an LVM volume and init variables
-check_root_lvm() {
+function check_root_lvm() {
   ROOT_FS=$(findmnt -n -l -o SOURCE /)
   jnl "INFO: Root filesystem info: ${ROOT_FS}"
 
@@ -79,14 +78,13 @@ check_root_lvm() {
   do
     check_fs_separate ${i}
   done
-  #USR_FS=$(findmnt -n -l -o SOURCE /usr 2>/dev/null) && { jnl "ERROR: /usr is part of a different filesystem, this could be dramatic in case of a snapshot revert. Aborting!"; exit 2; } || jnl "INFO: /usr is not on a separate filesystem, continuing..."
 
   # Is /boot on another FS/LV?
   BOOT_FS=$(findmnt -n -l -o SOURCE /boot 2>/dev/null) && jnl "WARN: /boot is on a different filesystem, you will need to amend grub configuration to point to current kernel in case of a revert LVM snapshot on the root volume." || jnl "INFO: /boot is not on a separate filesystem"
 }
 
 # If conditions are met, creating a new LVM snapshot
-create_snapshot() {
+function create_snapshot() {
   # Do we have enough space?
   SPACE_LEFT=$(vgs --noheading -o vg_free --units m --nosuffix ${LV_VG} | awk '{ match($1, /(^[0-9]+)\.[0-9]+/, res); print res[1] }') 
   jnl "INFO: There is ${SPACE_LEFT} MB available free space on VG"
@@ -113,19 +111,19 @@ create_snapshot() {
 
   # Everything checks out
   jnl "INFO: Creating snapshot ${LV_SNAP}"
-  lvcreate -n $LV_SNAP -l ${MIN_PERC_AVAIL}%ORIGIN -s /dev/${LV_VG}/${LV_ROOT} >> $LOGFILE 1>&1 && jnl "INFO: Snaphot created successfully." || { jnl "ERROR: Could not create snapshot.";exit 2; }
+  lvcreate -n ${LV_SNAP} -l ${MIN_PERC_AVAIL}%ORIGIN -s /dev/${LV_VG}/${LV_ROOT} >> $LOGFILE 1>&1 && jnl "INFO: Snaphot created successfully." || { jnl "ERROR: Could not create snapshot.";exit 2; }
 
   # Write down kernel version in case of a revert is needed, for extra information
   jnl "INFO: Kernel version running: $(uname -r)."
-  [ -n "$BOOT_FS" ] && jnl "WARN: You should ensure to keep this version installed during snapshot lifespan to be able to revert snapshot and boot to this kernel."
+  [ -n "${BOOT_FS}" ] && jnl "WARN: You should ensure to keep this version installed during snapshot lifespan to be able to revert snapshot and boot to this kernel."
 } 
 
 # Scheduling automatic removal of the snapshot
-remove_snapshot() {
+function remove_snapshot() {
   jnl "INFO: Setting removal of the snapshot in $DAYS days."
 
   # set up snapshot removal with system logging
-  at "now +$DAYS days" <<EOF
+  at "now +${DAYS} days" <<EOF
 /sbin/lvremove -y ${LV_VG}/${LV_SNAP} && logger "INFO: LVM snapshot ${LV_SNAP} has been removed" || { logger "ERROR: LVM snapshot removal of ${LV_SNAP} did not return exit code 0";echo -e "\nWARNING: auter snapshot ${LV_SNAP} could not be removed.\n**Please remove the snapshot manually**.\nOnce ok, please remove this line from /etc/motd" >> /etc/motd; }
 EOF
 }
@@ -138,9 +136,6 @@ EOF
 
 # Check for root user
 [ $UID -eq 0 ] || { echo "ERROR: Requires root privileges"; exit 1; }
-
-# Create log dir if needed
-[ -d ${LOGDIR} ] || mkdir -p ${LOGDIR}
 
 # Is root FS an LVM volume?
 check_root_lvm
