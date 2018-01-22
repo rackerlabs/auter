@@ -111,7 +111,7 @@ function create_snapshot() {
 
   # Everything checks out
   jnl "INFO: Creating snapshot ${LV_SNAP}"
-  lvcreate -n ${LV_SNAP} -l ${MIN_PERC_AVAIL}%ORIGIN -s /dev/${LV_VG}/${LV_ROOT} >> $LOGFILE 1>&1 && jnl "INFO: Snaphot created successfully." || { jnl "ERROR: Could not create snapshot.";exit 2; }
+  lvcreate -n ${LV_SNAP} -l ${MIN_PERC_AVAIL}%ORIGIN -s /dev/${LV_VG}/${LV_ROOT} && jnl "INFO: Snaphot created successfully." || { jnl "ERROR: Could not create snapshot.";exit 2; }
 
   # Write down kernel version in case of a revert is needed, for extra information
   jnl "INFO: Kernel version running: $(uname -r)."
