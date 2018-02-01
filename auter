@@ -40,7 +40,6 @@ PREAPPLYSCRIPTDIR="${SCRIPTDIR}/pre-apply.d"
 POSTAPPLYSCRIPTDIR="${SCRIPTDIR}/post-apply.d"
 PREREBOOTSCRIPTDIR="${SCRIPTDIR}/pre-reboot.d"
 POSTREBOOTSCRIPTDIR="${SCRIPTDIR}/post-reboot.d"
-STDOUT=0
 
 function default_signal_handling() {
   trap 'rm -f "${PIDFILE}"' SIGINT SIGTERM
