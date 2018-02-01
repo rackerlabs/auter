@@ -50,6 +50,7 @@ function prepare_updates() {
   else
     PREPOUTPUT=$(${PACKAGE_MANAGER} ${PACKAGEMANAGEROPTIONS} -s dist-upgrade)
   fi
+  rotate_file "${DATADIR}/last-prep-${CONFIGSET}"
   [[ "${PREPOUTPUT}" ]] && echo "${PREPOUTPUT}" > ${DATADIR}/last-prep-${CONFIGSET}
 
   # Run any post-prep scripts
@@ -91,6 +92,7 @@ function apply_updates() {
       echo "Trying to update"
       trap '' SIGINT SIGTERM
       RUN_OUTPUT=$(${PACKAGE_MANAGER} ${UPDATEACTION} ${PACKAGEMANAGEROPTIONS} ${DEBS})
+      rotate_file "${DATADIR}/last-apply-output-${CONFIGSET}"
       echo "${RUN_OUTPUT}" &>${DATADIR}/last-apply-output-${CONFIGSET}
       default_signal_handling
 
