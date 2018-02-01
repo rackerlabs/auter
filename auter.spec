@@ -133,7 +133,7 @@ exit 0
 - Release version 0.7
 - Updated the .spec file according to Fedora's guidelines
 - Moved scriptdir from /var/lib/auter to /etc/auter
-- Catagorize log messages as INFO, WARNING or ERROR
+- Categorise log messages as INFO, WARNING or ERROR
 - Remove pre-built man page
 
 * Wed Jul 06 2016 Cameron Beere <cameron.beere@rackspace.co.uk> 0.6-1
@@ -144,11 +144,11 @@ exit 0
 - Release version 0.5
 - Added transaction ID logging
 - Disable random sleepis when running from a tty
-- Rename variables to be package manager agonistic
+- Rename variables to be package manager agnostic
 - Add cron examples for @reboot jobs
 - Update default auter config file location
 - Remove example script files
-- Diable cronjobs & enable lockfile on installation
+- Disable cronjobs & enable lockfile on installation
 - Switch to using pre/post script directories instead of files
 - Add better handling for option parsing
 - Added CONFIGSET variable used to distinguish between distinct configs
@@ -168,7 +168,7 @@ exit 0
 - Release version 0.3
 - Better defined exit codes
 - Added bounds check for MAXDELAY
-- Updated documentation with more details abount configuration options
+- Updated documentation with more details about configuration options
 - Fixed logging error if downloadonly is not available
 
 * Thu Mar 10 2016 Piers Cornwell <piers.cornwell@rackspace.co.uk> 0.2-1

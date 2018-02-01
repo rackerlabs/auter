@@ -10,7 +10,7 @@ This directory contains useful scripts, config files and/or cron schedules which
 - Scripts should be explicitly include the interpreter line ie: #!/bin/sh or #!/usr/bin/python
 - Scripts should be set as executable before uploading
 - Scripts MUST return an exit code of 0 for a successful run. Any exceptions will cause auter to fail
-- Script names should be either a brief description or the package that is being called. The script name should also have a "-phase" suffix. Note that the interpreter suffix is not required but may be useful ie:
+- Script names should be either a brief description or the package that is being called. The script name should also reference the intended phase in the filename. Note that the interpreter suffix is not required but may be useful ie:
   - notifyAvailablePatches-post-prep
   - configsnap.pre-apply
   - removeFromAppPool.pre-reboot
@@ -38,11 +38,11 @@ Detailed description of the scripts including the purpose of the scripts
 
 Details of any packages that need to be installed and any config that is required 
 
-# Files and explainations
+# Files and explanations
 
-This should be a list of files that should be included in the directory and an expaination of what each file does
+This should be a list of files that should be included in the directory and an explanation of what each file does
 
-# Any additional information or sctions
+# Any additional information or sections
 ```
 
 # Git Pull Request guidelines
@@ -50,5 +50,5 @@ This should be a list of files that should be included in the directory and an e
 - Code reviews will be done for all files for all pull requests
   - Take this as constructive feedback and do not be discouraged if changes are requested
   - Code reviews may take a while however feel free to comment on the PR if you want to give it a nudge
-  - Code reviews will assess logic, code structure, naming convention and syle. Please ensure you are following the google guidelines: https://google.github.io/styleguide/
+  - Code reviews will assess logic, code structure, naming convention and style. Please ensure you are following the google guidelines: https://google.github.io/styleguide/
 

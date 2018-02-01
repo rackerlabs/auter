@@ -40,7 +40,7 @@ This is also the correct method for cleaning up an unused pidfile.
 
 [Rebooting]
 
-Rebooting is an essential part of applying updates, in order to ensure the updated packages are in use. An update to the kernel will always need a reboot. Some application updates, for example Apache, will restart the service. However often libraries are updated, such as openssl, which don't force a reboot of services that use them. Rebooting guarantees that every update is in use by running services. You can either enable AUTOREBOOT=yes in the config file (the default is AUTOREBOOT=no), to reboot after --apply, or you can schedule a seperate schedule for --reboot via a second cronjob. A 2 minute warning is emitted before the server is rebooted, and this can be cancelled by a superuser with shutdown -c.
+Rebooting is an essential part of applying updates, in order to ensure the updated packages are in use. An update to the kernel will always need a reboot. Some application updates, for example Apache, will restart the service. However often libraries are updated, such as openssl, which don't force a reboot of services that use them. Rebooting guarantees that every update is in use by running services. You can either enable AUTOREBOOT=yes in the config file (the default is AUTOREBOOT=no), to reboot after --apply, or you can schedule a separate schedule for --reboot via a second cronjob. A 2 minute warning is emitted before the server is rebooted, and this can be cancelled by a superuser with shutdown -c.
 
 [Config File Options]
 
