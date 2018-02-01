@@ -112,6 +112,8 @@ function reboot_server() {
   if [[ $(ls "${POSTREBOOTSCRIPTDIR}/" 2>/dev/null) ]]; then
     logit "INFO: Adding post-reboot-hook to run scripts under ${POSTREBOOTSCRIPTDIR} to /etc/cron.d/auter-postreboot-${CONFIGSET}"
     echo -e "@reboot root /usr/bin/auter --postreboot --config ${CONFIGFILE}" > /etc/cron.d/auter-postreboot-${CONFIGSET}
+    chown root.root /etc/cron.d/auter-postreboot-${CONFIGSET}
+    chmod 0644 /etc/cron.d/auter-postreboot-${CONFIGSET}
   fi
 
   logit "INFO: Rebooting server"
