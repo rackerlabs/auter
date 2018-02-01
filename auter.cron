@@ -20,7 +20,7 @@
 # Executing updates:
 # Example of executing the updates on the server. This may have a different
 # schedule for each server on your infrastructure to avoid overlapping 
-# downtime on servers which serve the same function, e.g. if you dont want to 
+# downtime on servers which serve the same function, e.g. if you don't want to 
 # update all your web servers at the same time.
 
 # On the 14th of every month
