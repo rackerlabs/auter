@@ -21,7 +21,7 @@ This directory contains useful scripts, config files and/or cron schedules which
 ```
 # <BASE NAME OF SCRIPTS>
 
-<SHORT DESCRIPTIN OF THE PURPOSE OF THE SCRIPTS>
+<SHORT DESCRIPTION OF THE PURPOSE OF THE SCRIPTS>
 
 # Script Details
 

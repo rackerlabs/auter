@@ -58,7 +58,7 @@ deb:
 	@/usr/bin/help2man --include=auter.help2man -n auter --no-info ./auter -o ${pkg_name}-${version}/docs/auter.1
 	@echo "auter (${version}) ${distributionrelease}; urgency=medium" >${pkg_name}-${version}/debian/changelog
 	@echo "  * Release ${version}." >>${pkg_name}-${version}/debian/changelog
-	# DON'T FORGET TO CHANGE THIS VERSION AT NEXR RERLEASE
+	# DON'T FORGET TO CHANGE THIS VERSION AT NEXT RERLEASE
 	@/usr/bin/awk '/0.11/,/^$$/' NEWS | sed 's/*/ */g' | grep -v "^[0-9]" >>${pkg_name}-${version}/debian/changelog
 	@echo " -- Paolo Gigante <paolo.gigante.sa@gmail.com>  ${datelong}" >>${pkg_name}-${version}/debian/changelog
 	@cp -ar ${pkg_name}-${version} ${pkg_name}-${version}.orig
