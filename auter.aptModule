@@ -8,6 +8,14 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   echo "ERROR: This script is used by auter and should not be executed directly. Exiting"
 fi
 
+function check_package_manager_lock() {
+  # Set default values if the variables are undefined
+  [[ ${PACKAGEMANAGERLOCKRETRIES} ]] || PACKAGEMANAGERLOCKRETRIES=5
+  [[ ${PACKAGEMANAGERLOCKWAITTIME} ]] || PACKAGEMANAGERLOCKWAITTIME=60
+
+  # This is a place holder function pending code for a check for apt-get locks
+}
+
 function prepare_updates() {
   # Run any pre-prep scripts
   for SCRIPT in "${PREPREPSCRIPTDIR}"/*; do
