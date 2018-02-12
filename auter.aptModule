@@ -75,7 +75,7 @@ function apply_updates() {
     # installed (i.e. dependencies of other packages). Instead we need to use install.
     UPDATEACTION="install"
   else
-    local AVAILABLE_PACKAGES=$(${PACKAGE_MANAGER} -u upgrade --assume-no ${PACKAGEMANAGEROPTIONS})
+    local AVAILABLE_PACKAGES=$(${PACKAGE_MANAGER} -u upgrade --assume-no ${PACKAGEMANAGEROPTIONS} 2>&1)
     echo "${AVAILABLE_PACKAGES}" >${DATADIR}/last-apply-output-${CONFIGSET}
     local ERROR_COUNT=$(echo "${AVAILABLE_PACKAGES}" | grep -c '^[WE]:')
     local AVAILABLE_PACKAGE_COUNT=$(echo "${AVAILABLE_PACKAGES}" | awk '/upgraded,.*newly installed,/ {sum=$1+$3} END {print sum}')
