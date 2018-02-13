@@ -70,7 +70,7 @@ Options:
 
 function logit() {
   # If running on a tty, or the --stdout option is provided, print to screen
-  ([[ $(tty -s) ]] || [[ $STDOUT ]]) && echo "$1"
+  ( tty -s || [[ $STDOUT ]] ) && echo "$1"
   logger -p info -t auter "$1"
 }
 
