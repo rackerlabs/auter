@@ -21,7 +21,7 @@ function check_package_manager_lock() {
     for LOCKCHECKATTEMPT in $(seq 1 $[${PACKAGEMANAGERLOCKRETRIES}+1]); do
       # If this has reached the retry limit configured then abort
       if [[ ${LOCKCHECKATTEMPT} -eq $[${PACKAGEMANAGERLOCKRETRIES}+1] ]]; then
-        logit "Final attemt to wait for yum to release lock file failed. Aborting auter run"
+        logit "Final attempt to wait for yum to release lock file failed. Aborting auter run"
         quit 3
       fi
 
