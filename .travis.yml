@@ -7,3 +7,4 @@ before_install:
 script:
     - "echo 'Testing'"
     - "sh ./test_auter.sh"
+    - "sestatus"
