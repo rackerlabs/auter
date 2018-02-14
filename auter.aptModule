@@ -108,7 +108,7 @@ function apply_updates() {
         run_script "${SCRIPT}" "Post-Apply"
       done
 
-      [[ "${AUTOREBOOT}" == "yes" ]] && reboot_server
+      [[ "${AUTOREBOOT}" == "yes" ]] && REBOOTCALL=1
 
     else
       logit "INFO: No updates are available to be applied."
