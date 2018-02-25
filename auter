@@ -19,21 +19,21 @@
 #
 
 
-readonly AUTERVERSION="0.11"
-readonly SCRIPTDIR="/etc/auter"
-readonly DATADIR="/var/lib/auter"
-readonly LOCKFILE="${DATADIR}/enabled"
-readonly PIDFILE="/var/run/auter/auter.pid"
+declare -r -x AUTERVERSION="0.11"
+declare -r -x SCRIPTDIR="/etc/auter"
+declare -r -x DATADIR="/var/lib/auter"
+declare -r -x LOCKFILE="${DATADIR}/enabled"
+declare -r -x PIDFILE="/var/run/auter/auter.pid"
 
 # Set default options - these can be overridden in the config file or with a command line argument
-AUTOREBOOT="no"
-PACKAGEMANAGEROPTIONS=""
-PREDOWNLOADUPDATES="yes"
-ONLYINSTALLFROMPREP="no"
-CONFIGFILE="/etc/auter/auter.conf"
-DOWNLOADDIR="/var/cache/auter"
-MAXDELAY=3600
-CONFIGSET="default"
+declare -x AUTOREBOOT="no"
+declare -x PACKAGEMANAGEROPTIONS=""
+declare -x PREDOWNLOADUPDATES="yes"
+declare -x ONLYINSTALLFROMPREP="no"
+declare -x CONFIGFILE="/etc/auter/auter.conf"
+declare -x DOWNLOADDIR="/var/cache/auter"
+declare -x MAXDELAY=3600
+declare -x CONFIGSET="default"
 PREPREPSCRIPTDIR="${SCRIPTDIR}/pre-prep.d"
 POSTPREPSCRIPTDIR="${SCRIPTDIR}/post-prep.d"
 PREAPPLYSCRIPTDIR="${SCRIPTDIR}/pre-apply.d"
@@ -178,7 +178,7 @@ while true ; do
     -h|--help) print_help ; exit 0; shift;;
     -v|--version) echo "auter ${AUTERVERSION}"; exit 0 ; shift;;
     --stdout) STDOUT=1; shift;;
-    --config) unset CONFIGSET ; CONFIGFILE=$2 ; CUSTOMCONFIG=1 ; shift 2;;
+    --config) unset CONFIGSET ; declare -x CONFIGFILE=$2 ; CUSTOMCONFIG=1 ; shift 2;;
     --prep) PREP=1 ; shift;;
     --apply) APPLY=1 ; shift;;
     --reboot) REBOOTCALL=1 ; shift;;
