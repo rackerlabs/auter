@@ -70,7 +70,7 @@ function build_mail_body() {
   local body="Greetings,\n\nThe auter prep stage for server $(hostname) "
 
   if [[ $PREP_RESULT -eq 0 ]]; then
-    body+="completed successfully at $(date '+%T %Z'). The following packages"
+    body+="completed successfully at $(date '+%T %Z'). The following packages "
     body+="will be installed during the next apply stage.\n"
   else
     body+="has failed with the following error.\n"
