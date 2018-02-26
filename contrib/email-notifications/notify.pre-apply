@@ -1,0 +1,72 @@
+#!/bin/bash
+#
+# Send an email notification informing that the server is about to reboot.
+#
+# auter is a yum-cron type package which implements automatic updates on an
+# individual server with features such as predownloading packages and reboots.
+#
+#
+# Copyright 2016 Rackspace, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not use
+# this file except in compliance with the License.  You may obtain a copy of the
+# License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations under the License.
+#
+
+# Mail config file
+source "${SCRIPTDIR}/auter-notify.conf" 
+
+############
+## Variables
+############
+
+function logit() {
+  # If running on a tty, or the --stdout option is provided, print to screen
+  ( tty -s || [[ $STDOUT ]]  ) && echo "$1"
+  logger -p info -t auter "$1"
+}
+
+[[ -z "$MAIL_TO" ]] && logit "WARNING: \$MAIL_TO is undefined, skipping $0 script..." && exit 0
+
+function auter_apply_start_time() {
+  local syslog=$([[ -f /var/log/messages ]] && echo "/var/log/messages" || echo "/var/log/syslog")
+  local start_time="$(awk --posix -v today="$(date '+%b %d')" '$0~today && /Running with: \/usr\/bin\/auter --apply/{last=$3;}END{printf("%s",last)}' $syslog)"
+  echo -n "${start_time}"
+}
+
+# Construct the mail subject based on
+# the prep success or failure
+function build_mail_subject() {
+  local subject="[Auter] apply stage has started for $(hostname)"
+  echo "$subject"
+}
+
+# Construct the mail body based on
+# the prep success or failure
+function build_mail_body() {
+  local body="Greetings,\n\nThe auter apply stage for server $(hostname) "
+  body+="started at $(auter_apply_start_time) $(date '+%Z')."
+  body+="\n\nRegards,\nAuter."
+
+  echo -e "$body"
+}
+
+##########################################################
+##
+##           MAIN 
+##
+##########################################################
+
+if ! mailx -r "$MAIL_FROM" $(echo "$MAIL_CC" | awk '{split($0, a, / /); for (m in a) printf("-c %s ", a[m])}') -s "$(build_mail_subject)" "$MAIL_TO" <<< "$(build_mail_body)"; then
+  logit "ERROR: Sending pre-apply email notification failed."
+fi
+exit 0
+
+# vim: ts=2 sw=2 sts=2 fo+=r
