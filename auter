@@ -175,18 +175,18 @@ eval set -- "$OPTS"
 
 while true ; do
   case "$1" in
-    -h|--help) print_help ; exit 0; shift;;
-    -v|--version) echo "auter ${AUTERVERSION}"; exit 0 ; shift;;
-    --stdout) STDOUT=1; shift;;
-    --config) unset CONFIGSET ; declare -x CONFIGFILE=$2 ; CUSTOMCONFIG=1 ; shift 2;;
+    -h|--help) print_help ; exit 0;;
+    -v|--version) echo "auter ${AUTERVERSION}" ; exit 0;;
+    --stdout) STDOUT=1 ; shift;;
+    --config) CONFIGSET="" ; CONFIGFILE="$2" ; CUSTOMCONFIG=1 ; shift 2;;
     --prep) PREP=1 ; shift;;
     --apply) APPLY=1 ; shift;;
     --reboot) REBOOTCALL=1 ; shift;;
     --postreboot) POSTREBOOT=1 ; shift;;
     --enable) ENABLE=1 ; shift;;
     --disable) DISABLE=1 ; shift;;
-    --status) print_status ; exit 0 ; shift;;
-    --) shift ; break ;;
+    --status) print_status ; exit 0;;
+    --) shift ; break;;
   esac
 done
 
