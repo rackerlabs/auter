@@ -1,0 +1,166 @@
+#!/bin/bash
+#
+# Send an email notification with the status of the auter prepare stage.
+#
+# auter is a yum-cron type package which implements automatic updates on an
+# individual server with features such as predownloading packages and reboots.
+#
+#
+# Copyright 2016 Rackspace, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not use
+# this file except in compliance with the License.  You may obtain a copy of the
+# License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations under the License.
+#
+# Mail config file
+
+############
+## Variables
+############
+
+function main() {
+  # Declare local variables ready to be overridden
+  local -r _MAIL_TO=""
+  local -r _MAIL_FROM=""
+  local -r _MAIL_CC=""
+
+  # Convert stage to lowercase for easier comparison
+  # later in the script and split into array using
+  # delimiter '-'
+  local stage="$1"
+  #IFS='-' read -ra stage <<< "$1"
+
+  # Override the above defaults in the config file
+  source "${SCRIPTDIR}/auter-notify.conf" 
+
+  # Format MAIL_CC list
+  _MAIL_CC="-c $(sed 's/ / -c /g' <<< $MAIL_CC)"
+
+  function logit() {
+    # If running on a tty, or the --stdout option is provided, print to screen
+    ( tty -s || [[ $STDOUT ]] ) && echo "$1"
+    logger -p info -t auter "$1"
+  }
+
+  [[ ! -x $(which mailx) ]] && logit "ERROR: mailx is not installed, skipping $0 script" && exit 0
+  [[ -z "$MAIL_TO" ]] && logit "ERROR: \$MAIL_TO is undefined, skipping $0 script" && exit 0
+  [[ "$#" -eq 0 ]] &&  logit "ERROR: auter-notify requires a phase argument, skipping $0 script" && exit 0
+
+  function _mail() {
+    local subject="$1"
+    local body="$2"
+
+    if ! mailx -r "$_MAIL_FROM" "$_MAIL_CC" -s "$subject" "$_MAIL_TO" <<< "$body"; then
+      logit "ERROR: Sending post-prep email notification failed."
+    fi
+  }
+
+  function send_mail() {
+    local stage="$1"; shift
+    local result="$1"; shift
+    local body="$1"
+
+    # Construct the mail subject based on
+    # the stage success or failure
+    function build_mail_subject() {
+      local subject="[Auter] $stage stage for $(hostname)"
+      if [[ "$result" == "SUCCESS" ]]; then
+        subject+=" was successful"
+      else
+        subject=" has failed"
+      fi
+      echo "$subject"
+    }
+
+    # Construct the mail body based on
+    # the prep success or failure
+    function build_mail_body() {
+      local body="Greetings,\n\n"
+      body+="The auter $stage stage for server $(hostname) "
+      body+="$body"
+      body+="\n\nRegards,\nAuter."
+      echo -e "$body"
+    }
+
+    _mail "$subject" "$body"
+  }
+
+  function notify_prep() {
+    function post_prep() {
+      # Build body for post-prep
+      # Last prep result, FAIL or SUCCESS
+      local -r prep_result="$(grep 'Error Downloading Packages' ${DATADIR}/last-prep-output-${CONFIGSET} &>/dev/null && echo 'FAIL' || echo 'SUCCESS')"
+      # Package list is present regardless of result
+      local package_list="\n$(awk --posix '/={80}/,/Total download size/' ${DATADIR}/last-prep-output-${CONFIGSET})"
+
+      # If FAIL then we should reword the email accordingly
+      if [[ "$prep_result" == "FAIL" ]]; then
+        local prep_error="\n\n$(awk '/Error Downloading Packages:/,0' ${DATADIR}/last-prep-output-${CONFIGSET})"
+      fi
+
+      if [[ $prep_result == "SUCCESS" ]]; then
+        body+="completed successfully at $(date '+%T %Z'). The following packages "
+        body+="will be installed during the next apply stage.\n"
+      else
+        body+="has failed with the following error.\n"
+      fi
+      body+="${package_list}${prep_error}"
+
+      send_mail "$stage" "$prep_result" "$body"
+    }
+    post_prep
+  }
+
+  function notify_apply() {
+    function pre_apply() {
+      # Build body for pre-apply
+
+    }
+    function post_apply() {
+      # Build body for post-apply
+
+    }
+
+  }
+
+  function notify_reboot() {
+    function pre_reboot() {
+      # Build body for pre-reboot
+
+    }
+    function post_reboot() {
+      # Build body for post-reboot
+
+    }
+
+  }
+
+  case "$stage" in
+    *-prep)
+      notify_prep "$stage"
+      ;;
+    *-apply | "post-apply")
+      notify_apply "$stage"
+      ;;
+    *-reboot | "post-reboot")
+      notify_reboot "$stage"
+      ;;
+    *)
+      logit "ERROR: Unknown auter stage $stage, it should be one of pre-prep, pre-apply, post-apply, pre-reboot, or post-reboot"
+      exit 0
+      ;;
+  esac
+
+
+}
+
+main "$@"
+
+# vim: ts=2 sw=2 sts=2 fo+=r
