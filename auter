@@ -190,7 +190,7 @@ while true ; do
   esac
 done
 
-[[ "${PREP}${APPLY}${REBOOTCALL}${POSTREBOOT}${ENABLE}${DISABLE}" == "" ]] && (print_help && exit 1)
+[[ "${PREP}${APPLY}${REBOOTCALL}${POSTREBOOT}${ENABLE}${DISABLE}" == "" ]] && print_help && quit 1
 
 readonly PACKAGE_MANAGER=$(check_package_manager)
 
