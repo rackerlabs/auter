@@ -26,13 +26,13 @@ declare -r -x LOCKFILE="${DATADIR}/enabled"
 declare -r -x PIDFILE="/var/run/auter/auter.pid"
 
 # Set default options - these can be overridden in the config file or with a command line argument
-declare -x AUTOREBOOT="no"
+declare -x -l AUTOREBOOT="no"
 declare -x PACKAGEMANAGEROPTIONS=""
-declare -x PREDOWNLOADUPDATES="yes"
-declare -x ONLYINSTALLFROMPREP="no"
+declare -x -l PREDOWNLOADUPDATES="yes"
+declare -x -l ONLYINSTALLFROMPREP="no"
 declare -x CONFIGFILE="/etc/auter/auter.conf"
 declare -x DOWNLOADDIR="/var/cache/auter"
-declare -x MAXDELAY=3600
+declare -x -i MAXDELAY=3600
 declare -x CONFIGSET="default"
 PREPREPSCRIPTDIR="${SCRIPTDIR}/pre-prep.d"
 POSTPREPSCRIPTDIR="${SCRIPTDIR}/post-prep.d"
