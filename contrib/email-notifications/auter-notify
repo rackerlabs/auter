@@ -26,22 +26,32 @@
 ############
 
 function main() {
-  # Declare local variables ready to be overridden
-  local -r _MAIL_TO=""
-  local -r _MAIL_FROM=""
-  local -r _MAIL_CC=""
-
   # Convert stage to lowercase for easier comparison
   # later in the script and split into array using
   # delimiter '-'
-  local stage="$1"
+  local -r stage="$1"
   #IFS='-' read -ra stage <<< "$1"
 
   # Override the above defaults in the config file
-  source "${SCRIPTDIR}/auter-notify.conf" 
+  local -r _notifyconfig="${SCRIPTDIR}/auter-notify.conf"
+  [[ ! -f "$_notifyconfig" ]] && logit "ERROR: auter-notify.conf is missing, skipping $0"
+  source "$_notifyconfig" 
 
+  # Declare readonly local variables
+  local -r _mail_to="$MAIL_TO"
+  local -r _mail_from="$MAIL_FOM"
   # Format MAIL_CC list
-  _MAIL_CC="-c $(sed 's/ / -c /g' <<< $MAIL_CC)"
+  local -r _mail_cc="-c $(sed 's/ / -c /g' <<< $MAIL_CC)"
+
+  # Util variables
+  local -r _syslog=$([[ -f /var/log/messages ]] && echo "/var/log/messages" || echo "/var/log/syslog")
+  local -r _start_time="$(awk --posix -v today="$(date '+%b %d')" '$0~today && /Running with: \/usr\/bin\/auter --apply/{last=$3;}END{printf("%s",last)}' $syslog)"
+
+  if [[ "$stage" =~ "prep" ]]; then
+    local output_file="${DATADIR}/last-prep-output-${CONFIGSET}"
+  elif [[ "$stage" =~ "apply" ]]; then
+    local output_file="${DATADIR}/last-apply-output-${CONFIGSET}"
+  fi
 
   function logit() {
     # If running on a tty, or the --stdout option is provided, print to screen
@@ -49,21 +59,25 @@ function main() {
     logger -p info -t auter "$1"
   }
 
+  function get_package_list() {
+    local package_list="\n$(awk --posix '/={80}/,/Total download size/' $output_file)"
+    echo -n "$package_list"
+  }
+  function get_error_message() {
+    local -r error_result="\n\n$(awk '/Error Downloading Packages:/,0' $output_file)"
+    echo -n "$error_result"
+  }
+  function get_stage_result() {
+    local -r result="$(grep 'Error Downloading Packages'  &>/dev/null && echo 'FAIL' || echo 'SUCCESS')"
+    echo -n "$result"
+  }
+
   [[ ! -x $(which mailx) ]] && logit "ERROR: mailx is not installed, skipping $0 script" && exit 0
   [[ -z "$MAIL_TO" ]] && logit "ERROR: \$MAIL_TO is undefined, skipping $0 script" && exit 0
   [[ "$#" -eq 0 ]] &&  logit "ERROR: auter-notify requires a phase argument, skipping $0 script" && exit 0
 
-  function _mail() {
-    local subject="$1"
-    local body="$2"
-
-    if ! mailx -r "$_MAIL_FROM" "$_MAIL_CC" -s "$subject" "$_MAIL_TO" <<< "$body"; then
-      logit "ERROR: Sending post-prep email notification failed."
-    fi
-  }
 
   function send_mail() {
-    local stage="$1"; shift
     local result="$1"; shift
     local body="$1"
 
@@ -89,57 +103,70 @@ function main() {
       echo -e "$body"
     }
 
-    _mail "$subject" "$body"
+    if ! mailx -r "$_mail_from" "$_mail_cc" -s "$subject" "$_mail_to" <<< "$body"; then
+      logit "ERROR: Sending $stage email notification failed."
+    fi
   }
 
   function notify_prep() {
-    function post_prep() {
+    if [[ "$stage" == "pre-prep" ]]; then
       # Build body for post-prep
       # Last prep result, FAIL or SUCCESS
-      local -r prep_result="$(grep 'Error Downloading Packages' ${DATADIR}/last-prep-output-${CONFIGSET} &>/dev/null && echo 'FAIL' || echo 'SUCCESS')"
-      # Package list is present regardless of result
-      local package_list="\n$(awk --posix '/={80}/,/Total download size/' ${DATADIR}/last-prep-output-${CONFIGSET})"
 
       # If FAIL then we should reword the email accordingly
       if [[ "$prep_result" == "FAIL" ]]; then
-        local prep_error="\n\n$(awk '/Error Downloading Packages:/,0' ${DATADIR}/last-prep-output-${CONFIGSET})"
+        local -r prep_error="\n\n$(awk '/Error Downloading Packages:/,0' )"
       fi
 
+      local body=""
       if [[ $prep_result == "SUCCESS" ]]; then
         body+="completed successfully at $(date '+%T %Z'). The following packages "
         body+="will be installed during the next apply stage.\n"
       else
         body+="has failed with the following error.\n"
       fi
-      body+="${package_list}${prep_error}"
+      body+="$(get_package_list ${DATADIR}/last-prep-output-${CONFIGSET})${prep_error}"
 
-      send_mail "$stage" "$prep_result" "$body"
-    }
-    post_prep
+      send_mail "$prep_result" "$body"
+    fi
   }
 
   function notify_apply() {
-    function pre_apply() {
+    if [[ "$stage" == "pre-apply" ]]; then
       # Build body for pre-apply
-
-    }
-    function post_apply() {
+      echo -n "$_start_time"
+    elif [[ "$stage" == "post-apply" ]]; then
       # Build body for post-apply
+      # Last prep result, FAIL or SUCCESS
+      local -r apply_result="$(grep 'Error Downloading Packages' ${DATADIR}/last-apply-output-${CONFIGSET} &>/dev/null && echo 'FAIL' || echo 'SUCCESS')"
 
-    }
+      # If FAIL then we should reword the email accordingly
+      if [[ "$prep_result" == "FAIL" ]]; then
+        local -r apply_error="\n\n$(awk '/Error Downloading Packages:/,0' ${DATADIR}/last-apply-output-${CONFIGSET})"
+      fi
 
+      local body=""
+      if [[ $prep_result == "SUCCESS" ]]; then
+        body+="completed successfully at $(date '+%T %Z'). The following packages "
+        body+="will be installed during the next apply stage.\n"
+      else
+        body+="has failed with the following error.\n"
+      fi
+      body+="$(get_package_list ${DATADIR}/last-prep-output-${CONFIGSET})${prep_error}"
+
+      send_mail "$prep_result" "$body"
+    fi
+
+    send_mail "$prep_result" "$body"
   }
 
   function notify_reboot() {
-    function pre_reboot() {
+    if [[ "$stage" == "pre-reboot" ]]; then
       # Build body for pre-reboot
-
-    }
-    function post_reboot() {
+      echo -n "$_start_time"
+    elif [[ "$stage" == "post-reboot" ]]; then
       # Build body for post-reboot
-
-    }
-
+    fi
   }
 
   case "$stage" in
