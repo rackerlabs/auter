@@ -70,11 +70,19 @@ function apply_updates() {
     local RC=0
     # Check if there are updates staged for this configset
     if [[ $(ls -1 ${DOWNLOADDIR}/${CONFIGSET}/*.rpm 2>/dev/null| wc -l) -gt 0 ]]; then
-      # Save the staged rpms to a variable
-      RPMS="${DOWNLOADDIR}/${CONFIGSET}/*.rpm"
+      local RPMS=""
       # Check if the updates staged are still required
-      "${PACKAGE_MANAGER}" check-update $(rpm -qp ${RPMS}) &>/dev/null
-      local RC=$?
+      for PACKAGE in ${DOWNLOADDIR}/${CONFIGSET}/*.rpm; do
+        # Check if the local rpm is an update to the installed package and if it is then add the file to RPMS
+        # list. We are using rpm directly for this check because "yum check-update" does not support local rpm
+        # files. This also avoids connecting to the repos. And finally this avoids an issue when updating the
+        # kernel to the same version.
+        rpm -U --nodeps --test "${PACKAGE}" &>/dev/null && RPMS+=" ${PACKAGE}"
+      done
+
+      # We are manually setting the RC to 100 if there are updates to be applied. This is the return code that
+      # yum check-update would return if there were outstanding updates
+      [[ "${RPMS}" ]] && RC=100
     fi
     # When passing RPM files to dnf/yum, the update verb won't install any that aren't already
     # installed (i.e. dependencies of other packages). Instead we need to use install.
