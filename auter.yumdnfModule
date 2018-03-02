@@ -9,6 +9,29 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   echo "ERROR: This script is used by auter and should not be executed directly. Exiting"
 fi
 
+function check_package_manager_lock() {
+  # Set default values if the variables are undefined
+  [[ "${PACKAGEMANAGERLOCKRETRIES}" ]] || PACKAGEMANAGERLOCKRETRIES=5
+  [[ "${PACKAGEMANAGERLOCKRETRIES}" -lt 1 ]] && PACKAGEMANAGERLOCKRETRIES=5
+
+  [[ "${PACKAGEMANAGERLOCKWAITTIME}" ]] || PACKAGEMANAGERLOCKWAITTIME=60
+  [[ "${PACKAGEMANAGERLOCKWAITTIME}" -lt 1 ]] && PACKAGEMANAGERLOCKWAITTIME=60
+
+  if [[ -f /var/run/yum.pid ]]; then
+    for LOCKCHECKATTEMPT in $(seq 1 $[${PACKAGEMANAGERLOCKRETRIES}+1]); do
+      # If this has reached the retry limit configured then abort
+      if [[ ${LOCKCHECKATTEMPT} -eq $[${PACKAGEMANAGERLOCKRETRIES}+1] ]]; then
+        logit "ERROR: Final attempt to wait for yum to release lock file failed. Aborting auter run"
+        quit 3
+      fi
+
+      logit "INFO: /var/run/yum.pid exists. Waiting ${PACKAGEMANAGERLOCKWAITTIME} seconds for yum lock to be released: Attempt ${LOCKCHECKATTEMPT} of ${PACKAGEMANAGERLOCKRETRIES}"
+      sleep ${PACKAGEMANAGERLOCKWAITTIME}
+      [[ ! -f /var/run/yum.pid ]] && logit "INFO: yum lock has been released" && break
+    done
+  fi
+}
+
 function prepare_updates() {
   # Run any pre-prep scripts
   for SCRIPT in "${PREPREPSCRIPTDIR}"/*; do

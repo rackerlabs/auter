@@ -277,9 +277,11 @@ $(tty -s) && MAXDELAY=1 && logit "INFO: Running in an interactive shell, disabli
 
 # Source the module for the specific package manager.
 . /usr/lib/auter/auter.module
-# The following 2 functions are provided by the previously sourced /usr/lib/auter/auter.module
-[[ "${PREP}" ]] && prepare_updates
-[[ "${APPLY}" ]] && apply_updates
+
+# The following 3 functions are provided by the previously sourced /usr/lib/auter/auter.module
+# Run the package manager specific check for locks
+[[ "${PREP}" ]] && check_package_manager_lock && prepare_updates
+[[ "${APPLY}" ]] && check_package_manager_lock && apply_updates
 
 [[ "${REBOOTCALL}" ]] && reboot_server
 
