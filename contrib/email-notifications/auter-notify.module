@@ -1,0 +1,218 @@
+#!/bin/bash
+#
+# Send an email notification with the status of the auter prepare stage.
+#
+# auter is a yum-cron type package which implements automatic updates on an
+# individual server with features such as predownloading packages and reboots.
+#
+#
+# Copyright 2016 Rackspace, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not use
+# this file except in compliance with the License.  You may obtain a copy of the
+# License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations under the License.
+#
+
+function main() {
+  function logit() {
+    # If running on a tty, or the --stdout option is provided, print to screen
+    ( tty -s || [[ -n "$STDOUT" ]] ) && echo "$1"
+    logger -p INFO -t auter "$1"
+  }
+
+  # Setup
+  local STAGE="$1"
+  if [[ -f "${SCRIPTDIR}/auter-notify.conf" ]]; then
+    source "${SCRIPTDIR}/auter-notify.conf"
+  else
+    logit "ERROR: auter-notify.conf is missing, skipping $0"
+  fi
+
+  local MAIL_CC
+  MAIL_CC="-c $(sed 's/ / -c /g' <<< "$MAIL_CC")"
+
+  if [[ "$STAGE" == "post-prep" ]] || [[ "$STAGE" == "pre-apply" ]]; then
+    local OUTPUT_FILE="${DATADIR}/last-prep-output-${CONFIGSET}"
+  elif [[ "$STAGE" == "post-apply" ]]; then
+    local OUTPUT_FILE="${DATADIR}/last-apply-output-${CONFIGSET}"
+  fi
+
+  # Sanity check some of the variables we can't live without
+  [[ -z "$STAGE" ]] &&  logit "ERROR: auter-notify requires a phase argument, skipping $0 script" && exit 0
+  [[ -z "$MAIL_TO" ]] && logit "ERROR: \$MAIL_TO is undefined, skipping $0 script" && exit 0
+  [[ ! -x $(which mailx) ]] && logit "ERROR: mailx is not installed, skipping $0 script" && exit 0
+
+  function get_prep_packages() {
+    awk --posix '/={70,}/,/Total download size/' "$OUTPUT_FILE"
+  }
+  function get_apply_packages() {
+    awk '/Updated:/,/Complete!/' "$OUTPUT_FILE"
+  }
+  function get_error_message() {
+    awk '/Error Downloading Packages:|Error Summary/,0' "$OUTPUT_FILE"
+  }
+  function get_stage_result() {
+    # Last $STAGE result, either FAIL or SUCCESS
+    if grep -E 'Error Downloading Packages|Error Summary' "$OUTPUT_FILE" &>/dev/null; then
+      local ret="FAIL"
+    fi
+    echo "${ret:-SUCCESS}"
+  }
+  function get_datetime() {
+    date -d "${1:-now}" "+%T %Z"
+  }
+  function run_custom_scripts {
+    for SCRIPT in ${SCRIPTDIR}/auter-notify.d/*$STAGE; do
+      if [[ -x "$SCRIPT" ]] && [[ -f "$SCRIPT" ]]; then
+        echo -e "\\nOutput from custom script: $SCRIPT\\n"
+        $SCRIPT
+      fi
+    done
+  }
+
+  function send_mail() {
+    local SUBJECT
+    local INFO
+    # Construct the mail SUBJECT and body
+    SUBJECT="[Auter] $STAGE stage for $HOSTNAME $1"; shift
+    # Truncate the central body length to a default value of 5k chars unless
+    # overriden in auter-notify.conf
+    INFO=$(echo -e "$1" | awk -v tlen="${TRUNCATE_LENGTH:=5000}" '
+    {
+      chars+=length()
+    }
+    chars>tlen{
+      printf("8< --- Exceeded TRUNCATE_LENGTH: %d, trimming body here --- >8\\n", tlen);
+      exit;
+    }
+    chars<tlen
+    ')
+
+    BODY="Greetings,\\n\\n"
+    BODY+="The auter $STAGE stage for server $HOSTNAME "
+    BODY+="$INFO"
+    BODY+="\\n\\nRegards,\\nAuter."
+    BODY=$(echo -e "$BODY")
+
+    if ! mailx -r "$MAIL_FROM" "$MAIL_CC" -s "$SUBJECT" "$MAIL_TO" <<< "$BODY"; then
+      logit "ERROR: Sending $STAGE email notification failed."
+    fi
+  }
+
+  function notify_prep() {
+    local SUBJECT
+    local INFO
+    local PREP_RESULT
+    # Build INFO for post-prep
+    PREP_RESULT="$(get_stage_result)"
+    if [[ "$STAGE" == "post-prep" ]]; then
+      # Report prep failure as auter will contiue with the
+      # apply stage regardless. Manual intervention required.
+      if [[ "$PREP_RESULT" == "SUCCESS" ]]; then
+        SUBJECT+="was successful"
+        INFO+="completed successfully at $(get_datetime). The following packages "
+        INFO+="will be installed during the next apply stage.\\n\\n"
+        INFO+="$(get_prep_packages)\\n"
+        INFO+="$(run_custom_scripts)"
+      else
+        SUBJECT+="has failed"
+        INFO+="has failed to download the prep packages with error.\\n\\n$(get_error_message)\\n"
+      fi
+    fi
+    send_mail "$SUBJECT" "$INFO"
+  }
+
+  function notify_apply() {
+    # Build INFO for post-apply
+    local APPLY_RESULT
+    local SUBJECT=""
+    local INFO=""
+
+
+    # Store whether the apply stage was successful or not
+    APPLY_RESULT="$(get_stage_result)"
+    if [[ "$STAGE" == "pre-apply" ]]; then
+      # Build INFO for pre-apply
+      INFO+="started at $(get_datetime)."
+      if [[ "$ONLYINSTALLFROMPREP" == "yes" ]]; then
+        # If installing from prep we should check the $OUTPUT_FILE for prep'd
+        # package list and whether there were any errors
+        if [[ "$APPLY_RESULT" == "SUCCESS" ]]; then
+          SUBJECT+="is about to start"
+          INFO+="The following packages are about to be installed.\\n\\n"
+          INFO+="$(get_prep_packages)\\n"
+          INFO+="$(run_custom_scripts)"
+        else
+          SUBJECT+="will fail due to a prep error"
+          INFO+="This stage will fail due to the due to the following prep errors.\\n\\n$(get_error_message)\\n"
+        fi
+      else
+        # We're not installing from prep, so we don't care about package lists
+        # or errors
+        INFO+="The latest updates available will installed."
+        INFO+="$(run_custom_scripts)"
+      fi
+    elif [[ "$STAGE" == "post-apply" ]]; then
+      if [[ "$APPLY_RESULT" == "SUCCESS" ]]; then
+        SUBJECT+="has completed successfully"
+        INFO+="completed successfully at $(get_datetime) with the following output.\\n\\n"
+        INFO+="$(get_apply_packages)\\n"
+        INFO+="$(run_custom_scripts)"
+      else
+        SUBJECT+="has failed"
+        INFO+="has failed with the following error.\\n\\n$(get_error_message)\\n"
+      fi
+    fi
+    send_mail "$SUBJECT" "$INFO"
+  }
+
+  function notify_reboot() {
+    local SUBJECT
+    local INFO
+    if [[ "$STAGE" == "pre-reboot" ]]; then
+      # Build body for pre-reboot
+      SUBJECT+="is about to start"
+      INFO+="will start in approximately 2 minutes at $(get_datetime "+2minutes").\\n"
+      INFO+="$(run_custom_scripts)"
+
+    elif [[ "$STAGE" == "post-reboot" ]]; then
+      # Build body for post-reboot
+      # No point checking for result here. It will either reboot or not - if
+      # the later then you've got bigger problems than email notifications.
+      SUBJECT+="has completed successfully"
+      INFO+="has completed successfully at $(get_datetime).\\n"
+      INFO+="$(run_custom_scripts)"
+    fi
+    send_mail "$SUBJECT" "$INFO"
+  }
+
+  case "$STAGE" in
+    *-prep)
+      notify_prep "$STAGE"
+      ;;
+    *-apply)
+      notify_apply "$STAGE"
+      ;;
+    *-reboot)
+      notify_reboot "$STAGE"
+      ;;
+    *)
+      logit "ERROR: Unknown auter stage $STAGE, it should be one of pre-prep, pre-apply, post-apply, pre-reboot, or post-reboot"
+      return 0
+      ;;
+  esac
+
+  return 0
+
+}
+
+main "$@"
+
+# vim: ts=2 sw=2 sts=2 fo+=r ft=sh
