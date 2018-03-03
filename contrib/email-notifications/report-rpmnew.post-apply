@@ -1,0 +1,3 @@
+#/bin/bash
+
+[[ `find / -type f -name '*.rpmnew' | wc -l` -gt 0 ]] && find / -type f -name '*.rpmnew' || echo "No new config files"

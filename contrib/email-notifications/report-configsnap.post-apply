@@ -1,0 +1,5 @@
+#!/bin/bash
+
+if [[ -f /root/auter-configsnap-$(date +%Y-%m-%d)/configsnap/post-update.compare ]]; then
+    awk '/^(Differences|-|+|?)/{a=1;print}END{if (!a) print "No differences found"}' "/root/auter-configsnap-$(date +%Y-%m-%d)/configsnap/post-update.compare"
+fi
