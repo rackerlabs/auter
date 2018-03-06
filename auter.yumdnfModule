@@ -35,8 +35,7 @@ function prepare_updates() {
           DOWNLOADLOGMSG=" to ${DOWNLOADDIR}/${CONFIGSET}"
         fi
 
-        rotate_file "${DATADIR}/last-prep-output-${CONFIGSET}"
-        ${PACKAGE_MANAGER} ${PACKAGEMANAGEROPTIONS} ${DOWNLOADOPTION} update --downloadonly -y &>${DATADIR}/last-prep-output-${CONFIGSET}
+        PREPOUTPUT=$(${PACKAGE_MANAGER} ${PACKAGEMANAGEROPTIONS} ${DOWNLOADOPTION} update --downloadonly -y 2>&1)
         if [[ $? -eq 0 ]]; then
           if [[ "${ONLYINSTALLFROMPREP}" == "yes" && "${PACKAGE_MANAGER}" == "dnf" ]]; then
             find /var/cache/dnf -name "*.rpm" -exec mv {} ${DOWNLOADDIR}/${CONFIGSET} \;
@@ -55,9 +54,10 @@ function prepare_updates() {
       logit "WARNING: downloadonly option is not available"
     fi
   else
-    rotate_file "${DATADIR}/last-prep-output-${CONFIGSET}"
-    ${PACKAGE_MANAGER} ${PACKAGEMANAGEROPTIONS} check-update &>${DATADIR}/last-prep-output-${CONFIGSET}
+    PREPOUTPUT=$(${PACKAGE_MANAGER} ${PACKAGEMANAGEROPTIONS} check-update 2>&1)
   fi
+  rotate_file "${DATADIR}/last-prep-output-${CONFIGSET}"
+  [[ "${PREPOUTPUT}" ]] && echo "${PREPOUTPUT}" > ${DATADIR}/last-prep-${CONFIGSET}
 
   # Run any post-prep scripts
   for SCRIPT in "${POSTPREPSCRIPTDIR}"/*; do
