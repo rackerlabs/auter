@@ -34,6 +34,7 @@ declare -x CONFIGFILE="/etc/auter/auter.conf"
 declare -x DOWNLOADDIR="/var/cache/auter"
 declare -x -i MAXDELAY=3600
 declare -x CONFIGSET="default"
+declare -x ROTATE="5"
 PREPREPSCRIPTDIR="${SCRIPTDIR}/pre-prep.d"
 POSTPREPSCRIPTDIR="${SCRIPTDIR}/post-prep.d"
 PREAPPLYSCRIPTDIR="${SCRIPTDIR}/pre-apply.d"
@@ -72,6 +73,20 @@ function logit() {
   # If running on a tty, or the --stdout option is provided, print to screen
   ( tty -s || [[ $STDOUT ]] ) && echo "$1"
   logger -p info -t auter "$1"
+}
+
+function rotate_file {
+  #Rotate old file
+  OUTPUT_FILE=$1
+  for i in `seq $(($ROTATE-1)) -1 1`; do
+    [[ -e "${OUTPUT_FILE}.$i" ]] && mv -f "${OUTPUT_FILE}.$i" "${OUTPUT_FILE}.$(($i+1))"
+  done
+
+  # Move base files to basefile.1
+  [[ -e "${OUTPUT_FILE}" ]] && mv "${OUTPUT_FILE}" "${OUTPUT_FILE}.1"
+
+  # Finally check for extra file from the rotation, and remove if it exists
+  [[ -e "${OUTPUT_FILE}.${ROTATE}" ]] && rm -f "${OUTPUT_FILE}.${ROTATE}"
 }
 
 function run_script {
