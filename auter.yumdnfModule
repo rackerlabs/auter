@@ -57,7 +57,7 @@ function prepare_updates() {
     PREPOUTPUT=$(${PACKAGE_MANAGER} ${PACKAGEMANAGEROPTIONS} check-update 2>&1)
   fi
   rotate_file "${DATADIR}/last-prep-output-${CONFIGSET}"
-  [[ "${PREPOUTPUT}" ]] && echo "${PREPOUTPUT}" > ${DATADIR}/last-prep-${CONFIGSET}
+  [[ "${PREPOUTPUT}" ]] && echo "${PREPOUTPUT}" > ${DATADIR}/last-prep-output-${CONFIGSET}
 
   # Run any post-prep scripts
   for SCRIPT in "${POSTPREPSCRIPTDIR}"/*; do
