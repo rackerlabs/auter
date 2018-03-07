@@ -3,8 +3,11 @@ services:
     - docker
 before_install:
     - docker pull centos
-    - docker run -d -p 127.0.0.1:80:4567 centos /bin/sh -c "ls -l /root/"
 script:
     - "echo 'Testing'"
     - "lsb_release -a"
     - "[[ -f /etc/redhat-release ]] && cat /etc/redhat-release || echo not Centos"
+    - "printenv"
+    - "docker run --name test -td centos"
+    - "docker exec test yum -y install git"
+
