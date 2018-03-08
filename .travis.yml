@@ -5,9 +5,7 @@ before_install:
     - docker pull centos
 script:
     - "echo 'Testing'"
-    - "lsb_release -a"
-    - "[[ -f /etc/redhat-release ]] && cat /etc/redhat-release || echo not Centos"
-    - "printenv"
     - "docker run --name test -td centos"
     - "docker exec test yum -y install git"
-
+    - "ls -lah"
+    - "ls -lah auter*"
