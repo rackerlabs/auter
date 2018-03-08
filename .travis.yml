@@ -4,8 +4,8 @@ services:
 before_install:
     - docker pull centos
 script:
-    - "echo 'Testing'"
-    - "docker run --name test -td centos"
-    - "docker exec test yum -y install git"
+    - "shellcheck auter"
+    - "docker run --rm=true --mount type=bind,source=`pwd`/testdir,destination=/testdir --name test -td centos:6"
+    - "docker exec test yum -y install "
     - "ls -lah"
     - "ls -lah auter*"
