@@ -6,6 +6,6 @@ before_install:
 script:
     - "shellcheck auter"
     - "docker --version"
-    - "sudo docker run --rm=true --mount type=bind,source=`pwd`/tests,destination=/tests --name test -td centos:6"
+    - "sudo docker run --rm=true --mount type=bind,source=$(pwd)/tests,destination=/tests --name auter-test -td centos:6"
     - "ls -lah"
-    - "ls -lah auter*"
+    - "pwd"
