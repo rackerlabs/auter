@@ -4,10 +4,8 @@ services:
 before_install:
     - docker pull centos
 script:
-    - "apt install shellcheck"
     - "shellcheck auter"
     - "docker --version"
-    - "docker run --rm=true --mount type=bind,source=`pwd`/testdir,destination=/testdir --name test -td centos:6"
-    - "docker exec test yum -y install "
+    - "sudo docker run --rm=true --mount type=bind,source=`pwd`/tests,destination=/tests --name test -td centos:6"
     - "ls -lah"
     - "ls -lah auter*"
