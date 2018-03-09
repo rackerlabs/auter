@@ -1,0 +1,11 @@
+language: bash
+services:
+    - docker
+before_install:
+    - docker pull centos
+script:
+    - "sudo docker run --rm=true --mount type=bind,source=$(pwd),destination=/auter --name auter-test -td centos:7"
+    - "docker exec auter-test yum -y install epel-release &>/dev/null"
+    - "docker exec auter-test yum -y install ShellCheck aspell &>/dev/null"
+    - "docker exec auter-test /auter/tests/01-spellcheck.sh"
+    - "docker exec auter-test /auter/tests/05-shellcheck.sh"
