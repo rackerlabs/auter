@@ -1,4 +1,4 @@
-personal_ws-1.1 en 167 
+personal_ws-1.1 en 176 
 DOWNLOADLOGMSG
 sublicense
 Gigante
@@ -16,12 +16,15 @@ EPEL
 VERSIONNUMBER
 ar
 MERCHANTABILITY
+pwd
 disableexcludes
+SPELLINGMISTAKESCOUNT
 dh
 auter
 cp
 config
 eg
+realpath
 el
 readonly
 dev
@@ -50,8 +53,8 @@ datelong
 AUTERVARIABLES
 changelog
 logit
-PIDfile
 pidfile
+PIDfile
 dirname
 configs
 bindir
@@ -61,6 +64,7 @@ Beere
 dnf
 esac
 md
+TESTDIR
 BuildRequires
 sharedstatedir
 ne
@@ -90,6 +94,7 @@ sa
 rf
 lockfile
 TESTVAR
+EXITCODE
 RHEL
 UPDATEACTION
 crontab
@@ -128,8 +133,10 @@ Ctrl
 PREDOWNLOADUPDATES
 ws
 lintian
+maxdepth
 REBOOTCALL
 usr
+SPELLINGMISTAKES
 txt
 untagged
 pid
@@ -147,6 +154,7 @@ useradd
 CentOS
 scriptdir
 yyyy
+shellcheck
 getopt
 SIGINT
 configsets
@@ -164,5 +172,6 @@ noninteractive
 POSTAPPLYSCRIPTDIR
 pre
 DEBs
+aspell
 AUTERVERSION
 TRANSACTIONID
