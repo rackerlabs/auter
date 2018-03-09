@@ -14,7 +14,7 @@ done
 echo "${SCRIPTSTOTEST}"
 
 # Add non-shebang scripts manually
-SCRIPTSTOTEST+="auter.aptModule auter.yumdnfModule"
+SCRIPTSTOTEST+="/auter/auter.aptModule /auter/auter.yumdnfModule"
 
 # Custom shellcheck exclusions
 SHELLCHECK_EXCLUSIONS=",SC2102,SC2124,SC2155,SC2148"
