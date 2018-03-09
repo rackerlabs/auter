@@ -4,8 +4,7 @@ services:
 before_install:
     - docker pull centos
 script:
-    - "shellcheck auter"
+    - "tests/01-spellcheck.sh"
+    - "tests/05-shellcheck.sh"
     - "docker --version"
     - "sudo docker run --rm=true --mount type=bind,source=$(pwd)/tests,destination=/tests --name auter-test -td centos:6"
-    - "ls -lah"
-    - "pwd"
