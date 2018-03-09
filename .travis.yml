@@ -4,6 +4,7 @@ services:
 before_install:
     - docker pull centos
 script:
+    - "apt install coreutils"
     - "tests/01-spellcheck.sh"
     - "tests/05-shellcheck.sh"
     - "docker --version"
