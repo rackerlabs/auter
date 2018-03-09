@@ -3,7 +3,11 @@ r='\033[31m'
 w='\033[0m'
 g='\033[32m'
 
-for FILE in $(find ../ -type f -not -path '*/\.*'); do
+EXITCODE=0
+AUTERDIR="$(cd "$(dirname "$0")" ; cd ../ ; pwd -P )"
+TESTDIR="$(cd "$(dirname "$0")" ; pwd -P )"
+
+for FILE in $(find "${AUTERDIR}" -type f -not -path '*/\.*'); do
   FILE=$(realpath "${FILE}")
   echo "Testing $FILE for common coding mistakes"
   SHELLCHECK_OUTPUT=$(shellcheck -e SC2044 "${FILE}")
