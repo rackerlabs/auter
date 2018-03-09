@@ -6,9 +6,9 @@ g='\033[32m'
 EXITCODE=0
 AUTERDIR="$(cd "$(dirname "$0")" ; cd ../ ; pwd -P )"
 TESTDIR="$(cd "$(dirname "$0")" ; pwd -P )"
-echo "Testing files in $TESTDIR"
+echo "Testing files in ${TESTDIR}"
 
-for FILE in $(find $AUTERDIR -maxdepth 1 -type f -not -path '*/\.*'); do
+for FILE in $(find "${AUTERDIR}" -maxdepth 1 -type f -not -path '*/\.*'); do
   unset SPELLINGMISTAKES
   FILE=$(realpath "${FILE}")
   echo "Testing $FILE for spelling mistakes"
