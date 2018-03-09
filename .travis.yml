@@ -6,6 +6,6 @@ before_install:
 script:
     - "sudo docker run --rm=true --mount type=bind,source=$(pwd)/tests,destination=/tests --name auter-test -td centos:7"
     - "docker exec auter-test yum -y install epel-release"
-    - "docker exec auter-test yum -y install ShellCheck"
+    - "docker exec auter-test yum -y install ShellCheck aspell"
     - "docker exec auter-test tests/01-spellcheck.sh"
     - "docker exec auter-test tests/05-shellcheck.sh"
