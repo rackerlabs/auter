@@ -23,25 +23,25 @@ function prepare_updates() {
   done
 
   if [[ "${PREDOWNLOADUPDATES}" == "yes" ]]; then
-    if [[ $(man ${PACKAGE_MANAGER} | grep -c download-only) -gt 0 ]]; then
+    if [[ $(man "${PACKAGE_MANAGER}" | grep -c download-only) -gt 0 ]]; then
       ${PACKAGE_MANAGER} update &>/dev/null
       # Check if there are any errors when checking for updates
-      local ERROR_COUNT=$(${PACKAGE_MANAGER} -u upgrade --assume-no ${PACKAGEMANAGEROPTIONS} | grep -c '^[WE]:')
-      local AVAILABLE_PACKAGE_COUNT=$(${PACKAGE_MANAGER} -u upgrade --assume-no ${PACKAGEMANAGEROPTIONS} | awk '/upgraded,.*newly installed,/ {sum=$1+$3} END {print sum}')
+      local ERROR_COUNT=$("${PACKAGE_MANAGER}" -u upgrade --assume-no "${PACKAGEMANAGEROPTIONS}" | grep -c '^[WE]:')
+      local AVAILABLE_PACKAGE_COUNT=$("${PACKAGE_MANAGER}" -u upgrade --assume-no "${PACKAGEMANAGEROPTIONS}" | awk '/upgraded,.*newly installed,/ {sum=$1+$3} END {print sum}')
 
       if [[ ${ERROR_COUNT} -eq 0 ]]; then
         # If there are packages to be installed then download them.
         if [[ "${AVAILABLE_PACKAGE_COUNT}" -gt 0 ]]; then
-          sleep $(($RANDOM % ${MAXDELAY}))
+          sleep $((RANDOM % MAXDELAY))
           if [[ "${ONLYINSTALLFROMPREP}" == "yes" ]]; then
             [[ -d "${DOWNLOADDIR}/${CONFIGSET}" ]] || mkdir -p "${DOWNLOADDIR}/${CONFIGSET}"
             DOWNLOADOPTION="-o dir::cache::archives=${DOWNLOADDIR}/${CONFIGSET}"
             rm -f "${DOWNLOADDIR}"/"${CONFIGSET}"/*.deb
             DOWNLOADLOGMSG=" to ${DOWNLOADDIR}/${CONFIGSET}"
           fi
-          DEBIAN_FRONTEND=noninteractive
-          PREPOUTPUT=$(${PACKAGE_MANAGER} ${PACKAGEMANAGEROPTIONS} ${DOWNLOADOPTION} --download-only dist-upgrade -y 2>&1)
-          if [[ $(echo ${PREPOUTPUT} | grep -c '^[WE]:') -gt 0 ]]; then
+          declare -x DEBIAN_FRONTEND=noninteractive
+          PREPOUTPUT=$("${PACKAGE_MANAGER}" "${PACKAGEMANAGEROPTIONS}" "${DOWNLOADOPTION}" --download-only dist-upgrade -y 2>&1)
+          if [[ $(echo "${PREPOUTPUT}" | grep -c '^[WE]:') -gt 0 ]]; then
             logit "ERROR: There were errors returned by \`${PACKAGE_MANAGER} ${PACKAGEMANAGEROPTIONS} ${DOWNLOADOPTION} --download-only dist-upgrade -y\`. Exiting."
           else
             logit "INFO: Updates downloaded${DOWNLOADLOGMSG}"
@@ -56,10 +56,10 @@ function prepare_updates() {
       logit "WARNING: downloadonly option is not available"
     fi
   else
-    PREPOUTPUT=$(${PACKAGE_MANAGER} ${PACKAGEMANAGEROPTIONS} -s dist-upgrade 2>&1)
+    PREPOUTPUT=$("${PACKAGE_MANAGER}" "${PACKAGEMANAGEROPTIONS}" -s dist-upgrade 2>&1)
   fi
   rotate_file "${DATADIR}/last-prep-output-${CONFIGSET}"
-  [[ "${PREPOUTPUT}" ]] && echo "${PREPOUTPUT}" > ${DATADIR}/last-prep-output-${CONFIGSET}
+  [[ "${PREPOUTPUT}" ]] && echo "${PREPOUTPUT}" >" ${DATADIR}/last-prep-output-${CONFIGSET}"
 
   # Run any post-prep scripts
   for SCRIPT in "${POSTPREPSCRIPTDIR}"/*; do
@@ -71,9 +71,9 @@ function prepare_updates() {
 function apply_updates() {
   # Set the list of debs to be installed
   if [[ "${ONLYINSTALLFROMPREP}" == "yes" ]]; then
-    if [[ $(ls -1 ${DOWNLOADDIR}/${CONFIGSET}/*.deb 2>/dev/null | wc -l) -gt 0 ]]; then
-      local AVAILABLE_PACKAGES=$(${PACKAGE_MANAGER} -u --just-print install --assume-no ${PACKAGEMANAGEROPTIONS} ${DOWNLOADDIR}/${CONFIGSET}/*.deb 2>&1)
-      echo "${AVAILABLE_PACKAGES}" >${DATADIR}/last-apply-output-${CONFIGSET}
+    if [[ $(find "${DOWNLOADDIR}/${CONFIGSET}" -name "*.deb" | wc -l) -gt 0 ]]; then
+      local AVAILABLE_PACKAGES=$("${PACKAGE_MANAGER}" -u --just-print install --assume-no "${PACKAGEMANAGEROPTIONS}" "${DOWNLOADDIR}/${CONFIGSET}"/*.deb 2>&1)
+      echo "${AVAILABLE_PACKAGES}" >"${DATADIR}/last-apply-output-${CONFIGSET}"
       local AVAILABLE_PACKAGE_COUNT=$(echo "${AVAILABLE_PACKAGES}" | awk '/upgraded,.*newly installed,/ {sum=$1+$3} END {print sum}')
       DEBS="${DOWNLOADDIR}/${CONFIGSET}/*.deb"
     else
@@ -84,8 +84,8 @@ function apply_updates() {
     # installed (i.e. dependencies of other packages). Instead we need to use install.
     UPDATEACTION="install"
   else
-    local AVAILABLE_PACKAGES=$(${PACKAGE_MANAGER} -u upgrade --assume-no ${PACKAGEMANAGEROPTIONS} 2>&1)
-    echo "${AVAILABLE_PACKAGES}" >${DATADIR}/last-apply-output-${CONFIGSET}
+    local AVAILABLE_PACKAGES=$(${PACKAGE_MANAGER} -u upgrade --assume-no "${PACKAGEMANAGEROPTIONS}" 2>&1)
+    echo "${AVAILABLE_PACKAGES}" >"${DATADIR}/last-apply-output-${CONFIGSET}"
     local ERROR_COUNT=$(echo "${AVAILABLE_PACKAGES}" | grep -c '^[WE]:')
     local AVAILABLE_PACKAGE_COUNT=$(echo "${AVAILABLE_PACKAGES}" | awk '/upgraded,.*newly installed,/ {sum=$1+$3} END {print sum}')
     UPDATEACTION="upgrade"
@@ -97,16 +97,16 @@ function apply_updates() {
         run_script "${SCRIPT}" "Pre-Apply"
       done
 
-      sleep $(($RANDOM % ${MAXDELAY}))
+      sleep $((RANDOM % MAXDELAY))
       logit "INFO: Applying updates"
       local PACKAGES_BEFORE=$(dpkg --list)
 
       # We don't want to allow the user to interrupt a yum/dnf/apt transaction or Bad Things Happen.
       echo "Trying to update"
       trap '' SIGINT SIGTERM
-      RUN_OUTPUT=$(${PACKAGE_MANAGER} ${UPDATEACTION} ${PACKAGEMANAGEROPTIONS} ${DEBS})
+      RUN_OUTPUT=$("${PACKAGE_MANAGER}" "${UPDATEACTION}" "${PACKAGEMANAGEROPTIONS}" "${DEBS}")
       rotate_file "${DATADIR}/last-apply-output-${CONFIGSET}"
-      echo "${RUN_OUTPUT}" &>${DATADIR}/last-apply-output-${CONFIGSET}
+      echo "${RUN_OUTPUT}" &>"${DATADIR}/last-apply-output-${CONFIGSET}"
       default_signal_handling
 
       local PACKAGES_AFTER=$(dpkg --list)
@@ -123,7 +123,7 @@ function apply_updates() {
         run_script "${SCRIPT}" "Post-Apply"
       done
 
-      [[ "${AUTOREBOOT}" == "yes" ]] && REBOOTCALL=1
+      [[ "${AUTOREBOOT}" == "yes" ]] && declare -x REBOOTCALL=1
 
     else
       logit "INFO: No updates are available to be applied."

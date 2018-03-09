@@ -35,12 +35,12 @@ declare -x DOWNLOADDIR="/var/cache/auter"
 declare -x -i MAXDELAY=3600
 declare -x CONFIGSET="default"
 declare -x ROTATE="5"
-PREPREPSCRIPTDIR="${SCRIPTDIR}/pre-prep.d"
-POSTPREPSCRIPTDIR="${SCRIPTDIR}/post-prep.d"
-PREAPPLYSCRIPTDIR="${SCRIPTDIR}/pre-apply.d"
-POSTAPPLYSCRIPTDIR="${SCRIPTDIR}/post-apply.d"
-PREREBOOTSCRIPTDIR="${SCRIPTDIR}/pre-reboot.d"
-POSTREBOOTSCRIPTDIR="${SCRIPTDIR}/post-reboot.d"
+declare -x PREPREPSCRIPTDIR="${SCRIPTDIR}/pre-prep.d"
+declare -x POSTPREPSCRIPTDIR="${SCRIPTDIR}/post-prep.d"
+declare -x PREAPPLYSCRIPTDIR="${SCRIPTDIR}/pre-apply.d"
+declare -x POSTAPPLYSCRIPTDIR="${SCRIPTDIR}/post-apply.d"
+declare -x PREREBOOTSCRIPTDIR="${SCRIPTDIR}/pre-reboot.d"
+declare -x POSTREBOOTSCRIPTDIR="${SCRIPTDIR}/post-reboot.d"
 
 function default_signal_handling() {
   trap 'rm -f "${PIDFILE}"' SIGINT SIGTERM
@@ -78,8 +78,8 @@ function logit() {
 function rotate_file {
   #Rotate old file
   OUTPUT_FILE=$1
-  for i in `seq $(($ROTATE-1)) -1 1`; do
-    [[ -e "${OUTPUT_FILE}.$i" ]] && mv -f "${OUTPUT_FILE}.$i" "${OUTPUT_FILE}.$(($i+1))"
+  for i in $(seq $((ROTATE-1)) -1 1); do
+    [[ -e "${OUTPUT_FILE}.$i" ]] && mv -f "${OUTPUT_FILE}.$i" "${OUTPUT_FILE}.$((i+1))"
   done
 
   # Move base files to basefile.1
@@ -138,7 +138,7 @@ function reboot_server() {
 function post_reboot() {
   logit "INFO: Removed post-reboot hook: /etc/cron.d/auter-postreboot-${CONFIGSET}"
   rm -f "/etc/cron.d/auter-postreboot-${CONFIGSET}"
-  $(tty -s) || sleep 300
+  tty -s || sleep 300
 
   for SCRIPT in "${POSTREBOOTSCRIPTDIR}"/*; do
     run_script "${SCRIPT}" "Post-Reboot"
@@ -147,7 +147,7 @@ function post_reboot() {
 
 function print_status() {
   if [[ -f "${LOCKFILE}" ]] && [[ -f "${PIDFILE}" ]]; then
-    if kill -0 $(cat ${PIDFILE}) &>/dev/null; then
+    if kill -0 "$(cat ${PIDFILE})" &>/dev/null; then
       echo "auter is currently enabled and running"
     else
       echo "auter is currently enabled and pid file exists but process is dead"
@@ -164,12 +164,11 @@ function quit() {
   if [[ -f "${PIDFILE}" ]]; then
     rm -f "${PIDFILE}"
   fi
-  exit $1
+  exit "$1"
 }
 
 function log_last_run() {
-    local LASTRUNTIME=$(date -Iseconds)
-    logit "INFO: Auter successfully ran at ${LASTRUNTIME}"
+    logit "INFO: Auter successfully ran at $(date -Iseconds)"
 }
 
 
@@ -229,7 +228,7 @@ fi
 
 if [[ "${DISABLE}" ]] ; then
   rm -f "${LOCKFILE}"
-  if [[ -f "${PIDFILE}" ]] && ! kill -0 $(cat ${PIDFILE}) &>/dev/null; then
+  if [[ -f "${PIDFILE}" ]] && ! kill -0 "$(cat ${PIDFILE})" &>/dev/null; then
       rm -f "${PIDFILE}"
       logit "INFO: auter disabled and cleared pid file"
   else
@@ -284,7 +283,7 @@ fi
 logit "INFO: Running with: $0 ${ARGS}"
 
 [[ "${MAXDELAY}" -lt 1 ]] && MAXDELAY=1
-$(tty -s) && MAXDELAY=1 && logit "INFO: Running in an interactive shell, disabling all random sleeps"
+tty -s && MAXDELAY=1 && logit "INFO: Running in an interactive shell, disabling all random sleeps"
 
 # There is an explicit quit here to avoid auter automatically running any
 # other unexpected functions.

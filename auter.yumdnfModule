@@ -18,9 +18,9 @@ function check_package_manager_lock() {
   [[ "${PACKAGEMANAGERLOCKWAITTIME}" -lt 1 ]] && PACKAGEMANAGERLOCKWAITTIME=60
 
   if [[ -f /var/run/yum.pid ]]; then
-    for LOCKCHECKATTEMPT in $(seq 1 $[${PACKAGEMANAGERLOCKRETRIES}+1]); do
+    for LOCKCHECKATTEMPT in $(seq 1 $((PACKAGEMANAGERLOCKRETRIES + 1))); do
       # If this has reached the retry limit configured then abort
-      if [[ ${LOCKCHECKATTEMPT} -eq $[${PACKAGEMANAGERLOCKRETRIES}+1] ]]; then
+      if [[ ${LOCKCHECKATTEMPT} -eq $((PACKAGEMANAGERLOCKRETRIES + 1)) ]]; then
         logit "ERROR: Final attempt to wait for yum to release lock file failed. Aborting auter run"
         quit 3
       fi
@@ -40,12 +40,12 @@ function prepare_updates() {
 
   if [[ "${PREDOWNLOADUPDATES}" == "yes" ]]; then
     if [[ $(${PACKAGE_MANAGER} --help | grep -c downloadonly) -gt 0 ]]; then
-      local RC=$(${PACKAGE_MANAGER} check-update ${PACKAGEMANAGEROPTIONS} &>/dev/null; echo $?)
+      local RC=$("${PACKAGE_MANAGER}" check-update "${PACKAGEMANAGEROPTIONS}" &>/dev/null; echo $?)
 
       # If check-update has an exit code of 100, updates are available.
       if [[ "${RC}" -eq 100 ]]; then
         # Run any pre-prep scripts
-        sleep $(($RANDOM % ${MAXDELAY}))
+        sleep $((RANDOM % MAXDELAY))
         if [[ "${ONLYINSTALLFROMPREP}" == "yes" ]]; then
           DOWNLOADOPTION="--downloaddir=${DOWNLOADDIR}/${CONFIGSET}"
           rm -f "${DOWNLOADDIR}"/"${CONFIGSET}"/*.rpm
@@ -58,10 +58,10 @@ function prepare_updates() {
           DOWNLOADLOGMSG=" to ${DOWNLOADDIR}/${CONFIGSET}"
         fi
 
-        PREPOUTPUT=$(${PACKAGE_MANAGER} ${PACKAGEMANAGEROPTIONS} ${DOWNLOADOPTION} update --downloadonly -y 2>&1)
+        PREPOUTPUT=$("${PACKAGE_MANAGER}" "${PACKAGEMANAGEROPTIONS}" "${DOWNLOADOPTION}" update --downloadonly -y 2>&1)
         if [[ $? -eq 0 ]]; then
           if [[ "${ONLYINSTALLFROMPREP}" == "yes" && "${PACKAGE_MANAGER}" == "dnf" ]]; then
-            find /var/cache/dnf -name "*.rpm" -exec mv {} ${DOWNLOADDIR}/${CONFIGSET} \;
+            find /var/cache/dnf -name "*.rpm" -exec mv {} "${DOWNLOADDIR}/${CONFIGSET}" \;
           fi
           logit "INFO: Updates downloaded${DOWNLOADLOGMSG}"
         else
@@ -77,10 +77,10 @@ function prepare_updates() {
       logit "WARNING: downloadonly option is not available"
     fi
   else
-    PREPOUTPUT=$(${PACKAGE_MANAGER} ${PACKAGEMANAGEROPTIONS} check-update 2>&1)
+    PREPOUTPUT=$("${PACKAGE_MANAGER}" "${PACKAGEMANAGEROPTIONS}" check-update 2>&1)
   fi
   rotate_file "${DATADIR}/last-prep-output-${CONFIGSET}"
-  [[ "${PREPOUTPUT}" ]] && echo "${PREPOUTPUT}" > ${DATADIR}/last-prep-output-${CONFIGSET}
+  [[ "${PREPOUTPUT}" ]] && echo "${PREPOUTPUT}" > "${DATADIR}/last-prep-output-${CONFIGSET}"
 
   # Run any post-prep scripts
   for SCRIPT in "${POSTPREPSCRIPTDIR}"/*; do
@@ -94,7 +94,7 @@ function apply_updates() {
     # Default RC to 0 which means no updates are available
     local RC=0
     # Check if there are updates staged for this configset
-    if [[ $(ls -1 ${DOWNLOADDIR}/${CONFIGSET}/*.rpm 2>/dev/null| wc -l) -gt 0 ]]; then
+    if [[ $(find "${DOWNLOADDIR}/${CONFIGSET}" -name "*.rpm" | wc -l) -gt 0 ]]; then
       local RPMS=""
       # Check if the updates staged are still required
       for PACKAGE in ${DOWNLOADDIR}/${CONFIGSET}/*.rpm; do
@@ -113,7 +113,7 @@ function apply_updates() {
     # installed (i.e. dependencies of other packages). Instead we need to use install.
     UPDATEACTION="install"
   else
-    local RC=$(${PACKAGE_MANAGER} check-update ${PACKAGEMANAGEROPTIONS} &>/dev/null; echo $?)
+    local RC=$("${PACKAGE_MANAGER}" check-update "${PACKAGEMANAGEROPTIONS}" &>/dev/null; echo $?)
     UPDATEACTION="update"
   fi
 
@@ -123,14 +123,14 @@ function apply_updates() {
       run_script "${SCRIPT}" "Pre-Apply"
     done
 
-    sleep $(($RANDOM % ${MAXDELAY}))
+    sleep $((RANDOM % MAXDELAY))
     logit "INFO: Applying updates"
     local HISTORY_BEFORE=$(${PACKAGE_MANAGER} history list)
 
     # We don't want to allow the user to interrupt a yum/dnf transaction or Bad Things Happen.
     trap '' SIGINT SIGTERM
     rotate_file "${DATADIR}/last-apply-output-${CONFIGSET}"
-    ${PACKAGE_MANAGER} ${UPDATEACTION} -y ${PACKAGEMANAGEROPTIONS} ${RPMS} &>${DATADIR}/last-apply-output-${CONFIGSET}
+    "${PACKAGE_MANAGER}" "${UPDATEACTION}" -y "${PACKAGEMANAGEROPTIONS}" "${RPMS}" &>"${DATADIR}/last-apply-output-${CONFIGSET}"
     default_signal_handling
 
     local HISTORY_AFTER=$(${PACKAGE_MANAGER} history list)
@@ -140,8 +140,8 @@ function apply_updates() {
     done
 
     if [[ "${HISTORY_BEFORE}" == "${HISTORY_AFTER}" ]]; then
-      logit "ERROR: Updates failed. See the ${DATADIR}/last-apply-output-${CONFIGSET}-$(date +\%F) file for details. Exiting."
-      cp ${DATADIR}/last-apply-output-${CONFIGSET} ${DATADIR}/last-apply-output-${CONFIGSET}-$(date +\%F)
+      logit "ERROR: Updates failed. See the ${DATADIR}/last-apply-output-${CONFIGSET}-$(date +%F) file for details. Exiting."
+      cp "${DATADIR}/last-apply-output-${CONFIGSET}" "${DATADIR}/last-apply-output-${CONFIGSET}-$(date +%F)"
       quit 3
     fi
 
@@ -149,7 +149,7 @@ function apply_updates() {
     logit "INFO: Updates complete (${PACKAGE_MANAGER} ${TRANSACTIONID}). You may need to reboot for some updates to take effect"
     log_last_run
 
-    [[ "${AUTOREBOOT}" == "yes" ]] && REBOOTCALL=1
+    [[ "${AUTOREBOOT}" == "yes" ]] && declare -x REBOOTCALL=1
 
   elif [[ "${RC}" -eq 0 ]]; then
     logit "INFO: No updates are available to be applied."
