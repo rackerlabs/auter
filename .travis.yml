@@ -4,13 +4,8 @@ services:
 before_install:
     - docker pull centos
 script:
-    - "pwd"
-    - "ls -lah"
     - "sudo docker run --rm=true --mount type=bind,source=$(pwd),destination=/auter --name auter-test -td centos:7"
-    - "docker exec auter-test yum -y install epel-release"
-    - "docker exec auter-test yum -y install ShellCheck aspell"
-    - "docker exec auter-test pwd"
-    - "docker exec auter-test ls -lah"
-#    - "docker exec auter-test "
+    - "docker exec auter-test yum -y install epel-release &>/dev/null"
+    - "docker exec auter-test yum -y install ShellCheck aspell &>/dev/null"
     - "docker exec auter-test /auter/tests/01-spellcheck.sh"
     - "docker exec auter-test /auter/tests/05-shellcheck.sh"
