@@ -1,8 +1,8 @@
-# This is a script that is intended to only be called by /usr/bin/auter and 
-# contains linux package manager specific code for auter. 
+# This is a script that is intended to only be called by /usr/bin/auter and
+# contains linux package manager specific code for auter.
 
 
-# This is the yum/dnf version of this script intended for redhat/fedora/CentOS 
+# This is the yum/dnf version of this script intended for redhat/fedora/CentOS
 
 # Exit if this script is executed directly
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then

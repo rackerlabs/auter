@@ -1,7 +1,7 @@
-#!/bin/bash 
+#!/bin/bash
 #
 # auter is a yum-cron type package which implements automatic updates on an
-# individual server with features such as predownloading packages and reboots. 
+# individual server with features such as predownloading packages and reboots.
 #
 #
 # Copyright 2016 Rackspace, Inc.
@@ -60,7 +60,7 @@ Actions:
   --apply       Apply updates, and reboot if AUTOREBOOT=yes
   --reboot      Reboot system including pre/post reboot scripts
   --postreboot  Run post reboot script
- 
+
 Options:
   --config=FILE Specify the full path to an auter config file. Defaults to /etc/auter/auter.conf
   --stdout      Always log to STDOUT, regardless of not having a tty
