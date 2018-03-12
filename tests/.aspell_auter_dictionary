@@ -1,11 +1,10 @@
-personal_ws-1.1 en 183 
+personal_ws-1.1 en 176 
 DOWNLOADLOGMSG
 sublicense
 Gigante
 tmpfilesdir
 sed
 downloaddir
-PACKAGEMANAGERLOCKWAITTIME
 debhelper
 aptModule
 buildroot
@@ -32,7 +31,6 @@ dev
 fi
 DATADIR
 POSTREBOOTSCRIPTDIR
-LOCKCHECKATTEMPT
 eq
 awk
 authorized
@@ -114,7 +112,6 @@ uc
 PACKAGEMANAGEROPTIONS
 cronjob
 PREREBOOTSCRIPTDIR
-repos
 dpkg
 localstatedir
 ve
@@ -151,7 +148,6 @@ RPMs
 Rackspace
 eval
 MAXDELAY
-basefile
 AUTOREBOOT
 gpg
 useradd
@@ -165,8 +161,6 @@ configsets
 ARGS
 adduser
 conf
-PACKAGEMANAGERLOCKRETRIES
-nodeps
 zcf
 github
 Licensor
@@ -179,6 +173,10 @@ POSTAPPLYSCRIPTDIR
 pre
 DEBs
 aspell
-chown
 AUTERVERSION
 TRANSACTIONID
+PACKAGEMANAGERLOCKRETRIES
+PACKAGEMANAGERLOCKWAITTIME
+LOCKCHECKATTEMPT
+nodeps
+repos

@@ -27,13 +27,6 @@ SCRIPTSTOTEST+="auter.aptModule auter.yumdnfModule"
 SHELLCHECK_EXCLUSIONS=",SC2102,SC2124,SC2155,SC2148"
 
 for SCRIPT in ${SCRIPTSTOTEST}; do
-
-  # Define script specifc exclusions. Reasons should be documented as comments
-  # ----------------------------------------------#
-  # Excluding SC2016 due to line 11 of 10-rpmbuild.sh. Expansion is specifically blocked
-  [[ "${SCRIPT}" =~ 10-rpmbuild.sh ]] && SHELLCHECK_EXCLUSIONS+=",SC2016"
-  # ----------------------------------------------#
-
   SCRIPT=$(realpath "${SCRIPT}")
   SHELLCHECK_OUTPUT=$(shellcheck -e SC2044"${SHELLCHECK_EXCLUSIONS}" "${SCRIPT}")
   if [[ $? -eq 0 ]]; then
