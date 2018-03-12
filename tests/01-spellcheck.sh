@@ -3,12 +3,20 @@ r='\033[31m'
 w='\033[0m'
 g='\033[32m'
 
+[[ ! -f /usr/bin/aspell ]] && echo "apsell not installed. Aborting test" && exit 1
+
 EXITCODE=0
 AUTERDIR="$(cd "$(dirname "$0")" ; cd ../ ; pwd -P )"
 TESTDIR="$(cd "$(dirname "$0")" ; pwd -P )"
-echo "Testing files in ${TESTDIR}"
 
-for FILE in $(find "${AUTERDIR}" -maxdepth 1 -type f -not -path '*/\.*'); do
+echo "Testing files in ${TESTDIR}"
+if [[ -f "${AUTERDIR}"/CHANGEDFILES ]]; then
+  FILELIST=$(find "${AUTERDIR}" -type f -not -path '*/\.*' | egrep "$(cat CHANGEDFILES | xargs | tr ' ' '|')")
+else
+  FILELIST=$(find "${AUTERDIR}" -type f -not -path '*/\.*')
+fi
+
+for FILE in ${FILELIST}; do 
   unset SPELLINGMISTAKES
   FILE=$(realpath "${FILE}")
   echo "Testing $FILE for spelling mistakes"
