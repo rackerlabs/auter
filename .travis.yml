@@ -9,3 +9,7 @@ script:
     - "docker exec auter-test yum -y install ShellCheck aspell &>/dev/null"
     - "docker exec auter-test /auter/tests/01-spellcheck.sh"
     - "docker exec auter-test /auter/tests/05-shellcheck.sh"
+
+    # RPM Build test
+    - "10-rpmbuild.sh"
+
