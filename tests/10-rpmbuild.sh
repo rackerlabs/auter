@@ -27,5 +27,3 @@ for RELEASE in 6 7; do
   rm -f auter.rpm.tar.gz
   docker stop auter-rpmbuild-test-${RELEASE}
 done
-
-
