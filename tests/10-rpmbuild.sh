@@ -8,7 +8,7 @@ for RELEASE in 6 7; do
   docker exec auter-rpmbuild-test-${RELEASE} yum -y -q install rpm-build elfutils-libelf rpm-libs rpm-pythoni gcc make help2man sudo
   docker exec auter-rpmbuild-test-${RELEASE} useradd builduser
   docker exec auter-rpmbuild-test-${RELEASE} mkdir -p /home/builduser/rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
-  echo '%_topdir %(echo $HOME)/rpmbuild' > /tmp.rpmmacros
+  echo '%_topdir %(echo $HOME)/rpmbuild' > /tmp/.rpmmacros
   
   # Create the tarball for rpmbuild
   tar -czf ../auter-"$(grep Version auter.spec | awk '{print $2}')"-rpmbuild.tar.gz ../auter
