@@ -19,3 +19,6 @@ script:
 
     # RPM Build test
     - "tests/10-rpmbuild.sh"
+
+    # DEB Build test
+    - "tests/20-debuild.sh
