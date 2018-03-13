@@ -7,10 +7,17 @@ EXITCODE=0
 AUTERDIR="$(cd "$(dirname "$0")" ; cd ../ ; pwd -P )"
 
 # Create a list of script files to be checked. These are files 
-ALLFILES=$(find "${AUTERDIR}" -type f -not -path '*/\.*')
+if [[ -f "${TESTDIR}"/CHANGEDFILES ]]; then
+  ALLFILES=$(find "${AUTERDIR}" -type f -not -path '*/\.*' | egrep "$(cat CHANGEDFILES | xargs | tr ' ' '|')")
+  
+else
+  ALLFILES=$(find "${AUTERDIR}" -type f -not -path '*/\.*')
+fi
+
 for FILE in ${ALLFILES}; do
   grep -q '^#!/.*sh' "${FILE}" && SCRIPTSTOTEST+="${FILE} "
 done
+
 echo "${SCRIPTSTOTEST}"
 
 # Add non-shebang scripts manually
