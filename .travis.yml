@@ -4,8 +4,15 @@ services:
 before_install:
     - docker pull centos
 script:
+    # Save changed files to a text file to narrow test scope
+    - "git remote add upstream https://github.com/rackerlabs/auter.git"
+    - "git fetch upstream master:rmaster"
+    - "git diff rmaster --name-only >CHANGEDFILES"
+    - "cat CHANGEDFILES"
+
+    # Create docker image and run general code checks
     - "sudo docker run --rm=true --mount type=bind,source=$(pwd),destination=/auter --name auter-test -td centos:7"
-    - "docker exec auter-test yum -y install epel-release &>/dev/null"
-    - "docker exec auter-test yum -y install ShellCheck aspell &>/dev/null"
+    - "docker exec auter-test yum -y -q install epel-release &>/dev/null"
+    - "docker exec auter-test yum -y -q install ShellCheck aspell &>/dev/null"
     - "docker exec auter-test /auter/tests/01-spellcheck.sh"
     - "docker exec auter-test /auter/tests/05-shellcheck.sh"
