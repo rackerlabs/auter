@@ -11,5 +11,4 @@ script:
     - "docker exec auter-test /auter/tests/05-shellcheck.sh"
 
     # RPM Build test
-    - "10-rpmbuild.sh"
-
+    - "tests/10-rpmbuild.sh"
