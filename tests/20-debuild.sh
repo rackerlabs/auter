@@ -13,7 +13,9 @@ function EVALSUCCESS {
   fi
 }
 
+# shellcheck disable=SC2164
 AUTERDIR="$(cd "$(dirname "$0")"; cd .. ; pwd -P)"
+# shellcheck disable=SC2164
 AUTERPARENTDIR="$(cd "$(dirname "$0")"; cd ../.. ; pwd -P)"
 VERSION="$(grep "Version" "${AUTERDIR}"/auter.spec | awk '{print $2}')"
 echo "AUTERDIR: ${AUTERDIR}"
@@ -27,8 +29,7 @@ function quit() {
   exit "$1"
 }
 
-#for RELEASE in 16.04 17.10 18.04; do
-for RELEASE in 16.04; do
+for RELEASE in 16.04 17.10 18.04; do
   # build the container
   DOCKERCONTAINERS+=" $(docker run --rm=true --name auter-debuild-test-${RELEASE} -e DEBIAN_FRONTEND=noninteractive -td ubuntu:${RELEASE})"
   EVALSUCCESS "Created ${RELEASE} docker image"
@@ -42,7 +43,7 @@ for RELEASE in 16.04; do
   docker exec auter-debuild-test-"${RELEASE}" apt-get -qq update
   EVALSUCCESS "Updated apt cache in docker image devscripts build-essential lintian"
 
-  for PACKAGE in apt-utils sudo git make help2man; do
+  for PACKAGE in apt-utils sudo git make help2man lsb-release lintian devscripts debhelper; do
     OUTPUT=""
     OUTPUT=$(docker exec auter-debuild-test-"${RELEASE}" apt-get -qq install -y ${PACKAGE})
     EVALSUCCESS "Installed ${PACKAGE}"
@@ -54,14 +55,14 @@ for RELEASE in 16.04; do
   # Create the tarball for debbuild
   # Manually changing directory due to tar -C not working too well
   CURRENTDIR="$(pwd)"
-  cd "${AUTERPARENTDIR}"
+  cd "${AUTERPARENTDIR}" || EVALSUCCESS "Failed to cd to ${AUTERPARENTDIR}"
   tar -czf "auter-${VERSION}-debuild.tar.gz" auter
   EVALSUCCESS "Created source tarball from travis container"
   sleep 2
 
   mv "auter-${VERSION}-debuild.tar.gz" "${AUTERDIR}"
   EVALSUCCESS "Moved sources tarball from $(pwd) to ${AUTERDIR}"
-  cd "${CURRENTDIR}"
+  cd "${CURRENTDIR}" || EVALSUCCESS "Failed to cd to ${CURRENTDIR}"
 
   # Copy the build test script to the container
   docker cp "${AUTERDIR}/auter-${VERSION}-debuild.tar.gz" auter-debuild-test-${RELEASE}:/home/builduser/
@@ -74,8 +75,8 @@ for RELEASE in 16.04; do
   docker exec auter-debuild-test-${RELEASE} /home/builduser/21-container-debuild.sh
   EVALSUCCESS "Executed /home/builduser/21-container-debuild.sh"
 
-#  docker cp auter-debuild-test-${RELEASE}:/home/builduser/auter.deb.tar.gz ./
-#  tar -xzf auter.deb.tar.gz
-#  rm -f auter.deb.tar.gz
+  docker cp auter-debuild-test-${RELEASE}:/home/builduser/auter.deb.tar.gz ./
+  tar -xzf auter.deb.tar.gz
+  rm -f auter.deb.tar.gz
   docker stop auter-debuild-test-${RELEASE}
 done
