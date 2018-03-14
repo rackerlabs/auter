@@ -6,13 +6,14 @@ if [[ $(whoami) == "root" ]]; then
 else
    echo "I am builduser... I am building"
    cd /home/builduser
-   tar -xzf /home/builduser/*.tar.gz
-   mv /home/builduser/auter /home/builduser/auter-"$(grep Version auter/auter.spec | awk '{print $2}')"
-#   tar -czf "$(grep Version auter*/auter.spec | awk '{print $2}')".tar.gz auter-"$(grep Version auter*/auter.spec | awk '{print $2}')"
-   cd auter*
-   make deb
-   cd "$(find . -maxdepth 1 -type d | grep auter | grep -v orig)"
-   debuild -us -uc
-   cd ../
-   tar -czf /home/builduser/auter.deb.tar.gz auter*deb
+   echo "I am in the $(pwd) directory"
+#   tar -xzf /home/builduser/*.tar.gz
+#   mv /home/builduser/auter /home/builduser/auter-"$(grep Version auter/auter.spec | awk '{print $2}')"
+##   tar -czf "$(grep Version auter*/auter.spec | awk '{print $2}')".tar.gz auter-"$(grep Version auter*/auter.spec | awk '{print $2}')"
+#   cd auter*
+#   make deb
+#   cd "$(find . -maxdepth 1 -type d | grep auter | grep -v orig)"
+#   debuild -us -uc
+#   cd ../
+#   tar -czf /home/builduser/auter.deb.tar.gz auter*deb
 fi

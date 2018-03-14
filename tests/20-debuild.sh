@@ -1,4 +1,18 @@
 #!/bin/bash
+
+function EVALSUCCESS {
+  RC=$?
+  if [[ $RC -ne 0 ]]; then
+    [[ -z $OUTPUT ]] && echo "$OUTPUT"
+    echo -e " [ FAILED ] ABORTING - RC=$RC - $1"
+    FAILEDTESTS+="Ubuntu ${RELEASE}"
+    quit 1
+  else
+    echo " [ PASSED ] $1"
+    return 0
+  fi
+}
+
 AUTERDIR="$(cd "$(dirname "$0")"; cd .. ; pwd -P)"
 AUTERPARENTDIR="$(cd "$(dirname "$0")"; cd ../.. ; pwd -P)"
 VERSION="$(grep "Version" "${AUTERDIR}"/auter.spec | awk '{print $2}')"
@@ -13,21 +27,8 @@ function quit() {
   exit "$1"
 }
 
-#for RELEASE in 16.04 17.04 17.10; do
+#for RELEASE in 16.04 17.10 18.04; do
 for RELEASE in 16.04; do
-  function EVALSUCCESS {
-    RC=$?
-    if [[ $RC -ne 0 ]]; then
-      [[ -z $OUTPUT ]] && echo "$OUTPUT"
-      echo -e " [ FAILED ] ABORTING - RC=$RC - $1"
-      FAILEDTESTS+="Ubuntu ${RELEASE}"
-      continue
-    else
-      echo " [ PASSED ] $1"
-      return 0
-    fi
-  }
-
   # build the container
   DOCKERCONTAINERS+=" $(docker run --rm=true --name auter-debuild-test-${RELEASE} -e DEBIAN_FRONTEND=noninteractive -td ubuntu:${RELEASE})"
   EVALSUCCESS "Created ${RELEASE} docker image"
@@ -39,7 +40,7 @@ for RELEASE in 16.04; do
   #  -  dh-make
   #  -  build-essential
   docker exec auter-debuild-test-"${RELEASE}" apt-get -qq update
-  EVALSUCCESS "Updated apt cache in docker image"
+  EVALSUCCESS "Updated apt cache in docker image devscripts build-essential lintian"
 
   for PACKAGE in apt-utils sudo git make help2man; do
     OUTPUT=""
