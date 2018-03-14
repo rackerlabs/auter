@@ -13,7 +13,7 @@ else
   tar -czf "${VERSION}".tar.gz auter-"${VERSION}" || (echo "Failed to create ${VERSION}.tar.gz" && exit 1)
   mv "${VERSION}".tar.gz rpmbuild/SOURCES  || (echo "Failed to extract ${VERSION}.tar.gz" && exit 1)
   cd /home/builduser/rpmbuild/SPECS
-  STDERROUTPUT="$(rpmbuild -ba auter.spec 2>&1)"
+  OUTPUT="$(rpmbuild -ba auter.spec 2>&1)"
   if [[ $? -ne 0 ]]; then
     echo "${OUTPUT}"
     echo "FAILED to run 'rpmbuild -ba auter.spec'"
