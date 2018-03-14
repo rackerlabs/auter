@@ -51,6 +51,7 @@ for RELEASE in 6 7; do
   ls -l
   tar -czf "${AUTERPARENTDIR}/auter-${VERSION}-rpmbuild.tar.gz" auter
   EVALSUCCESS "Created source tarball from travis container"
+  ls -l
   cd "${CURRENTDIR}"
   sleep 2
 
