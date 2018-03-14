@@ -46,8 +46,12 @@ for RELEASE in 6 7; do
   echo '%_topdir %(echo $HOME)/rpmbuild' > /tmp/.rpmmacros
   
   # Create the tarball for rpmbuild
-  tar -czf "${AUTERPARENTDIR}/auter-${VERSION}-rpmbuild.tar.gz" -C "${AUTERPARENTDIR}" auter
+  CURRENTDIR="$(pwd)"
+  cd "${AUTERPARENTDIR}"
+  ls -l
+  tar -czf "${AUTERPARENTDIR}/auter-${VERSION}-rpmbuild.tar.gz" auter
   EVALSUCCESS "Created source tarball from travis container"
+  cd "${CURRENTDIR}"
   sleep 2
 
   mv "${AUTERPARENTDIR}/auter-${VERSION}-rpmbuild.tar.gz" "${AUTERDIR}"
