@@ -10,7 +10,8 @@ echo "VERSION: ${VERSION}"
 
 function quit() {
   CONTAINERS=$(docker ps -a -q)
-  [[ -n $CONTAINERS ]] && echo "Stopping leftover containers" && docker stop "${DOCKERCONTAINERS}"
+  # shellcheck disable=SC2086
+  [[ -n $CONTAINERS ]] && echo "Stopping leftover containers" && docker stop ${DOCKERCONTAINERS}
   exit "$1"
 }
 
@@ -41,6 +42,7 @@ for RELEASE in 6 7; do
   docker exec auter-rpmbuild-test-${RELEASE} mkdir -p /home/builduser/rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
   EVALSUCCESS "Created rpmbuild structure"
 
+  # shellcheck disable=SC2016
   echo '%_topdir %(echo $HOME)/rpmbuild' > /tmp/.rpmmacros
   
   # Create the tarball for rpmbuild
@@ -48,7 +50,7 @@ for RELEASE in 6 7; do
   EVALSUCCESS "Created source tarball from travis container"
   sleep 2
 
-  mv "$(cd "$(dirname "$0")"; cd ../../ ; pwd -P)/auter-${VERSION}-rpmbuild.tar.gz" "$(cd "$(dirname "$0")"; cd ../ ; pwd -P)"
+  mv "${AUTERPARENTDIR}/auter-${VERSION}-rpmbuild.tar.gz" "${AUTERDIR}"
   EVALSUCCESS "Moved sources tarball from travis container to docker container"
   
   # Copy the rpmbuild config and tarball to the builduser homedir
