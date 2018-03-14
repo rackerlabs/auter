@@ -46,23 +46,22 @@ for RELEASE in 6 7; do
   echo '%_topdir %(echo $HOME)/rpmbuild' > /tmp/.rpmmacros
   
   # Create the tarball for rpmbuild
+  # Manually changing directory due to tar -C not working too well
   CURRENTDIR="$(pwd)"
   cd "${AUTERPARENTDIR}"
-  ls -l
-  tar -czf "${AUTERPARENTDIR}/auter-${VERSION}-rpmbuild.tar.gz" auter
+  tar -czf "auter-${VERSION}-rpmbuild.tar.gz" auter
   EVALSUCCESS "Created source tarball from travis container"
-  ls -l
-  cd "${CURRENTDIR}"
   sleep 2
 
-  mv "${AUTERPARENTDIR}/auter-${VERSION}-rpmbuild.tar.gz" "${AUTERDIR}"
-  EVALSUCCESS "Moved sources tarball from travis container to docker container"
+  mv "auter-${VERSION}-rpmbuild.tar.gz" "${AUTERDIR}"
+  EVALSUCCESS "Moved sources tarball from $(pwd) to ${AUTERDIR}"
+  cd "${CURRENTDIR}"
   
   # Copy the rpmbuild config and tarball to the builduser homedir
   docker cp /tmp/.rpmmacros auter-rpmbuild-test-${RELEASE}:/home/builduser/.rpmmacros
   EVALSUCCESS "Copied /tmp/.rpmmacros to docker container"
 
-  docker cp ../auter-"${VERSION}"-rpmbuild.tar.gz auter-rpmbuild-test-${RELEASE}:/home/builduser/
+  docker cp "${AUTERDIR}/auter-${VERSION}-rpmbuild.tar.gz" auter-rpmbuild-test-${RELEASE}:/home/builduser/
   EVALSUCCESS "Copied sources to docker container"
 
   docker cp "${AUTERDIR}/auter.spec" "auter-rpmbuild-test-${RELEASE}":/home/builduser/rpmbuild/SPECS
