@@ -33,6 +33,9 @@ function check_package_manager_lock() {
 }
 
 function prepare_updates() {
+  # Check for yum.lock file
+  check_package_manager_lock
+
   # Run any pre-prep scripts
   for SCRIPT in "${PREPREPSCRIPTDIR}"/*; do
     run_script "${SCRIPT}" "Pre-Prep"
@@ -119,6 +122,9 @@ function apply_updates() {
 
   # If check-update has an exit code of 100, updates are available.
   if [[ "${RC}" -eq 100 ]]; then
+    # Check for yum.lock file
+    check_package_manager_lock
+
     for SCRIPT in "${PREAPPLYSCRIPTDIR}"/*; do
       run_script "${SCRIPT}" "Pre-Apply"
     done
