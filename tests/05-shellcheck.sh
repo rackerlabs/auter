@@ -28,12 +28,14 @@ grep -q "auter.yumdnfModule" "${CHANGEDFILES}" && SCRIPTSTOTEST+=" ${AUTERDIR}/a
 # Custom shellcheck exclusions
 SHELLCHECK_EXCLUSIONS=",SC2102,SC2124,SC2155,SC2148"
 
+echo "===================================="
 for SCRIPT in ${SCRIPTSTOTEST}; do
 
   # Define script specifc exclusions. Reasons should be documented as comments
+  # This can be done bu adding "# shellcheck disable=SC2016" to the previous line in the script
   # ----------------------------------------------#
   # Excluding SC2016 due to line 11 of 10-rpmbuild.sh. Expansion is specifically blocked
-  [[ "${SCRIPT}" =~ 10-rpmbuild.sh ]] && SHELLCHECK_EXCLUSIONS+=",SC2016"
+#  [[ "${SCRIPT}" =~ 10-rpmbuild.sh ]] && SHELLCHECK_EXCLUSIONS+=",SC2016"
   # ----------------------------------------------#
 
   SCRIPT=$(realpath "${SCRIPT}")
