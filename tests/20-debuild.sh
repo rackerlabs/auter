@@ -3,7 +3,7 @@
 function EVALSUCCESS {
   RC=$?
   if [[ $RC -ne 0 ]]; then
-    [[ -z $OUTPUT ]] && echo "$OUTPUT"
+    [[ -z ${OUTPUT} ]] && echo "${OUTPUT}"
     echo -e " [ FAILED ] ABORTING - RC=$RC - $1"
     FAILEDTESTS+="Ubuntu ${RELEASE}"
     quit 1
@@ -45,7 +45,7 @@ for RELEASE in 16.04 17.10 18.04; do
 
   for PACKAGE in apt-utils sudo git make help2man lsb-release lintian devscripts debhelper; do
     OUTPUT=""
-    OUTPUT=$(docker exec auter-debuild-test-"${RELEASE}" apt-get -qq install -y ${PACKAGE})
+    OUTPUT=$(docker exec auter-debuild-test-"${RELEASE}" apt-get -qq install -y ${PACKAGE} 2>&1)
     EVALSUCCESS "Installed ${PACKAGE}"
   done
 
@@ -74,12 +74,20 @@ for RELEASE in 16.04 17.10 18.04; do
   docker exec auter-debuild-test-${RELEASE} chown -R builduser.builduser /home/builduser
   docker exec auter-debuild-test-${RELEASE} /home/builduser/21-container-debuild.sh
   EVALSUCCESS "Executed /home/builduser/21-container-debuild.sh"
+
   [[ -d packages ]] || mkdir packages
   docker cp auter-debuild-test-${RELEASE}:/home/builduser/auter.deb.tar.gz ./
+  EVALSUCCESS "Copied auter.deb.tar.gz to travis container"
+
   tar -xzf auter.deb.tar.gz
-  ORIGFILENAME=$(tar -tzf auter.deb.tar.gz)
-  NEWFILENAME=${ORIGFILENAME/auter-/auter-ubuntu"${RELEASE}"-}
+  EVALSUCCESS "Extracted auter.deb.tar.gz on travis container"
+
+  ORIGFILENAME=$(tar -tzf auter.deb.tar.gz) && echo "${ORIGFILENAME}"
+  NEWFILENAME=${ORIGFILENAME/auter-/auter-ubuntu"${RELEASE}"-} && echo "${NEWFILENAME}"
+
   mv "${ORIGFILENAME}" "packages/${NEWFILENAME}"
+  EVALSUCCESS "New package extracted to $(pwd)/packages/${NEWFILENAME}"
+
   rm -f auter.deb.tar.gz
   docker stop auter-debuild-test-${RELEASE}
 done
