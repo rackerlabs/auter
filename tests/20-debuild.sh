@@ -75,11 +75,11 @@ for RELEASE in 16.04 17.10 18.04; do
   docker exec auter-debuild-test-${RELEASE} /home/builduser/21-container-debuild.sh
   EVALSUCCESS "Executed /home/builduser/21-container-debuild.sh"
   [[ -d packages ]] || mkdir packages
-  docker cp auter-debuild-test-${RELEASE}:/home/builduser/auter.deb.tar.gz ./packages/
-  tar -xzf auter.deb.tar.gz -C packages
-  ORIGFILENAME=$(tar -tzf packages/auter.deb.tar.gz)
-  NEWFILENAME=$(echo "${ORIGFILENAME}" | sed 's/auter-/auter-ubuntu'"${RELEASE}"'-/g')
-  mv "packages/${ORIGFILENAME}" "packages/${NEWFILENAME}"
-  rm -f packages/auter.deb.tar.gz
+  docker cp auter-debuild-test-${RELEASE}:/home/builduser/auter.deb.tar.gz ./
+  tar -xzf auter.deb.tar.gz
+  ORIGFILENAME=$(tar -tzf auter.deb.tar.gz)
+  NEWFILENAME=${ORIGFILENAME/auter-/auter-ubuntu"${RELEASE}"-}
+  mv "${ORIGFILENAME}" "packages/${NEWFILENAME}"
+  rm -f auter.deb.tar.gz
   docker stop auter-debuild-test-${RELEASE}
 done
