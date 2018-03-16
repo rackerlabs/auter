@@ -104,11 +104,17 @@ exit 0
 
 %changelog
 
-* Fri Dec 1 2017 Paolo Gigante <paolo.gigante@rackspace.co.uk> 0.11-1
+* Fri Mar 16 2018 Paolo Gigante <paolo.gigante@rackspace.co.uk> 0.11-1
 - Updated documentation and references to include apt for Ubuntu/debian
 - Removed debugging message that was printed during apt update
 - Added "Valid Options" in auter.conf
 - Added the pre/post prep directories in auter.conf
+- Added retention and rotation for last-prep-output and last-apply-output files in /var/lib/auter
+- Corrected file permissions for the auter-postreboot cron file
+- Added --stdout option to force output to stdout even if there is no ative tty
+- Added a package manager lock file check before prep and apply functions call the package manager
+- Improved checks to confirm prepared patches are still required
+
 
 * Mon Oct 30 2017 Paolo Gigante <paolo.gigante@rackspace.co.uk> 0.10-1
 - Added pre and post prep script hooks
