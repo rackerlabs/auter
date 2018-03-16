@@ -50,9 +50,27 @@ auter --reboot
     5 mins after the reboot, tail /var/log/messages should include text "root: custom post reboot script ran"
 ```
 
+Now that you have confirmed that the updates does in fact work, you should test the specific code that has been changed. You will need to assess what change was made to accurately define tests. 
+Where relevant, these are some guidelines:
+1) Manually test the commands in a normal shell session. 
+2) Ensure you test for a positive and negative result.
+3) Test the effects of the change in the function. Again, if possible, test success and failure conditions
+4) Test the all parts of the application that call the function that has been changed. 
+
+
 **Documentation**
 
 When making any changes to code, make sure documentation (--help, man page) has been updated to reflect any changes
+
+**Merge Rules**
+
+- All pull requests MUST be reviewed and approved before merging
+- Pull request Reviews and merges MUST be done by another maintainer
+- If possible squash and merge commits
+- All travis-ci tests should pass before merging
+  - If the spellcheck test fails, adding the problematic words to the dictionary is a valid option
+  - If the shellcheck test fails, you should fix the issues mentioned or adjust the test with explicit comments for the check code and why it is being ignored
+  - The adjustments to the test files may need to be merged before the PR will pass the tests. This should be done as a separate PR referencing the associated PR for the changes.
 
 **Release Process**
 
