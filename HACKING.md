@@ -57,29 +57,29 @@ This should be completed in all pull requests before being merged.
     - Check: /var/lib/auter/enabled exists
 
 [ pass/fail ] auter --help
-    - check: same output when running 'auter' without arguments
+    - Check: same output when running 'auter' without arguments
 
 [ pass/fail ] auter --version
-    - check: prints 'auter VERSION'
+    - Check: prints 'auter VERSION'
 
 #### update manually
 
 [ pass/fail ] auter --prep
-    - Check: prints "INFO: Running with: ./auter --prep Updates downloaded", /var/lib/auter/last-prep-auter
+    - Check: prints "INFO: Running with: ./auter --prep Updates downloaded" to stdout
     - Check: /var/lib/auter/last-prep-default contains update info
     - Check: updates downloaded to /var/cache/auter/default
     - Check: pre/post prep scripts ran successfully with messages logged to syslog
 
 [ pass/fail ] auter --apply
-    - Check: prints "INFO: Running with: /usr/bin/auter --apply; Applying updates; Updates complete, you may need to reboot for some updates to take effect
+    - Check: prints "INFO: Running with: /usr/bin/auter --apply; Applying updates; Updates complete, you may need to reboot for some updates to take effect" to stdout
     - Check: expected updates were applied using 'yum history info' or 'dnf history info'
     - Check: /var/lib/auter/last-update-default contains update info
     - Check: no upates available after running
     - Check: pre/post apply scripts ran successfully, messages logged to syslog
 
-[ pass/fail ] auter --reboot working
+[ pass/fail ] auter --reboot
     - Check: reboot scheduled in 2 minutes time
-    - Check: prints "INFO: Running with: ./auter --reboot; Rebooting server" followed by shutdown message
+    - Check: prints "INFO: Running with: ./auter --reboot; Rebooting server" followed by shutdown message to stdout
     - Check: 5 minutes after reboot is complete pre/post reboot scripts ran successfully with messages logged to syslog
 
 #### updates via cron
