@@ -40,9 +40,9 @@ function prepare_updates() {
             DOWNLOADLOGMSG=" to ${DOWNLOADDIR}/${CONFIGSET}"
           fi
           declare -x DEBIAN_FRONTEND=noninteractive
-          PREPOUTPUT=$($PACKAGE_MANAGER $PACKAGEMANAGEROPTIONS $DOWNLOADOPTION --download-only dist-upgrade -y 2>&1)
+          PREPOUTPUT=$("${PACKAGE_MANAGER}" "${PACKAGEMANAGEROPTIONS[@]}" "${DOWNLOADOPTION}" --download-only dist-upgrade -y 2>&1)
           if [[ $(echo "${PREPOUTPUT}" | grep -c '^[WE]:') -gt 0 ]]; then
-            logit "ERROR: There were errors returned by \`${PACKAGE_MANAGER} ${PACKAGEMANAGEROPTIONS[@]} ${DOWNLOADOPTION} --download-only dist-upgrade -y\`. Exiting."
+            logit "ERROR: There were errors returned by \`${PACKAGE_MANAGER} ${PACKAGEMANAGEROPTIONS[*]} ${DOWNLOADOPTION} --download-only dist-upgrade -y\`. Exiting."
           else
             logit "INFO: Updates downloaded${DOWNLOADLOGMSG}"
           fi
@@ -50,7 +50,7 @@ function prepare_updates() {
           logit "INFO: No updates are available to be downloaded."
         fi
       else
-        logit "ERROR: There were errors returned by \`${PACKAGE_MANAGER} -u upgrade --assume-no ${PACKAGEMANAGEROPTIONS[@]}\`. Exiting."
+        logit "ERROR: There were errors returned by \`${PACKAGE_MANAGER} -u upgrade --assume-no ${PACKAGEMANAGEROPTIONS[*]}\`. Exiting."
       fi
     else
       logit "WARNING: downloadonly option is not available"
@@ -130,7 +130,7 @@ function apply_updates() {
       log_last_run
     fi
   else
-    logit "ERROR: Exit status ${RC} returned by \`${PACKAGE_MANAGER} -u upgrade --assume-no ${PACKAGEMANAGEROPTIONS[@]}\`. Exiting."
+    logit "ERROR: Exit status ${RC} returned by \`${PACKAGE_MANAGER} -u upgrade --assume-no ${PACKAGEMANAGEROPTIONS[*]}\`. Exiting."
     quit 3
   fi
 }
