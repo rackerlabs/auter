@@ -27,7 +27,7 @@ declare -r -x PIDFILE="/var/run/auter/auter.pid"
 
 # Set default options - these can be overridden in the config file or with a command line argument
 declare -x -l AUTOREBOOT="no"
-declare -x PACKAGEMANAGEROPTIONS=""
+declare -x -a PACKAGEMANAGEROPTIONS
 declare -x -l PREDOWNLOADUPDATES="yes"
 declare -x -l ONLYINSTALLFROMPREP="no"
 declare -x CONFIGFILE="/etc/auter/auter.conf"
@@ -73,6 +73,21 @@ function logit() {
   # If running on a tty, or the --stdout option is provided, print to screen
   ( tty -s || [[ $STDOUT ]] ) && echo "$1"
   logger -p info -t auter "$1"
+}
+
+function read_config() {
+  if [[ -f "${CONFIGFILE}" ]]; then
+    source "${CONFIGFILE}"
+  elif [[ "${CUSTOMCONFIG}" ]]; then
+    logit "ERROR: Custom config file ${CONFIGFILE} does not exist"
+    quit 5
+  else
+    logit "WARNING: Using default config values."
+  fi
+
+  # Convert space separated list from the config file to an indexed array
+  # https://github.com/koalaman/shellcheck/wiki/SC2086
+  PACKAGEMANAGEROPTIONS=($PACKAGEMANAGEROPTIONS)
 }
 
 function rotate_file {
@@ -256,14 +271,7 @@ else
   echo "$$" > "${PIDFILE}"
 fi
 
-if [[ -f "${CONFIGFILE}" ]]; then
-  source "${CONFIGFILE}"
-elif [[ "${CUSTOMCONFIG}" ]]; then
-  logit "ERROR: Custom config file ${CONFIGFILE} does not exist"
-  quit 5
-else
-  logit "WARNING: Using default config values."
-fi
+read_config
 
 # CONFIGSET needs to be set if we're using a custom configuration file.
 if [[ -z "${CONFIGSET}" ]]; then
