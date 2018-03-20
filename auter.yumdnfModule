@@ -98,19 +98,19 @@ function apply_updates() {
     local RC=0
     # Check if there are updates staged for this configset
     if [[ $(find "${DOWNLOADDIR}/${CONFIGSET}" -name "*.rpm" | wc -l) -gt 0 ]]; then
-      local RPMS=""
+      local RPMS=()
       # Check if the updates staged are still required
       for PACKAGE in ${DOWNLOADDIR}/${CONFIGSET}/*.rpm; do
         # Check if the local rpm is an update to the installed package and if it is then add the file to RPMS
         # list. We are using rpm directly for this check because "yum check-update" does not support local rpm
         # files. This also avoids connecting to the repos. And finally this avoids an issue when updating the
         # kernel to the same version.
-        rpm -U --nodeps --test "${PACKAGE}" &>/dev/null && RPMS+=" ${PACKAGE}"
+        rpm -U --nodeps --test "${PACKAGE}" &>/dev/null && RPMS+=("$PACKAGE")
       done
 
       # We are manually setting the RC to 100 if there are updates to be applied. This is the return code that
       # yum check-update would return if there were outstanding updates
-      [[ "${RPMS}" ]] && RC=100
+      [[ "${RPMS[*]}" ]] && RC=100
     fi
     # When passing RPM files to dnf/yum, the update verb won't install any that aren't already
     # installed (i.e. dependencies of other packages). Instead we need to use install.
@@ -136,7 +136,7 @@ function apply_updates() {
     # We don't want to allow the user to interrupt a yum/dnf transaction or Bad Things Happen.
     trap '' SIGINT SIGTERM
     rotate_file "${DATADIR}/last-apply-output-${CONFIGSET}"
-    "${PACKAGE_MANAGER}" "${UPDATEACTION}" -y "${PACKAGEMANAGEROPTIONS[@]}" "${RPMS}" &>"${DATADIR}/last-apply-output-${CONFIGSET}"
+    "${PACKAGE_MANAGER}" "${UPDATEACTION}" -y "${PACKAGEMANAGEROPTIONS[@]}" "${RPMS[@]}" &>"${DATADIR}/last-apply-output-${CONFIGSET}"
     default_signal_handling
 
     local HISTORY_AFTER=$(${PACKAGE_MANAGER} history list)
