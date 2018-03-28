@@ -42,26 +42,26 @@ function prepare_updates() {
   done
 
   if [[ "${PREDOWNLOADUPDATES}" == "yes" ]]; then
-    if [[ $(${PACKAGE_MANAGER} --help | grep -c downloadonly) -gt 0 ]]; then
-      local RC=$("${PACKAGE_MANAGER}" check-update "${PACKAGEMANAGEROPTIONS}" &>/dev/null; echo $?)
+    if [[ $("${PACKAGE_MANAGER}" --help | grep -c downloadonly) -gt 0 ]]; then
+      local RC=$("${PACKAGE_MANAGER}" check-update "${PACKAGEMANAGEROPTIONS[@]}" &>/dev/null; echo $?)
 
       # If check-update has an exit code of 100, updates are available.
       if [[ "${RC}" -eq 100 ]]; then
         # Run any pre-prep scripts
         sleep $((RANDOM % MAXDELAY))
         if [[ "${ONLYINSTALLFROMPREP}" == "yes" ]]; then
-          DOWNLOADOPTION="--downloaddir=${DOWNLOADDIR}/${CONFIGSET}"
+          DOWNLOADOPTION=("--downloaddir=${DOWNLOADDIR}/${CONFIGSET}")
           rm -f "${DOWNLOADDIR}"/"${CONFIGSET}"/*.rpm
           # DNF doesn't support downloaddir, so instead we download to the default
           # location and copy out the way
           if [[ "${PACKAGE_MANAGER}" == "dnf" ]]; then
             find /var/cache/dnf -name "*.rpm" -exec rm -f {} \;
-            DOWNLOADOPTION=""
+            DOWNLOADOPTION=()
           fi
           DOWNLOADLOGMSG=" to ${DOWNLOADDIR}/${CONFIGSET}"
         fi
 
-        PREPOUTPUT=$("${PACKAGE_MANAGER}" "${PACKAGEMANAGEROPTIONS}" "${DOWNLOADOPTION}" update --downloadonly -y 2>&1)
+        PREPOUTPUT=$("${PACKAGE_MANAGER}" "${PACKAGEMANAGEROPTIONS[@]}" "${DOWNLOADOPTION[@]}" update --downloadonly -y 2>&1)
         if [[ $? -eq 0 ]]; then
           if [[ "${ONLYINSTALLFROMPREP}" == "yes" && "${PACKAGE_MANAGER}" == "dnf" ]]; then
             find /var/cache/dnf -name "*.rpm" -exec mv {} "${DOWNLOADDIR}/${CONFIGSET}" \;
@@ -72,7 +72,7 @@ function prepare_updates() {
         fi
 
       elif [[ "${RC}" -eq 1 ]]; then
-        logit "ERROR: Exit status ${RC} returned by \`${PACKAGE_MANAGER} ${PACKAGEMANAGEROPTIONS} ${DOWNLOADOPTION} update --downloadonly -y\`. Exiting."
+        logit "ERROR: Exit status ${RC} returned by \`${PACKAGE_MANAGER} ${PACKAGEMANAGEROPTIONS[*]} ${DOWNLOADOPTION[*]} update --downloadonly -y\`. Exiting."
       else
         logit "INFO: No updates are available to be downloaded."
       fi
@@ -80,7 +80,7 @@ function prepare_updates() {
       logit "WARNING: downloadonly option is not available"
     fi
   else
-    PREPOUTPUT=$("${PACKAGE_MANAGER}" "${PACKAGEMANAGEROPTIONS}" check-update 2>&1)
+    PREPOUTPUT=$("${PACKAGE_MANAGER}" "${PACKAGEMANAGEROPTIONS[@]}" check-update 2>&1)
   fi
   rotate_file "${DATADIR}/last-prep-output-${CONFIGSET}"
   [[ "${PREPOUTPUT}" ]] && echo "${PREPOUTPUT}" > "${DATADIR}/last-prep-output-${CONFIGSET}"
@@ -116,7 +116,7 @@ function apply_updates() {
     # installed (i.e. dependencies of other packages). Instead we need to use install.
     UPDATEACTION="install"
   else
-    local RC=$("${PACKAGE_MANAGER}" check-update "${PACKAGEMANAGEROPTIONS}" &>/dev/null; echo $?)
+    local RC=$("${PACKAGE_MANAGER}" check-update "${PACKAGEMANAGEROPTIONS[@]}" &>/dev/null; echo $?)
     UPDATEACTION="update"
   fi
 
@@ -136,7 +136,7 @@ function apply_updates() {
     # We don't want to allow the user to interrupt a yum/dnf transaction or Bad Things Happen.
     trap '' SIGINT SIGTERM
     rotate_file "${DATADIR}/last-apply-output-${CONFIGSET}"
-    "${PACKAGE_MANAGER}" "${UPDATEACTION}" -y "${PACKAGEMANAGEROPTIONS}" "${RPMS}" &>"${DATADIR}/last-apply-output-${CONFIGSET}"
+    "${PACKAGE_MANAGER}" "${UPDATEACTION}" -y "${PACKAGEMANAGEROPTIONS[@]}" "${RPMS}" &>"${DATADIR}/last-apply-output-${CONFIGSET}"
     default_signal_handling
 
     local HISTORY_AFTER=$(${PACKAGE_MANAGER} history list)
@@ -161,7 +161,7 @@ function apply_updates() {
     logit "INFO: No updates are available to be applied."
     log_last_run
   else
-    logit "ERROR: Exit status ${RC} returned by \`${PACKAGE_MANAGER} check-update ${PACKAGEMANAGEROPTIONS}\`. Exiting."
+    logit "ERROR: Exit status ${RC} returned by \`${PACKAGE_MANAGER} check-update ${PACKAGEMANAGEROPTIONS[*]}\`. Exiting."
     quit 3
   fi
 }
