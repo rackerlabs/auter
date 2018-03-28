@@ -1,9 +1,10 @@
 pkg_name := "auter"
 
 # Version info:
-git_tag := $(shell git describe --exact-match --tags 2>/dev/null | sed "s/^v\?//g")
+#git_tag := $(shell git describe --exact-match --tags 2>/dev/null | sed "s/^v\?//g")
+git_tag := $(shell awk '/Version:/ {print $$2}' auter.spec)
 git_commit := $(shell git log --pretty=format:'%h' -n 1)
-release := "1"
+release := $(shell awk '/Release:/ {gsub(/%.*/,""); print $$2}' auter.spec)
 date := $(shell date +%Y%m%d)
 datelong := $(shell date +"%a, %d %b %Y %T %z")
 lintian-standards-version := $(shell grep -o -m1 "^[0-9].* " /usr/share/lintian/data/standards-version/release-dates)
@@ -28,8 +29,8 @@ else
   distributionrelease := "FAILED... distribution=${distribution}"
 endif
 
-ignore_files_regexp := "^Makefile\|${pkg_name}..*.tar.gz\|${pkg_name}.spec.*$$\|.*.md\|buildguide.txt"
-files := $(shell ls | egrep -ve ${ignore_files_regexp})
+ignore_files_regexp_rpmbuild := "^Makefile\|${pkg_name}.spec.*$$\|.*.md\|buildguide.txt\|contrib\|debian\|tests"
+files := $(shell ls -1 | egrep -ve ${ignore_files_regexp_rpmbuild})
 
 clean:
 	@rm -rf ${pkg_name}-*.tar.gz
@@ -38,11 +39,10 @@ clean:
 
 sources:
 	@mkdir -p ${pkg_name}-${version}
-	@cp -p ${files} ${pkg_name}-${version}
+	@cp -pr ${files} ${pkg_name}-${version}
+	@rm -rf ${pkg_name}-${version}/contrib ${pkg_name}-${version}/debian ${pkg_name}-${version}/tests
 	@tar -zcf ${pkg_name}-${version}.tar.gz ${pkg_name}-${version}
 	@rm -rf ${pkg_name}-${version}
-	@sed -r -i "s/^(Name:\s*).*\$$/\1${pkg_name}/g" ${pkg_name}.spec 
-	@sed -r -i "s/^(Version:\s*).*\$$/\1${version}/g" ${pkg_name}.spec
 
 deb:
 	@echo ${release_message}
@@ -77,3 +77,4 @@ showvariables:
 	@echo "pkg_name  =  ${pkg_name}"
 	@echo "release  =  ${release}"
 	@echo "version  =  ${version}"
+	@echo "${version}"
