@@ -2,7 +2,7 @@
 
 For any changes that are made, the following should be considered the bare minimum to be tested:
 
-```
+```sh
 auter --disable         # deletes /var/lib/auter/enabled, prints "auter disabled"
 auter --status          # prints "auter is currently disabled"
 auter --enable          # touches /var/lib/auter/enabled, prints "auter enabled"
@@ -14,14 +14,14 @@ man auter               # check the contents of the man page
 
 If you don't have any updates available do this:
 
-```
+```sh
 yum install zsh
 yum downgrade zsh
 ```
 
 Use the following to setup auter's pre/post scripts:
 
-```
+```sh
 echo 'logger custom pre prep script ran' > /etc/auter/pre-prep.d/pre_prep_script
 echo 'logger custom post prep script ran' > /etc/auter/post-prep.d/post_prep_script
 echo 'logger custom pre apply script ran' > /etc/auter/pre-apply.d/pre_apply_script
@@ -42,7 +42,13 @@ chmod +x /etc/auter/*.d/*script
 
 This should be completed in all pull requests before being merged.
 
-```
+```md
+### Config settings
+
+AUTOREBOOT="no"
+ONLYINSTALLFROMPREP="yes"
+PREDOWNLOADUPDATES=yes
+
 ### <OS test version>
 
 #### auter status
@@ -76,6 +82,7 @@ This should be completed in all pull requests before being merged.
     - Check: /var/lib/auter/last-update-default contains update info
     - Check: no upates available after running
     - Check: pre/post apply scripts ran successfully, messages logged to syslog
+    - Check: no mail is sent to the root user with the stdout from auter
 
 [ pass/fail ] auter --reboot
     - Check: reboot scheduled in 2 minutes time
@@ -109,25 +116,30 @@ This should be completed in all pull requests before being merged.
 
 When making any changes to code, make sure documentation (--help, man page) has been updated with the new functionality.
 
-#### Merge Rules
+#### Pull Request Rules
 
 - All pull requests should be made against the develop branch
 - All pull requests MUST be reviewed and approved before merging
 - Pull request reviews and merges MUST be completed by another maintainer
-- If possible squash and merge commits
+- Always squash and merge commits prior to submitting a pull request
 - All travis-ci tests should pass before merging
     - If the spellcheck test fails, adding the problematic words to the dictionary is a valid option
-    - If the shellcheck test fails, you should fix the issues mentioned or adjust the test with explicit comments for the check code and why it is being ignored
-    - The adjustments to the test files may need to be merged before the PR will pass the tests. This should be done as a separate PR referencing the associated PR for the changes.
+    - If the shellcheck test fails, you should fix the issues mentioned or add a shellcheck ignore directive to the previous line along with a comment on why it is being ignored
 
 #### Release Process
 
-1. Ensure that all files are updated to the version of the release number you're about to tag.  This includes:
-    - auter
-    - NEWS
-    - auter.spec
-2. Add notes to auter.spec and NEWS with a list of the changes for this release
-3. Push to github
-4. Tag a release through github
-5. Engage with the RPM building process to get RPMs built based on the new tag, and attach those to the github release. 
+1. A new issue should be raised with the title of "Prep for <VERSION> Release"
+2. Ensure all required PRs for the new release have been merged to the develop branch
+3. A maintainer with admin rights to the master branch in rackerlabs/auter should create a new branch based from the develop branch:
 
+```sh
+git clone --branch=develop https://github.com/rackerlabs/auter.git rackerlabs/auter
+cd rackerlabs/auter
+git checkout -b Release-<NEW_VERSION>
+git push origin Release-<NEW_VERSION>
+```
+
+4. Any new PRs should be made to the develop branch. The only changes to the Release-<NEW_VERSION> should be fixing of any review issues for that branch.
+5. Full testing for all supported OSs should be carried out and tracked in a github project created for the release. Example: https://github.com/rackerlabs/auter/projects/1
+6. Once all testing has been completed for Release-<NEW_VERSION>, the reviewer should merge the Release-<NEW_VERSION> branch to both master and develop branches.
+7. Tag a new release named <NEW_VERSION> using template <major ver>.<minor ver> (Eg: Release 0.11)
