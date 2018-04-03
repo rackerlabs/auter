@@ -87,7 +87,7 @@ function read_config() {
 
   # Convert space separated list from the config file to an indexed array
   # https://github.com/koalaman/shellcheck/wiki/SC2086
-  PACKAGEMANAGEROPTIONS=($PACKAGEMANAGEROPTIONS)
+  IFS=' ' read -r -a PACKAGEMANAGEROPTIONS <<< "$PACKAGEMANAGEROPTIONS"
 }
 
 function rotate_file {
