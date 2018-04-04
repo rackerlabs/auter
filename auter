@@ -92,7 +92,7 @@ function read_config() {
 
 function rotate_file {
   #Rotate old file
-  OUTPUT_FILE=$1
+  local OUTPUT_FILE="$1"
   for i in $(seq $((ROTATE-1)) -1 1); do
     [[ -e "${OUTPUT_FILE}.$i" ]] && mv -f "${OUTPUT_FILE}.$i" "${OUTPUT_FILE}.$((i+1))"
   done
@@ -100,8 +100,9 @@ function rotate_file {
   # Move base files to basefile.1
   [[ -e "${OUTPUT_FILE}" ]] && mv "${OUTPUT_FILE}" "${OUTPUT_FILE}.1"
 
+  local REMOVE_FILES="$(find $DATADIR -type f -name $(basename $OUTPUT_FILE).* | sort -V | awk -F'.' -v s=$ROTATE 'BEGIN{ORS=" "}($NF+1)>s')"
   # Finally check for extra file from the rotation, and remove if it exists
-  [[ -e "${OUTPUT_FILE}.${ROTATE}" ]] && rm -f "${OUTPUT_FILE}.${ROTATE}"
+  [[ -n "$REMOVE_FILEs" ]] && rm -f $REMOVE_FILES
 }
 
 function run_script {
