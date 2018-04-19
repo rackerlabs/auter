@@ -27,6 +27,7 @@ declare -r -x PIDFILE="/var/run/auter/auter.pid"
 
 # Set default options - these can be overridden in the config file or with a command line argument
 declare -x -l AUTOREBOOT="no"
+declare -x -i REBOOTCALL=0
 declare -x -a PACKAGEMANAGEROPTIONS
 declare -x -l PREDOWNLOADUPDATES="yes"
 declare -x -l ONLYINSTALLFROMPREP="no"
@@ -305,6 +306,6 @@ tty -s && MAXDELAY=1 && logit "INFO: Running in an interactive shell, disabling 
 [[ "${PREP}" ]] && prepare_updates
 [[ "${APPLY}" ]] && apply_updates
 
-[[ "${REBOOTCALL}" ]] && reboot_server
+[[ $REBOOTCALL -eq 1 ]] && reboot_server
 
 quit 0
