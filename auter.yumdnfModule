@@ -155,7 +155,8 @@ function apply_updates() {
     logit "INFO: Updates complete (${PACKAGE_MANAGER} ${TRANSACTIONID}). You may need to reboot for some updates to take effect"
     log_last_run
 
-    [[ "${AUTOREBOOT}" == "yes" ]] && declare -x REBOOTCALL=1
+    # shellcheck disable=SC2034
+    [[ "${AUTOREBOOT}" == "yes" ]] && REBOOTCALL=1
 
   elif [[ "${RC}" -eq 0 ]]; then
     logit "INFO: No updates are available to be applied."
