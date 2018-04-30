@@ -35,8 +35,8 @@ function check_package_manager_lock() {
 function prepare_updates() {
   # Check for yum.lock file
   check_package_manager_lock
-  local PREPOUTPUT
-  local -i RC
+  declare PREPOUTPUT
+  declare -i RC
 
   PREPOUTPUT="$(date '+%F %T')\\n"
   # Run any pre-prep scripts
@@ -87,7 +87,7 @@ function prepare_updates() {
       logit "WARNING: downloadonly option is not available"
     fi
   else
-    PREPOUTPUT+=$("${PACKAGE_MANAGER}" "${PACKAGEMANAGEROPTIONS[@]}" check-update 2>&1)
+    PREPOUTPUT+="$("${PACKAGE_MANAGER}" "${PACKAGEMANAGEROPTIONS[@]}" check-update 2>&1)"
   fi
   rotate_file "${DATADIR}/last-prep-output-${CONFIGSET}"
   [[ "${PREPOUTPUT}" ]] && echo -e "${PREPOUTPUT}" > "${DATADIR}/last-prep-output-${CONFIGSET}"
@@ -100,12 +100,12 @@ function prepare_updates() {
 
 function apply_updates() {
   # Default RC to 0 which means no updates are available
-  local -i RC=0
-  local APPLYOUTPUT
-  local UPDATEACTION
-  local HISTORY_BEFORE
-  local HISTORY_AFTER
-  local TRANSACTIONID
+  declare -i RC=0
+  declare APPLYOUTPUT
+  declare UPDATEACTION
+  declare HISTORY_BEFORE
+  declare HISTORY_AFTER
+  declare TRANSACTIONID
 
   APPLYOUTPUT="$(date '+%F %T')\\n"
   # Set the list of rpms to be installed
