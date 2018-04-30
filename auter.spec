@@ -25,7 +25,9 @@ set schedule, optionally rebooting to finish applying the updates.
 %setup -q
 
 %build
-help2man --include=auter.help2man --no-info ./auter -o auter.man
+help2man --section=1 ./auter -N -o auter.man -n "Automatic Update Transaction Execution by Rackspace" --include=auter.help2man-sections
+
+#help2man --section=1 --include=auter.help2man --no-info ./auter -o auter.man
 
 %install
 %if 0%{?fedora} >= 15 || 0%{?rhel} >= 7
