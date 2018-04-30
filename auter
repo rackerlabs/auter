@@ -91,9 +91,10 @@ function read_config() {
 }
 
 function rotate_file {
+  declare OUTPUT_FILE="$1"
+  declare -a REMOVE_FILES
+
   #Rotate old file
-  local OUTPUT_FILE="$1"
-  local -a REMOVE_FILES
   for i in $(seq $((ROTATE-1)) -1 1); do
     [[ -e "${OUTPUT_FILE}.$i" ]] && mv -f "${OUTPUT_FILE}.$i" "${OUTPUT_FILE}.$((i+1))"
   done
