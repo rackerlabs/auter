@@ -158,7 +158,8 @@ function apply_updates() {
     logit "INFO: Updates complete (${PACKAGE_MANAGER} ${TRANSACTIONID}). You may need to reboot for some updates to take effect"
     log_last_run
 
-    [[ "${AUTOREBOOT}" == "yes" ]] && declare -x REBOOTCALL=1
+    # shellcheck disable=SC2034
+    [[ "${AUTOREBOOT}" == "yes" ]] && REBOOTCALL=1
 
     # Remove the old RPMS from the auter cache
     [[ "${ONLYINSTALLFROMPREP}" == "yes" ]] && rm -f "${DOWNLOADDIR}"/"${CONFIGSET}"/*.rpm
