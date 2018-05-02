@@ -152,8 +152,11 @@ function reboot_server() {
   fi
 
   logit "INFO: Rebooting server"
-  [[ ${NOWALLMSG} ]] && shutdown --help | grep -q "no-wall" && SHUTDOWNARGS="--no-wall"
-  /sbin/shutdown "${SHUTDOWNARGS}" -r +2 "auter: System reboot to apply updates" &
+  if [[ ${NOWALLMSG} ]] && shutdown --help | grep -q "no-wall"; then
+    /sbin/shutdown --no-wall -r +2 "auter: System reboot to apply updates" &>/dev/null &
+  else
+    /sbin/shutdown -r +2 "auter: System reboot to apply updates" &
+  fi
 }
 
 function post_reboot() {
