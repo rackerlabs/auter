@@ -42,26 +42,29 @@ function prepare_updates() {
   done
 
   if [[ "${PREDOWNLOADUPDATES}" == "yes" ]]; then
-    if [[ $(${PACKAGE_MANAGER} --help | grep -c downloadonly) -gt 0 ]]; then
-      local RC=$("${PACKAGE_MANAGER}" check-update "${PACKAGEMANAGEROPTIONS}" &>/dev/null; echo $?)
+    if [[ $("${PACKAGE_MANAGER}" --help | grep -c downloadonly) -gt 0 ]]; then
+      # Remove the old RPMS from the auter cache
+      [[ "${ONLYINSTALLFROMPREP}" == "yes" ]] && rm -f "${DOWNLOADDIR}"/"${CONFIGSET}"/*.rpm
+
+      local RC=$("${PACKAGE_MANAGER}" check-update "${PACKAGEMANAGEROPTIONS[@]}" &>/dev/null; echo $?)
 
       # If check-update has an exit code of 100, updates are available.
       if [[ "${RC}" -eq 100 ]]; then
         # Run any pre-prep scripts
         sleep $((RANDOM % MAXDELAY))
         if [[ "${ONLYINSTALLFROMPREP}" == "yes" ]]; then
-          DOWNLOADOPTION="--downloaddir=${DOWNLOADDIR}/${CONFIGSET}"
-          rm -f "${DOWNLOADDIR}"/"${CONFIGSET}"/*.rpm
+          DOWNLOADOPTION=("--downloaddir=${DOWNLOADDIR}/${CONFIGSET}")
+          
           # DNF doesn't support downloaddir, so instead we download to the default
           # location and copy out the way
           if [[ "${PACKAGE_MANAGER}" == "dnf" ]]; then
             find /var/cache/dnf -name "*.rpm" -exec rm -f {} \;
-            DOWNLOADOPTION=""
+            DOWNLOADOPTION=()
           fi
           DOWNLOADLOGMSG=" to ${DOWNLOADDIR}/${CONFIGSET}"
         fi
 
-        PREPOUTPUT=$("${PACKAGE_MANAGER}" "${PACKAGEMANAGEROPTIONS}" "${DOWNLOADOPTION}" update --downloadonly -y 2>&1)
+        PREPOUTPUT=$("${PACKAGE_MANAGER}" "${PACKAGEMANAGEROPTIONS[@]}" "${DOWNLOADOPTION[@]}" update --downloadonly -y 2>&1)
         if [[ $? -eq 0 ]]; then
           if [[ "${ONLYINSTALLFROMPREP}" == "yes" && "${PACKAGE_MANAGER}" == "dnf" ]]; then
             find /var/cache/dnf -name "*.rpm" -exec mv {} "${DOWNLOADDIR}/${CONFIGSET}" \;
@@ -72,7 +75,7 @@ function prepare_updates() {
         fi
 
       elif [[ "${RC}" -eq 1 ]]; then
-        logit "ERROR: Exit status ${RC} returned by \`${PACKAGE_MANAGER} ${PACKAGEMANAGEROPTIONS} ${DOWNLOADOPTION} update --downloadonly -y\`. Exiting."
+        logit "ERROR: Exit status ${RC} returned by \`${PACKAGE_MANAGER} ${PACKAGEMANAGEROPTIONS[*]} ${DOWNLOADOPTION[*]} update --downloadonly -y\`. Exiting."
       else
         logit "INFO: No updates are available to be downloaded."
       fi
@@ -80,7 +83,7 @@ function prepare_updates() {
       logit "WARNING: downloadonly option is not available"
     fi
   else
-    PREPOUTPUT=$("${PACKAGE_MANAGER}" "${PACKAGEMANAGEROPTIONS}" check-update 2>&1)
+    PREPOUTPUT=$("${PACKAGE_MANAGER}" "${PACKAGEMANAGEROPTIONS[@]}" check-update 2>&1)
   fi
   rotate_file "${DATADIR}/last-prep-output-${CONFIGSET}"
   [[ "${PREPOUTPUT}" ]] && echo "${PREPOUTPUT}" > "${DATADIR}/last-prep-output-${CONFIGSET}"
@@ -98,25 +101,25 @@ function apply_updates() {
     local RC=0
     # Check if there are updates staged for this configset
     if [[ $(find "${DOWNLOADDIR}/${CONFIGSET}" -name "*.rpm" | wc -l) -gt 0 ]]; then
-      local RPMS=""
+      local RPMS=()
       # Check if the updates staged are still required
       for PACKAGE in ${DOWNLOADDIR}/${CONFIGSET}/*.rpm; do
         # Check if the local rpm is an update to the installed package and if it is then add the file to RPMS
         # list. We are using rpm directly for this check because "yum check-update" does not support local rpm
         # files. This also avoids connecting to the repos. And finally this avoids an issue when updating the
         # kernel to the same version.
-        rpm -U --nodeps --test "${PACKAGE}" &>/dev/null && RPMS+=" ${PACKAGE}"
+        rpm -U --nodeps --test "${PACKAGE}" &>/dev/null && RPMS+=("$PACKAGE")
       done
 
       # We are manually setting the RC to 100 if there are updates to be applied. This is the return code that
       # yum check-update would return if there were outstanding updates
-      [[ "${RPMS}" ]] && RC=100
+      [[ "${RPMS[*]}" ]] && RC=100
     fi
     # When passing RPM files to dnf/yum, the update verb won't install any that aren't already
     # installed (i.e. dependencies of other packages). Instead we need to use install.
     UPDATEACTION="install"
   else
-    local RC=$("${PACKAGE_MANAGER}" check-update "${PACKAGEMANAGEROPTIONS}" &>/dev/null; echo $?)
+    local RC=$("${PACKAGE_MANAGER}" check-update "${PACKAGEMANAGEROPTIONS[@]}" &>/dev/null; echo $?)
     UPDATEACTION="update"
   fi
 
@@ -136,7 +139,7 @@ function apply_updates() {
     # We don't want to allow the user to interrupt a yum/dnf transaction or Bad Things Happen.
     trap '' SIGINT SIGTERM
     rotate_file "${DATADIR}/last-apply-output-${CONFIGSET}"
-    "${PACKAGE_MANAGER}" "${UPDATEACTION}" -y "${PACKAGEMANAGEROPTIONS}" "${RPMS}" &>"${DATADIR}/last-apply-output-${CONFIGSET}"
+    "${PACKAGE_MANAGER}" "${UPDATEACTION}" -y "${PACKAGEMANAGEROPTIONS[@]}" "${RPMS[@]}" &>"${DATADIR}/last-apply-output-${CONFIGSET}"
     default_signal_handling
 
     local HISTORY_AFTER=$(${PACKAGE_MANAGER} history list)
@@ -155,13 +158,17 @@ function apply_updates() {
     logit "INFO: Updates complete (${PACKAGE_MANAGER} ${TRANSACTIONID}). You may need to reboot for some updates to take effect"
     log_last_run
 
-    [[ "${AUTOREBOOT}" == "yes" ]] && declare -x REBOOTCALL=1
+    # shellcheck disable=SC2034
+    [[ "${AUTOREBOOT}" == "yes" ]] && REBOOTCALL=1
+
+    # Remove the old RPMS from the auter cache
+    [[ "${ONLYINSTALLFROMPREP}" == "yes" ]] && rm -f "${DOWNLOADDIR}"/"${CONFIGSET}"/*.rpm
 
   elif [[ "${RC}" -eq 0 ]]; then
     logit "INFO: No updates are available to be applied."
     log_last_run
   else
-    logit "ERROR: Exit status ${RC} returned by \`${PACKAGE_MANAGER} check-update ${PACKAGEMANAGEROPTIONS}\`. Exiting."
+    logit "ERROR: Exit status ${RC} returned by \`${PACKAGE_MANAGER} check-update ${PACKAGEMANAGEROPTIONS[*]}\`. Exiting."
     quit 3
   fi
 }

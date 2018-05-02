@@ -6,8 +6,8 @@ before_install:
 script:
     # Save changed files to a text file to narrow test scope
     - "git remote add upstream https://github.com/rackerlabs/auter.git"
-    - "git fetch upstream master:rmaster"
-    - "git diff rmaster --name-only >CHANGEDFILES"
+    - "git fetch upstream develop:rdevelop"
+    - "git diff rdevelop --name-only >CHANGEDFILES"
     - "cat CHANGEDFILES"
 
     # Create docker image and run general code checks
