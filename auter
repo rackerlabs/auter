@@ -27,6 +27,7 @@ declare -r -x PIDFILE="/var/run/auter/auter.pid"
 
 # Set default options - these can be overridden in the config file or with a command line argument
 declare -x -l AUTOREBOOT="no"
+declare -x -i REBOOTCALL=0
 declare -x -a PACKAGEMANAGEROPTIONS
 declare -x -l PREDOWNLOADUPDATES="yes"
 declare -x -l ONLYINSTALLFROMPREP="no"
@@ -93,8 +94,10 @@ function read_config() {
 }
 
 function rotate_file {
+  declare OUTPUT_FILE="$1"
+  declare -a REMOVE_FILES
+
   #Rotate old file
-  OUTPUT_FILE=$1
   for i in $(seq $((ROTATE-1)) -1 1); do
     [[ -e "${OUTPUT_FILE}.$i" ]] && mv -f "${OUTPUT_FILE}.$i" "${OUTPUT_FILE}.$((i+1))"
   done
@@ -102,8 +105,9 @@ function rotate_file {
   # Move base files to basefile.1
   [[ -e "${OUTPUT_FILE}" ]] && mv "${OUTPUT_FILE}" "${OUTPUT_FILE}.1"
 
+  readarray -t REMOVE_FILES <<< "$(find "$DATADIR" -type f -name "$(basename "$OUTPUT_FILE").*" | awk -F'.' -v s="$ROTATE" '($NF+1)>s')"
   # Finally check for extra file from the rotation, and remove if it exists
-  [[ -e "${OUTPUT_FILE}.${ROTATE}" ]] && rm -f "${OUTPUT_FILE}.${ROTATE}"
+  [[ -n "${REMOVE_FILES[*]}" ]] && rm -f "${REMOVE_FILES[@]}"
 }
 
 function run_script {
@@ -307,6 +311,6 @@ tty -s && MAXDELAY=1 && logit "INFO: Running in an interactive shell, disabling 
 [[ "${PREP}" ]] && prepare_updates
 [[ "${APPLY}" ]] && apply_updates
 
-[[ "${REBOOTCALL}" ]] && reboot_server
+[[ $REBOOTCALL -eq 1 ]] && reboot_server
 
 quit 0
