@@ -83,6 +83,7 @@ exit 0
 %doc NEWS
 %doc MAINTAINERS.md
 %{_mandir}/man1/%{name}.1*
+%{_mandir}/man8/%{name}.conf.8*
 %{_sharedstatedir}/%{name}
 %dir %{_sysconfdir}/%{name}
 %dir %{_var}/cache/auter
