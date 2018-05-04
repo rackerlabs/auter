@@ -61,6 +61,26 @@ A list of maintainers and mailing list
 .B /usr/share/doc/auter-0.11/NEWS
 The NEWS file and changelog for auter
 
+[Enable/Disable]
+
+To provide an easy way to switch on/off all auter jobs, use auter --enable or auter --disable to set the lockfile /var/lib/auter/enabled. Auter will check for the presence of this file before running.
+
+This is also the correct method for cleaning up an unused pidfile.
+
+[Rebooting]
+
+Rebooting is an essential part of applying updates, in order to ensure the updated packages are in use. An update to the kernel will always need a reboot. Some application updates, for example Apache, will restart the service. However often libraries are updated, such as openssl, which don't force a reboot of services that use them. Rebooting guarantees that every update is in use by running services. You can either enable AUTOREBOOT=yes in the config file (the default is AUTOREBOOT=no), to reboot after --apply, or you can schedule a separate schedule for --reboot via a second cronjob. A 2 minute warning is emitted before the server is rebooted, and this can be cancelled by a superuser with shutdown -c.
+
+[Exit Codes]
+
+ 0 = updates successful / no updates available
+ 3 = issue related to yum / dnf / apt-get command
+ 4 = auter disabled via lockfile
+ 5 = script not run as root / DATADIR does not exist / config file does not exist
+ 6 = auter is already running / PIDFILE exists
+ 7 = yum, dnf or apt-get was not found
+ 8 = a pre/post hook exited with a non-zero error code
+
 [authors]
 .TP
 This documentation was primarily written by:
