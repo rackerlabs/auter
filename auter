@@ -166,10 +166,13 @@ function post_reboot() {
 
 function print_status() {
   if [[ -f "${LOCKFILE}" ]] && [[ -f "${PIDFILE}" ]]; then
-    if kill -0 "$(cat ${PIDFILE})" &>/dev/null; then
+    CURRENTPIDSTATUS="$(kill -0 "$(cat ${PIDFILE})" 2>&1 )"
+    if [[ $? -eq 0 ]]; then
       echo "auter is currently enabled and running"
-    else
+    elif [[ "${CURRENTPIDSTATUS}" == *"No such process"* ]]; then
       echo "auter is currently enabled and pid file exists but process is dead"
+    elif [[ "${CURRENTPIDSTATUS}" == *"Operation not permitted"* ]]; then
+      echo "auter is enabled but permission denied on ${PIDFILE}. Run 'auter --status' as root"
     fi
   elif [[ -f "${LOCKFILE}" ]] && [[ ! -f "${PIDFILE}" ]]; then
     echo "auter is currently enabled and not running"
