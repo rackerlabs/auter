@@ -43,6 +43,9 @@ function prepare_updates() {
 
   if [[ "${PREDOWNLOADUPDATES}" == "yes" ]]; then
     if [[ $("${PACKAGE_MANAGER}" --help | grep -c downloadonly) -gt 0 ]]; then
+      # Remove the old RPMS from the auter cache
+      [[ "${ONLYINSTALLFROMPREP}" == "yes" ]] && rm -f "${DOWNLOADDIR}"/"${CONFIGSET}"/*.rpm
+
       local RC=$("${PACKAGE_MANAGER}" check-update "${PACKAGEMANAGEROPTIONS[@]}" &>/dev/null; echo $?)
 
       # If check-update has an exit code of 100, updates are available.
@@ -51,7 +54,7 @@ function prepare_updates() {
         sleep $((RANDOM % MAXDELAY))
         if [[ "${ONLYINSTALLFROMPREP}" == "yes" ]]; then
           DOWNLOADOPTION=("--downloaddir=${DOWNLOADDIR}/${CONFIGSET}")
-          rm -f "${DOWNLOADDIR}"/"${CONFIGSET}"/*.rpm
+          
           # DNF doesn't support downloaddir, so instead we download to the default
           # location and copy out the way
           if [[ "${PACKAGE_MANAGER}" == "dnf" ]]; then
@@ -155,7 +158,11 @@ function apply_updates() {
     logit "INFO: Updates complete (${PACKAGE_MANAGER} ${TRANSACTIONID}). You may need to reboot for some updates to take effect"
     log_last_run
 
-    [[ "${AUTOREBOOT}" == "yes" ]] && declare -x REBOOTCALL=1
+    # shellcheck disable=SC2034
+    [[ "${AUTOREBOOT}" == "yes" ]] && REBOOTCALL=1
+
+    # Remove the old RPMS from the auter cache
+    [[ "${ONLYINSTALLFROMPREP}" == "yes" ]] && rm -f "${DOWNLOADDIR}"/"${CONFIGSET}"/*.rpm
 
   elif [[ "${RC}" -eq 0 ]]; then
     logit "INFO: No updates are available to be applied."
