@@ -23,9 +23,10 @@ function logit() {
 # Calculated variables
 ###############################################################################
 DISTRIBUTION="$(python -c "import platform; print platform.linux_distribution()[0]")"
-[[ "${DISTRIBUTION}" =~ debian|Ubuntu ]] && SYSTEMLOG="/var/log/syslog"
-[[ "${DISTRIBUTION}" =~ CentOS|Red\ Hat|Fedora ]] && SYSTEMLOG="/var/log/messages"
-TRANSACTIONID="$(awk -F'[()]' '/auter:.*Transaction/{print substr($2,22)}' "${SYSTEMLOG}" | sort | tail -n1)"
+# for later use:
+# [[ "${DISTRIBUTION}" =~ debian|Ubuntu ]] && SYSTEMLOG="/var/log/syslog"
+# [[ "${DISTRIBUTION}" =~ CentOS|Red\ Hat|Fedora ]] && SYSTEMLOG="/var/log/messages"
+# TRANSACTIONID="$(awk -F'[()]' '/auter:.*Transaction/{print substr($2,22)}' "${SYSTEMLOG}" | sort | tail -n1)"
 if [[ "${DISTRIBUTION}" =~ CentOS|Red\ Hat|Fedora ]]; then
   PACKAGESUPDATED=($(awk -F" : " '/Running transaction$/,/Updated:/ {print $2}' /var/lib/auter/last-apply-output-default | awk '{print $1}' | sort -u))
 elif [[ "${DISTRIBUTION}" =~ debian|Ubuntu ]]; then
@@ -59,9 +60,10 @@ LIBCHECK=$(lsof | grep lib | grep DEL)
 # Check if any of the packages in the APPLIST were updated
 if [[ -n ${APPLIST} ]]; then
   for PACKAGEMATCH in $APPLIST; do
-    PACKAGEMATCH=$(echo $PACKAGEMATCH | sed 's/*/.*/g')
-    for PACKAGE in ${PACKAGESUPDATED[@]}; do
-      if echo ${PACKAGE} | grep -q ${PACKAGEMATCH}; then
+    # shellcheck disable=SC2001
+    PACKAGEMATCH=$(echo "$PACKAGEMATCH" | sed 's/*/.*/g')
+    for PACKAGE in "${PACKAGESUPDATED[@]}"; do
+      if echo "${PACKAGE}" | grep -q "${PACKAGEMATCH}"; then
         REBOOTREQURIRED+=("${PACKAGE} was updated and is in the $0 APPLIST config")
       fi
     done
@@ -69,7 +71,7 @@ if [[ -n ${APPLIST} ]]; then
 fi
 
 # Reboot the server using auter
-if [[ -n $REBOOTREQURIRED ]]; then
+if [[ -n "${REBOOTREQURIRED[@]}" ]]; then
   logit "$0 assessed that the server needs to be rebooted. The assessments that triggered this requirement are: $(printf '%s, ' "${REBOOTREQURIRED[@]}")" 
   logit "Rebooting server"
   auter --reboot
