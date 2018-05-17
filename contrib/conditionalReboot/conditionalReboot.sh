@@ -52,7 +52,7 @@ fi
 
 # Identify if there are any libraries that are running but deleted
 LIBCHECK=$(lsof | grep lib | grep DEL)
-[[ -n "${LIBCHECK}" ]] && REBOOTREQURIRED+=("Running Library check")
+[[ -n "${LIBCHECK}" ]] && REBOOTREQURIRED+=("detected deleted libraries")
 
 # This is primarily for Debian and Ubuntu
 [[ -f /var/run/reboot-required ]] && REBOOTREQURIRED+=("/var/run/reboot-required exists")
@@ -64,7 +64,7 @@ if [[ -n ${APPLIST} ]]; then
     PACKAGEMATCH=$(echo "$PACKAGEMATCH" | sed 's/*/.*/g')
     for PACKAGE in "${PACKAGESUPDATED[@]}"; do
       if echo "${PACKAGE}" | grep -q "${PACKAGEMATCH}"; then
-        REBOOTREQURIRED+=("${PACKAGE} was updated and is in the $0 APPLIST config")
+        REBOOTREQURIRED+=("package ${PACKAGE} was updated and is in the $0 APPLIST config")
       fi
     done
   done
@@ -72,7 +72,11 @@ fi
 
 # Reboot the server using auter
 if [[ -n "${REBOOTREQURIRED[@]}" ]]; then
-  logit "$0 assessed that the server needs to be rebooted. The assessments that triggered this requirement are: $(printf '%s, ' "${REBOOTREQURIRED[@]}")" 
+  logit "$0 assessed that the server needs to be rebooted. The assessments that triggered this requirement are:"
+  for REBOOTMATCH in "${REBOOTREQURIRED[@]}"
+  do
+    logit "Rebooting because ${REBOOTMATCH}"
+  done
   logit "Rebooting server"
   auter --reboot
 else
