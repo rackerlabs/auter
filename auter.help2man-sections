@@ -1,0 +1,98 @@
+[directories]
+Default Directory locations are listed, but also customizable in the config file. The customization will be required for the use of multiple auter profiles
+
+If any scripts in the pre/post hook directories are not executable a warning will be logged with  the  filename  but auter  will continue.
+
+If any scripts in the pre-post hook directories exit with a non-zero exit code an error will be logged with the filename and exit code, and auter will abort.
+
+Post reboot, there is a delay of 5 mins to allow the system to become fully ready before the post-reboot scripts are run.
+
+.TP
+.B /etc/auter/pre-prep.d
+Directory containing scripts to be executed before downloading updates
+
+.TP
+.B /etc/auter/post-prep.d
+Directory containing scripts to be executed after downloading updates
+
+.TP
+.B /etc/auter/pre-apply.d
+Directory containing scripts to be executed before applying updates
+
+.TP
+.B /etc/auter/post-apply.d
+Directory containing scripts to be executed after applying updates
+
+.TP
+.B /etc/auter/pre-reboot.d
+Directory containing scripts to be executed before rebooting
+
+.TP
+.B /etc/auter/post-reboot.d
+Directory containing scripts to be executed after rebooting
+
+[files]
+
+.TP
+.B /etc/auter/auter.conf
+Default config file location. Use the --config option to pass an alternative  config  file  to  use  within /etc/auter.
+
+.TP
+.B /etc/cron.d/auter
+The default cron file with examples
+
+.TP
+.B /usr/bin/auter
+The main auter script which contains linux generic code
+
+.TP
+.B /usr/lib/auter/auter.module
+The auter module for the relevant package manager
+
+.TP
+.B /usr/share/doc/auter-0.11/LICENSE
+The Apache License
+
+.TP
+.B /usr/share/doc/auter-0.11/MAINTAINERS.md
+A list of maintainers and mailing list
+
+.TP
+.B /usr/share/doc/auter-0.11/NEWS
+The NEWS file and changelog for auter
+
+[Enable/Disable]
+
+To provide an easy way to switch on/off all auter jobs, use auter --enable or auter --disable to set the lockfile /var/lib/auter/enabled. Auter will check for the presence of this file before running.
+
+This is also the correct method for cleaning up an unused pidfile.
+
+[Rebooting]
+
+Rebooting is an essential part of applying updates, in order to ensure the updated packages are in use. An update to the kernel will always need a reboot. Some application updates, for example Apache, will restart the service. However often libraries are updated, such as openssl, which don't force a reboot of services that use them. Rebooting guarantees that every update is in use by running services. You can either enable AUTOREBOOT=yes in the config file (the default is AUTOREBOOT=no), to reboot after --apply, or you can schedule a separate schedule for --reboot via a second cronjob. A 2 minute warning is emitted before the server is rebooted, and this can be cancelled by a superuser with shutdown -c.
+
+[Exit Codes]
+
+ 0 = updates successful / no updates available
+ 3 = issue related to yum / dnf / apt-get command
+ 4 = auter disabled via lockfile
+ 5 = script not run as root / DATADIR does not exist / config file does not exist
+ 6 = auter is already running / PIDFILE exists
+ 7 = yum, dnf or apt-get was not found
+ 8 = a pre/post hook exited with a non-zero error code
+
+[authors]
+.TP
+This documentation was primarily written by:
+ Paolo Gigante
+ Piers Cornwell
+ Cameron Beere
+
+[REPORTING BUGS]
+.TP
+Please report any bugs by raising an issue against the github page or email us at:
+ https://github.com/rackerlabs/auter/issues
+ auter-devel@rackspace.com
+
+[see also]
+  auter.conf(5), cron(8), crontab(5)

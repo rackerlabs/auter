@@ -53,6 +53,8 @@ function print_help() {
   echo "
 Usage: auter [--enable|--disable|--status] [--prep] [--apply] [--reboot] [--postreboot] [--config=<configfile>] [OPTION]
 
+Automatic Update Transaction Execution by Rackspace. A wrapper around cron and yum/dnf/apt to manage system updates with the ability to configure automatic reboots and custom scripts.
+
 Actions:
   --enable      Enable auter
   --disable     Disable auter. Also deletes unused pidfile if it exists
