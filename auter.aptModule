@@ -130,7 +130,8 @@ function apply_updates() {
         run_script "${SCRIPT}" "Post-Apply"
       done
 
-      [[ "${AUTOREBOOT}" == "yes" ]] && declare -x REBOOTCALL=1
+      # shellcheck disable=SC2034
+      [[ "${AUTOREBOOT}" == "yes" ]] && REBOOTCALL=1
 
     else
       logit "INFO: No updates are available to be applied."
