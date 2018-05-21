@@ -65,15 +65,23 @@ chmod 0755 %{buildroot}%{_sysconfdir}/%{name}/*.d
 # If this is the first time install, create the lockfile
 if [ $1 -eq 1 ]; then
   /usr/bin/auter --enable
+  mandb -q
 fi
 exit 0
 
 %preun
 # If this is a complete removal, then remove lockfile
 if [ $1 -eq 0 ]; then
- /usr/bin/auter --disable
+  /usr/bin/auter --disable
 fi
 exit 0
+
+%postun
+if [ $1 -eq 0 ]; then
+  mandb -q
+fi
+exit 0
+
 
 %files
 %defattr(-,root,root,-)
