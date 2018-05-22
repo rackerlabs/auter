@@ -1,5 +1,45 @@
 #!/bin/bash
 
+# Ensure docker is installed
+if tty -s; then
+  HOSTDIST=$(python -c "import platform; print platform.linux_distribution()[0]")
+  echo "Checking if Docker is installed on your $HOSTDIST host"
+  if [[ "$HOSTDIST" =~ Ubuntu ]]; then
+    dpkg --list | grep -q "docker-ce"
+  elif [[ "$HOSTDIST" =~ CentOS|Fedora|Red\ Hat ]]; then
+    rpm -qa | grep -q "docker-ce"
+  else
+    echo "Unable to get your OS distribution"
+    exit 1
+  fi
+
+  if [[ $? -ne 0 ]]; then
+    echo " [ FAIL ] docker-ce not installed on Host"
+    echo "Do you want to install docker-ce?"
+    read -p "Do you want to install docker-ce?" INSTALLDOCKER
+    if [[ $INSTALLDOCKER =~ y|Y|yes|Yes|YES ]]; then
+      if [[ "$HOSTDIST" =~ CentOS|Fedora|Red\ Hat ]]; then
+        yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+        yum -y install docker-ce
+        groupadd docker
+        systemctl enable docker
+        systemctl start docker
+      elif [[ "$HOSTDIST" =~ Ubuntu ]]; then
+        apt-get install apt-transport-https ca-certificates curl software-properties-common
+        curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+        add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+        apt-get update
+        apt-get install docker-ce
+        groupadd docker
+        systemctl enable docker
+        systemctl start docker
+      fi
+    else
+      echo "Exiting..."
+      exit 1
+    fi
+  fi
+fi
 
 AUTERDIR="$(cd "$(dirname "$0")"; cd .. ; pwd -P)"
 AUTERPARENTDIR="$(cd "$(dirname "$0")"; cd ../.. ; pwd -P)"
@@ -31,7 +71,7 @@ for RELEASE in 6 7; do
   # Build the docker container
   DOCKERCONTAINERS+=" $(docker run --rm=true --name auter-rpmbuild-test-${RELEASE} -td centos:${RELEASE})"
   EVALSUCCESS "Created ${RELEASE} docker image"
-  
+
   # Install the rpmbuild dependencies, add the user and create the ENV
   docker exec auter-rpmbuild-test-${RELEASE} yum -y -q -e 0 install rpm-build elfutils-libelf rpm-libs rpm-pythoni gcc make help2man sudo 2>/dev/null 1>/dev/null
   EVALSUCCESS "Installed packages to docker image"
@@ -44,7 +84,7 @@ for RELEASE in 6 7; do
 
   # shellcheck disable=SC2016
   echo '%_topdir %(echo $HOME)/rpmbuild' > /tmp/.rpmmacros
-  
+
   # Create the tarball for rpmbuild
   # Manually changing directory due to tar -C not working too well
   CURRENTDIR="$(pwd)"
@@ -56,7 +96,7 @@ for RELEASE in 6 7; do
   mv "auter-${VERSION}-rpmbuild.tar.gz" "${AUTERDIR}"
   EVALSUCCESS "Moved sources tarball from $(pwd) to ${AUTERDIR}"
   cd "${CURRENTDIR}"
-  
+
   # Copy the rpmbuild config and tarball to the builduser homedir
   docker cp /tmp/.rpmmacros auter-rpmbuild-test-${RELEASE}:/home/builduser/.rpmmacros
   EVALSUCCESS "Copied /tmp/.rpmmacros to docker container"
@@ -89,7 +129,7 @@ if [[ -n "${FAILEDTESTS}" ]]; then
   echo " [ FAILED ] - The following builds failed:"
   echo "${FAILEDTESTS}"
   quit 1
-else 
+else
   echo " [ SUCCESS ] All builds were successfull"
   quit 0
 fi
