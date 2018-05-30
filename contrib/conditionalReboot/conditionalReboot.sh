@@ -51,7 +51,7 @@ if [[ "${DISTRIBUTION}" =~ CentOS|Red\ Hat|Fedora|Oracle\ Linux ]]; then
 fi
 
 # Identify if there are any libraries that are running but deleted
-LIBCHECK=$(lsof | grep lib | grep DEL)
+LIBCHECK=$(PATH=/usr/sbin:/usr/local/sbin:$PATH lsof | grep lib | grep DEL)
 [[ -n "${LIBCHECK}" ]] && REBOOTREQURIRED+=("detected deleted libraries")
 
 # This is primarily for Debian and Ubuntu
@@ -77,8 +77,8 @@ if [[ -n "${REBOOTREQURIRED[@]}" ]]; then
   do
     logit "Rebooting because ${REBOOTMATCH}"
   done
-  logit "Rebooting server"
-  auter --reboot
+  logit "Scheduling server reboot."
+  (while test -f "${PIDFILE}" ; do sleep 1; done; auter --reboot) &
 else
   logit "Reboot not required"
 fi
