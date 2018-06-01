@@ -77,8 +77,8 @@ if [[ -n "${REBOOTREQURIRED[@]}" ]]; then
   do
     logit "Rebooting because ${REBOOTMATCH}"
   done
-  logit "Scheduling server reboot."
-  (while test -f "${PIDFILE}" ; do sleep 1; done; auter --reboot) &
+  logit "Reboot required, rebooting server after running auter process completes"
+  (while test -f "${PIDFILE}"; do sleep 5; done; auter --reboot) &
 else
   logit "Reboot not required"
 fi
