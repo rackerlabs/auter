@@ -19,7 +19,7 @@ endif
 version_release := ${version}-${release}
 
 # Build release for debian
-distribution := $(shell lsb_release -is)
+distribution := $(shell python -c "import platform; print platform.linux_distribution()[0]")
 ifeq (${distribution}, Debian)
   distributionrelease := unstable
   lintian-standards-version := $(shell grep -o -m1 "^[0-9].* " /usr/share/lintian/data/standards-version/release-dates)

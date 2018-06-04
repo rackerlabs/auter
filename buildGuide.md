@@ -59,7 +59,7 @@ notes:
 
 2) Install the required packages:
     ```
-    yum -y install rpm-build elfutils-libelf rpm-libs rpm-pythoni gcc make help2man sudo
+    yum -y install rpm-build elfutils-libelf rpm-libs rpm-python gcc make help2man sudo
     ```
 3) Add a build user:
     ```
@@ -93,7 +93,7 @@ notes:
     ```
 9) Move the sources into the correct location with the correct sources name
     ```
-    mv auter*.tar.gz /home/builduser/rpmbuild/SOURCES/$(grep Version /home/builduser/rpmbuild/SPECS/auter.spec).tar.gz
+    mv auter*.tar.gz /home/builduser/rpmbuild/SOURCES/$(awk '/Version/ {print $2}' /home/builduser/rpmbuild/SPECS/auter.spec).tar.gz
     ```
 10) Start building the rpm
     ```
