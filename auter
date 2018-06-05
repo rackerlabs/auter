@@ -42,6 +42,7 @@ declare -x PREAPPLYSCRIPTDIR="${SCRIPTDIR}/pre-apply.d"
 declare -x POSTAPPLYSCRIPTDIR="${SCRIPTDIR}/post-apply.d"
 declare -x PREREBOOTSCRIPTDIR="${SCRIPTDIR}/pre-reboot.d"
 declare -x POSTREBOOTSCRIPTDIR="${SCRIPTDIR}/post-reboot.d"
+declare -x -i SKIPALLSCRIPTS=1
 
 function default_signal_handling() {
   trap 'rm -f "${PIDFILE}"' SIGINT SIGTERM
@@ -67,6 +68,7 @@ Actions:
 Options:
   --config=FILE Specify the full path to an auter config file. Defaults to /etc/auter/auter.conf
   --stdout      Always log to STDOUT, regardless of not having a tty
+  --skip-all-scripts Skip the executions of all custom scripts (Default in /etc/auter/*.d/)
   --no-wall	If possible, suppress shutdown wall messages in the reboot phase
   -h, --help    Show this help text
   -v, --version Show the version
@@ -114,16 +116,20 @@ function rotate_file {
 function run_script {
   SCRIPT=$1
   PHASE=$2
-  if [[ -x "${SCRIPT}" ]] && [[ -f "${SCRIPT}" ]]; then
-    logit "INFO: Running ${PHASE} script ${SCRIPT}"
-    ${SCRIPT}
-    local RC=$?
-    if [[ "${RC}" -ne 0 ]]; then
-      logit "ERROR: ${PHASE} script ${SCRIPT} exited with non-zero exit code ${RC}. Aborting auter run."
-      quit 8
+  if [[ "${SKIPALLSCRIPTS}" -eq 0 ]]; then
+    if [[ -x "${SCRIPT}" ]] && [[ -f "${SCRIPT}" ]]; then
+      logit "INFO: Running ${PHASE} script ${SCRIPT}"
+      ${SCRIPT}
+      local RC=$?
+      if [[ "${RC}" -ne 0 ]]; then
+        logit "ERROR: ${PHASE} script ${SCRIPT} exited with non-zero exit code ${RC}. Aborting auter run."
+        quit 8
+      fi
+    elif [[ -f "${SCRIPT}" ]]; then
+      logit "ERROR: ${PHASE} script ${SCRIPT} exists but the execute bit is not set. Skipping."
     fi
-  elif [[ -f "${SCRIPT}" ]]; then
-    logit "ERROR: ${PHASE} script ${SCRIPT} exists but the execute bit is not set. Skipping."
+  else
+    logit "INFO: The --skip-all-scripts flag was used. NOT executing ${SCRIPT} as part of the ${PHASE} phase"
   fi
 }
 
@@ -208,7 +214,7 @@ default_signal_handling
 
 
 ARGS=$@
-OPTS=$(getopt -n "$0" -o h,v --long prep,apply,enable,disable,reboot,postreboot,version,help,stdout,no-wall,status,config: -- "$@")
+OPTS=$(getopt -n "$0" -o h,v --long prep,apply,enable,disable,reboot,postreboot,version,help,stdout,no-wall,status,config:,skip-all-scripts -- "$@")
 if [[ $? -ne 0 ]]; then
   echo "Try '$0 --help' for more information."
   exit
@@ -229,6 +235,7 @@ while true ; do
     --postreboot) POSTREBOOT=1 ; shift;;
     --enable) ENABLE=1 ; shift;;
     --disable) DISABLE=1 ; shift;;
+    --skip-all-scripts) SKIPALLSCRIPTS=1 ; shift;;
     --status) print_status ; exit 0;;
     --) shift ; break;;
   esac
