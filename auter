@@ -72,12 +72,19 @@ Options:
   --stdout      Always log to STDOUT, regardless of not having a tty
   --skip-all-scripts
                 Skip the executions of all custom scripts (Default in /etc/auter/*.d/)
+
   --skip-phase-scripts=PHASE
-                Skip the execution of the custom scripts for the specified phase. Valid Phases: pre-prep, post-prep, pre-apply, post-apply, pre-reboot, post-reboot. You can specify myltiple phases.
+                Skip the execution of the custom scripts for the specified phase. You can specify myltiple phases.
+
+                Valid Phases: pre-prep, post-prep, pre-apply, post-apply, pre-reboot, post-reboot. 
+
                 Example: --skip-phase-scripts=\"pre-prep,post-apply,pre-reboot\"
-  --skip-scripts-by-name=SCRIPTNAME 
-                Skip specific scripts by name.  You can specify myltiple phases. 
+
+  --skip-scripts-by-name=SCRIPTNAME
+                Skip specific scripts by name. You can specify myltiple phases. 
+
                 Example: --skip-scripts-by-name=\"10-configsnap-pre, 20-startApp.sh\"
+
   --no-wall	If possible, suppress shutdown wall messages in the reboot phase
   -h, --help    Show this help text
   -v, --version Show the version
