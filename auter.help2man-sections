@@ -1,64 +1,80 @@
-[directories]
-Default Directory locations are listed, but also customizable in the config file. The customization will be required for the use of multiple auter profiles
+[Directories]
 
-If any scripts in the pre/post hook directories are not executable a warning will be logged with  the  filename  but auter  will continue.
+Default Directory locations are listed are listed below; custom paths can be specified in the config file. The use of additional, none default, config files is required when running more than one auter profile.
 
-If any scripts in the pre-post hook directories exit with a non-zero exit code an error will be logged with the filename and exit code, and auter will abort.
+.SS
+Pre/Post Hooks
 
-Post reboot, there is a delay of 5 mins to allow the system to become fully ready before the post-reboot scripts are run.
+If any scripts in the pre/post hook directories are not executable, they will be skipped by auter and a warning containing the filename will be logged. If any scripts in the pre/post hook directories exit with a non-zero exit code an error will be logged with the filename and exit code, and auter will abort.
 
 .TP
-.B /etc/auter/pre-prep.d
+.I /etc/auter/pre-prep.d
 Directory containing scripts to be executed before downloading updates
 
 .TP
-.B /etc/auter/post-prep.d
+.I /etc/auter/post-prep.d
 Directory containing scripts to be executed after downloading updates
 
 .TP
-.B /etc/auter/pre-apply.d
+.I /etc/auter/pre-apply.d
 Directory containing scripts to be executed before applying updates
 
 .TP
-.B /etc/auter/post-apply.d
+.I /etc/auter/post-apply.d
 Directory containing scripts to be executed after applying updates
 
 .TP
-.B /etc/auter/pre-reboot.d
+.I /etc/auter/pre-reboot.d
 Directory containing scripts to be executed before rebooting
 
 .TP
-.B /etc/auter/post-reboot.d
+.I /etc/auter/post-reboot.d
 Directory containing scripts to be executed after rebooting
+
+There is a hard coded delay of 5 minutes post-reboot to allow the system to become fully ready before the post-reboot scripts are executed.
+
+.SS Hook execution order
+
+Files in the pre/post script directories are parsed in sorted lexical order. That is, /etc/auter/pre-apply.d/01_first will be parsed before /etc/auter/pre-apply.d/10_second. Be aware that because the sorting is lexical, not numeric, /etc/auter/pre-apply.d/1_whoops would be loaded after /etc/pre-apply.d/10_second. Using a consistent number of leading zeroes in the file names can be used to avoid such problems. For example the following execution order would occur for pre-apply scripts:
+
+.RS
+.nf
+pre-apply.d/00-first.sh
+pre-apply.d/99-second.sh
+pre-apply.d/AA-fourth.sh
+pre-apply.d/aa-third.sh
+pre-apply.d/zz-fifth.sh
+pre-apply.d/ZZ-sixth.sh
+.RE
 
 [files]
 
 .TP
-.B /etc/auter/auter.conf
-Default config file location. Use the --config option to pass an alternative  config  file  to  use  within /etc/auter.
+.I /etc/auter/auter.conf
+Default config file location. Use the --config option to pass an alternative config file to use within /etc/auter.
 
 .TP
-.B /etc/cron.d/auter
+.I /etc/cron.d/auter
 The default cron file with examples
 
 .TP
-.B /usr/bin/auter
+.I /usr/bin/auter
 The main auter script which contains linux generic code
 
 .TP
-.B /usr/lib/auter/auter.module
+.I /usr/lib/auter/auter.module
 The auter module for the relevant package manager
 
 .TP
-.B /usr/share/doc/auter-0.11/LICENSE
+.I /usr/share/doc/auter-0.11/LICENSE
 The Apache License
 
 .TP
-.B /usr/share/doc/auter-0.11/MAINTAINERS.md
+.I /usr/share/doc/auter-0.11/MAINTAINERS.md
 A list of maintainers and mailing list
 
 .TP
-.B /usr/share/doc/auter-0.11/NEWS
+.I /usr/share/doc/auter-0.11/NEWS
 The NEWS file and changelog for auter
 
 [Enable/Disable]
@@ -95,4 +111,5 @@ Please report any bugs by raising an issue against the github page or email us a
  auter-devel@rackspace.com
 
 [see also]
-  auter.conf(5), cron(8), crontab(5)
+ auter.conf(5), cron(8), crontab(5)
+
