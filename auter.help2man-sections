@@ -33,7 +33,7 @@ Directory containing scripts to be executed after rebooting
 
 There is a hard coded delay of 5 minutes post-reboot to allow the system to become fully ready before the post-reboot scripts are executed.
 
-.SS Hook execution order
+.SS Hook Execution Order
 
 Files in the pre/post script directories are parsed in sorted lexical order. That is, /etc/auter/pre-apply.d/01_first will be parsed before /etc/auter/pre-apply.d/10_second. Be aware that because the sorting is lexical, not numeric, /etc/auter/pre-apply.d/1_whoops would be loaded after /etc/pre-apply.d/10_second. Using a consistent number of leading zeroes in the file names can be used to avoid such problems. For example the following execution order would occur for pre-apply scripts:
 
@@ -46,6 +46,8 @@ pre-apply.d/aa-third.sh
 pre-apply.d/zz-fifth.sh
 pre-apply.d/ZZ-sixth.sh
 .RE
+
+Note that the ordering is case-insensitive so AA-fourth.sh will be run before aa-third.sh.
 
 [files]
 
@@ -97,14 +99,14 @@ Rebooting is an essential part of applying updates, in order to ensure the updat
  7 = yum, dnf or apt-get was not found
  8 = a pre/post hook exited with a non-zero error code
 
-[authors]
+[Authors]
 .TP
 This documentation was primarily written by:
  Paolo Gigante
  Piers Cornwell
  Cameron Beere
 
-[REPORTING BUGS]
+[Reporting Bugs]
 .TP
 Please report any bugs by raising an issue against the github page or email us at:
  https://github.com/rackerlabs/auter/issues
