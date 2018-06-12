@@ -15,6 +15,7 @@ This directory contains useful scripts, config files and/or cron schedules which
   - configsnap.pre-apply
   - removeFromAppPool.pre-reboot
   - appStartConfirmation.post-reboot.sh
+- It is also recommended that script names follow the xx-filename (where xx are padded digits) naming convention to ensure correct script execution order. See the man page for more information.
 
 
 # README.md layout template

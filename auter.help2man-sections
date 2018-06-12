@@ -1,6 +1,6 @@
 [Directories]
 
-Default Directory locations are listed are listed below; custom paths can be specified in the config file. The use of additional, none default, config files is required when running more than one auter profile.
+Default Directory locations are listed below; custom paths can be specified in the config file. The use of additional, non-default, config files is required when running more than one auter profile.
 
 .SS
 Pre/Post Hooks
