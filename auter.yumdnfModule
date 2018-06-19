@@ -1,3 +1,4 @@
+#!/bin/bash
 # This is a script that is intended to only be called by /usr/bin/auter and
 # contains linux package manager specific code for auter.
 
@@ -170,6 +171,7 @@ function apply_updates() {
     logit "INFO: Updates complete (${PACKAGE_MANAGER} ${TRANSACTIONID}). You may need to reboot for some updates to take effect"
     log_last_run
 
+    # Excluding this check because the REBOOTCALL variable is used by the main auter script
     # shellcheck disable=SC2034
     [[ "${AUTOREBOOT}" == "yes" ]] && REBOOTCALL=1
 

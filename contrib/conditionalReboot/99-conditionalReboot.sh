@@ -60,6 +60,7 @@ LIBCHECK=$(PATH=/usr/sbin:/usr/local/sbin:$PATH lsof | grep lib | grep DEL)
 # Check if any of the packages in the APPLIST were updated
 if [[ -n ${APPLIST} ]]; then
   for PACKAGEMATCH in $APPLIST; do
+    # Excluding SC2001 for readability purposes
     # shellcheck disable=SC2001
     PACKAGEMATCH=$(echo "$PACKAGEMATCH" | sed 's/*/.*/g')
     for PACKAGE in "${PACKAGESUPDATED[@]}"; do
