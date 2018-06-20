@@ -6,7 +6,7 @@ Run configsnap at each major phase of auter. Configsnap records useful system st
 
 Language: bash
 
-Supported OS: CENTOS>=6 RHEL>=6 Fedora>=26 Ubuntu>=16.04 Debian>=9
+Supported OS: CENTOS>=6 RHEL>=6 Fedora>=26
 
 Additional setup required: YES
 
