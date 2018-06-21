@@ -1,12 +1,12 @@
 pkg_name := "auter"
 
 # Version info:
+
 git_tag := $(shell awk '/Version:/ {print $$2}' auter.spec)
 git_commit := $(shell git log --pretty=format:'%h' -n 1)
 release := $(shell awk '/Release:/ {gsub(/%.*/,""); print $$2}' auter.spec)
 date := $(shell date +%Y%m%d)
 datelong := $(shell date +"%a, %d %b %Y %T %z")
-lintian-standards-version := $(shell grep -o -m1 "^[0-9].* " /usr/share/lintian/data/standards-version/release-dates)
 
 
 ifeq ($(strip ${git_tag}),)
@@ -20,6 +20,7 @@ version_release := ${version}-${release}
 
 # Build release for debian
 distribution := $(shell python -c "import platform; print(platform.linux_distribution()[0])")
+
 ifeq (${distribution}, Debian)
   distributionrelease := unstable
   lintian-standards-version := $(shell grep -o -m1 "^[0-9].* " /usr/share/lintian/data/standards-version/release-dates)

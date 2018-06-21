@@ -25,7 +25,9 @@ set schedule, optionally rebooting to finish applying the updates.
 %setup -q
 
 %build
-help2man --include=auter.help2man --no-info ./auter -o auter.man
+help2man --section=1 ./auter -N -o auter.man -n "Automatic Update Transaction Execution by Rackspace" --include=auter.help2man-sections
+
+#help2man --section=1 --include=auter.help2man --no-info ./auter -o auter.man
 
 %install
 %if 0%{?fedora} >= 15 || 0%{?rhel} >= 7
@@ -43,6 +45,7 @@ mkdir -p %{buildroot}%{_bindir} %{buildroot}%{_sharedstatedir}/%{name} \
   %{buildroot}%{_var}/cache/auter \
   %{buildroot}%{_usr}/lib/%{name} \
   %{buildroot}%{_mandir}/man1 \
+  %{buildroot}%{_mandir}/man8 \
   %{buildroot}%{_sysconfdir}/%{name}/pre-reboot.d \
   %{buildroot}%{_sysconfdir}/%{name}/post-reboot.d \
   %{buildroot}%{_sysconfdir}/%{name}/pre-apply.d \
@@ -55,6 +58,7 @@ install -p -m 0755 %{name}.yumdnfModule %{buildroot}%{_usr}/lib/%{name}/auter.mo
 install -p -m 0644 %{name}.cron %{buildroot}%{_sysconfdir}/cron.d/%{name}
 install -p -m 0644 %{name}.conf %{buildroot}%{_sysconfdir}/%{name}/%{name}.conf
 install -p -m 0644 %{name}.man %{buildroot}%{_mandir}/man1/%{name}.1
+install -p -m 0644 %{name}.conf.man %{buildroot}%{_mandir}/man8/%{name}.conf.8
 chmod 0755 %{buildroot}%{_sysconfdir}/%{name}/*.d
 
 %post
@@ -79,6 +83,7 @@ exit 0
 %doc NEWS
 %doc MAINTAINERS.md
 %{_mandir}/man1/%{name}.1*
+%{_mandir}/man8/%{name}.conf.8*
 %{_sharedstatedir}/%{name}
 %dir %{_sysconfdir}/%{name}
 %dir %{_var}/cache/auter
@@ -104,11 +109,17 @@ exit 0
 
 %changelog
 
-* Fri Dec 1 2017 Paolo Gigante <paolo.gigante@rackspace.co.uk> 0.11-1
+* Fri Mar 16 2018 Paolo Gigante <paolo.gigante@rackspace.co.uk> 0.11-1
 - Updated documentation and references to include apt for Ubuntu/debian
 - Removed debugging message that was printed during apt update
 - Added "Valid Options" in auter.conf
 - Added the pre/post prep directories in auter.conf
+- Added retention and rotation for last-prep-output and last-apply-output files in /var/lib/auter
+- Corrected file permissions for the auter-postreboot cron file
+- Added --stdout option to force output to stdout even if there is no active tty
+- Added a package manager lock file check before prep and apply functions call the package manager
+- Improved checks to confirm prepared patches are still required
+
 
 * Mon Oct 30 2017 Paolo Gigante <paolo.gigante@rackspace.co.uk> 0.10-1
 - Added pre and post prep script hooks

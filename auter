@@ -27,7 +27,8 @@ declare -r -x PIDFILE="/var/run/auter/auter.pid"
 
 # Set default options - these can be overridden in the config file or with a command line argument
 declare -x -l AUTOREBOOT="no"
-declare -x PACKAGEMANAGEROPTIONS=""
+declare -x -i REBOOTCALL=0
+declare -x -a PACKAGEMANAGEROPTIONS
 declare -x -l PREDOWNLOADUPDATES="yes"
 declare -x -l ONLYINSTALLFROMPREP="no"
 declare -x CONFIGFILE="/etc/auter/auter.conf"
@@ -35,12 +36,12 @@ declare -x DOWNLOADDIR="/var/cache/auter"
 declare -x -i MAXDELAY=3600
 declare -x CONFIGSET="default"
 declare -x ROTATE="5"
-PREPREPSCRIPTDIR="${SCRIPTDIR}/pre-prep.d"
-POSTPREPSCRIPTDIR="${SCRIPTDIR}/post-prep.d"
-PREAPPLYSCRIPTDIR="${SCRIPTDIR}/pre-apply.d"
-POSTAPPLYSCRIPTDIR="${SCRIPTDIR}/post-apply.d"
-PREREBOOTSCRIPTDIR="${SCRIPTDIR}/pre-reboot.d"
-POSTREBOOTSCRIPTDIR="${SCRIPTDIR}/post-reboot.d"
+declare -x PREPREPSCRIPTDIR="${SCRIPTDIR}/pre-prep.d"
+declare -x POSTPREPSCRIPTDIR="${SCRIPTDIR}/post-prep.d"
+declare -x PREAPPLYSCRIPTDIR="${SCRIPTDIR}/pre-apply.d"
+declare -x POSTAPPLYSCRIPTDIR="${SCRIPTDIR}/post-apply.d"
+declare -x PREREBOOTSCRIPTDIR="${SCRIPTDIR}/pre-reboot.d"
+declare -x POSTREBOOTSCRIPTDIR="${SCRIPTDIR}/post-reboot.d"
 
 function default_signal_handling() {
   trap 'rm -f "${PIDFILE}"' SIGINT SIGTERM
@@ -51,6 +52,8 @@ function default_signal_handling() {
 function print_help() {
   echo "
 Usage: auter [--enable|--disable|--status] [--prep] [--apply] [--reboot] [--postreboot] [--config=<configfile>] [OPTION]
+
+Automatic Update Transaction Execution by Rackspace. A wrapper around cron and yum/dnf/apt to manage system updates with the ability to configure automatic reboots and custom scripts.
 
 Actions:
   --enable      Enable auter
@@ -64,6 +67,7 @@ Actions:
 Options:
   --config=FILE Specify the full path to an auter config file. Defaults to /etc/auter/auter.conf
   --stdout      Always log to STDOUT, regardless of not having a tty
+  --no-wall	If possible, suppress shutdown wall messages in the reboot phase
   -h, --help    Show this help text
   -v, --version Show the version
 "
@@ -75,18 +79,34 @@ function logit() {
   logger -p info -t auter "$1"
 }
 
+function read_config() {
+  if [[ -f "${CONFIGFILE}" ]]; then
+    source "${CONFIGFILE}"
+  elif [[ "${CUSTOMCONFIG}" ]]; then
+    logit "ERROR: Custom config file ${CONFIGFILE} does not exist"
+    quit 5
+  else
+    logit "WARNING: Using default config values."
+  fi
+
+  IFS=' ' read -r -a PACKAGEMANAGEROPTIONS <<< "${PACKAGEMANAGEROPTIONS[*]}"
+}
+
 function rotate_file {
+  declare OUTPUT_FILE="$1"
+  declare -a REMOVE_FILES
+
   #Rotate old file
-  OUTPUT_FILE=$1
-  for i in `seq $(($ROTATE-1)) -1 1`; do
-    [[ -e "${OUTPUT_FILE}.$i" ]] && mv -f "${OUTPUT_FILE}.$i" "${OUTPUT_FILE}.$(($i+1))"
+  for i in $(seq $((ROTATE-1)) -1 1); do
+    [[ -e "${OUTPUT_FILE}.$i" ]] && mv -f "${OUTPUT_FILE}.$i" "${OUTPUT_FILE}.$((i+1))"
   done
 
   # Move base files to basefile.1
   [[ -e "${OUTPUT_FILE}" ]] && mv "${OUTPUT_FILE}" "${OUTPUT_FILE}.1"
 
+  readarray -t REMOVE_FILES <<< "$(find "$DATADIR" -type f -name "$(basename "$OUTPUT_FILE").*" | awk -F'.' -v s="$ROTATE" '($NF+1)>s')"
   # Finally check for extra file from the rotation, and remove if it exists
-  [[ -e "${OUTPUT_FILE}.${ROTATE}" ]] && rm -f "${OUTPUT_FILE}.${ROTATE}"
+  [[ -n "${REMOVE_FILES[*]}" ]] && rm -f "${REMOVE_FILES[@]}"
 }
 
 function run_script {
@@ -132,13 +152,17 @@ function reboot_server() {
   fi
 
   logit "INFO: Rebooting server"
-  /sbin/shutdown -r +2 "auter: System reboot to apply updates" &
+  if [[ ${NOWALLMSG} -eq 1 ]] && shutdown --help | grep -q "no-wall"; then
+    /sbin/shutdown --no-wall -r +2 "auter: System reboot to apply updates" &>/dev/null &
+  else
+    /sbin/shutdown -r +2 "auter: System reboot to apply updates" &>/dev/null &
+  fi
 }
 
 function post_reboot() {
   logit "INFO: Removed post-reboot hook: /etc/cron.d/auter-postreboot-${CONFIGSET}"
   rm -f "/etc/cron.d/auter-postreboot-${CONFIGSET}"
-  $(tty -s) || sleep 300
+  tty -s || sleep 300
 
   for SCRIPT in "${POSTREBOOTSCRIPTDIR}"/*; do
     run_script "${SCRIPT}" "Post-Reboot"
@@ -147,10 +171,13 @@ function post_reboot() {
 
 function print_status() {
   if [[ -f "${LOCKFILE}" ]] && [[ -f "${PIDFILE}" ]]; then
-    if kill -0 $(cat ${PIDFILE}) &>/dev/null; then
+    CURRENTPIDSTATUS="$(kill -0 "$(cat ${PIDFILE})" 2>&1 )"
+    if [[ $? -eq 0 ]]; then
       echo "auter is currently enabled and running"
-    else
+    elif [[ "${CURRENTPIDSTATUS}" == *"No such process"* ]]; then
       echo "auter is currently enabled and pid file exists but process is dead"
+    elif [[ "${CURRENTPIDSTATUS}" == *"Operation not permitted"* ]]; then
+      echo "auter is enabled but permission denied on ${PIDFILE}. Run 'auter --status' as root"
     fi
   elif [[ -f "${LOCKFILE}" ]] && [[ ! -f "${PIDFILE}" ]]; then
     echo "auter is currently enabled and not running"
@@ -164,12 +191,11 @@ function quit() {
   if [[ -f "${PIDFILE}" ]]; then
     rm -f "${PIDFILE}"
   fi
-  exit $1
+  exit "$1"
 }
 
 function log_last_run() {
-    local LASTRUNTIME=$(date -Iseconds)
-    logit "INFO: Auter successfully ran at ${LASTRUNTIME}"
+    logit "INFO: Auter successfully ran at $(date -Iseconds)"
 }
 
 
@@ -179,8 +205,8 @@ function log_last_run() {
 default_signal_handling
 
 
-ARGS=$@
-OPTS=$(getopt -n "$0" -o h,v --long prep,apply,enable,disable,reboot,postreboot,version,help,stdout,status,config: -- "$@")
+ARGS="$*"
+OPTS=$(getopt -n "$0" -o h,v --long prep,apply,enable,disable,reboot,postreboot,version,help,stdout,no-wall,status,config: -- "$@")
 if [[ $? -ne 0 ]]; then
   echo "Try '$0 --help' for more information."
   exit
@@ -193,6 +219,7 @@ while true ; do
     -h|--help) print_help ; exit 0;;
     -v|--version) echo "auter ${AUTERVERSION}" ; exit 0;;
     --stdout) STDOUT=1 ; shift;;
+    --no-wall) NOWALLMSG=1 ; shift;;
     --config) CONFIGSET="" ; CONFIGFILE="$2" ; CUSTOMCONFIG=1 ; shift 2;;
     --prep) PREP=1 ; shift;;
     --apply) APPLY=1 ; shift;;
@@ -229,7 +256,7 @@ fi
 
 if [[ "${DISABLE}" ]] ; then
   rm -f "${LOCKFILE}"
-  if [[ -f "${PIDFILE}" ]] && ! kill -0 $(cat ${PIDFILE}) &>/dev/null; then
+  if [[ -f "${PIDFILE}" ]] && ! kill -0 "$(cat ${PIDFILE})" &>/dev/null; then
       rm -f "${PIDFILE}"
       logit "INFO: auter disabled and cleared pid file"
   else
@@ -257,14 +284,7 @@ else
   echo "$$" > "${PIDFILE}"
 fi
 
-if [[ -f "${CONFIGFILE}" ]]; then
-  source "${CONFIGFILE}"
-elif [[ "${CUSTOMCONFIG}" ]]; then
-  logit "ERROR: Custom config file ${CONFIGFILE} does not exist"
-  quit 5
-else
-  logit "WARNING: Using default config values."
-fi
+read_config
 
 # CONFIGSET needs to be set if we're using a custom configuration file.
 if [[ -z "${CONFIGSET}" ]]; then
@@ -284,7 +304,7 @@ fi
 logit "INFO: Running with: $0 ${ARGS}"
 
 [[ "${MAXDELAY}" -lt 1 ]] && MAXDELAY=1
-$(tty -s) && MAXDELAY=1 && logit "INFO: Running in an interactive shell, disabling all random sleeps"
+tty -s && MAXDELAY=1 && logit "INFO: Running in an interactive shell, disabling all random sleeps"
 
 # There is an explicit quit here to avoid auter automatically running any
 # other unexpected functions.
@@ -295,9 +315,9 @@ $(tty -s) && MAXDELAY=1 && logit "INFO: Running in an interactive shell, disabli
 
 # The following 3 functions are provided by the previously sourced /usr/lib/auter/auter.module
 # Run the package manager specific check for locks
-[[ "${PREP}" ]] && check_package_manager_lock && prepare_updates
-[[ "${APPLY}" ]] && check_package_manager_lock && apply_updates
+[[ "${PREP}" ]] && prepare_updates
+[[ "${APPLY}" ]] && apply_updates
 
-[[ "${REBOOTCALL}" ]] && reboot_server
+[[ $REBOOTCALL -eq 1 ]] && reboot_server
 
 quit 0

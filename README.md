@@ -2,6 +2,12 @@
 
 Automatic updates for RHEL, CentOS, Fedora, Ubuntu and Debian Linux servers, with the ability to run pre/post hooks, pre-download packages and reboot after the updates.
 
+**Note about contributions**
+Auter is an open source project and we welcome users to send in feature requests and report any bugs in our issues page. We also welcome any help with maintaining the application and any code contributions.
+
+**What does auter mean?**
+Automatic Update Transaction Execution by Rackspace.
+
 **When to use Auter?**
 
 Updates should be applied regularly to Linux systems in order to apply security and bug fixes. For some of those updates, for example the kernel, or a shared library, a system restart is required for those updates to take effect. Whether you apply those updates manually, or automatically will depend on your requirements.
