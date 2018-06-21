@@ -71,6 +71,12 @@ for RELEASE in 16.04 17.10 18.04; do
   docker cp "${AUTERDIR}/tests/21-container-debuild.sh" "auter-debuild-test-${RELEASE}":/home/builduser
   EVALSUCCESS "Copied build script to container"
 
+  if ! docker exec auter-debuild-test-${RELEASE} ls -1 /usr/bin/python &>/dev/null; then
+    if docker exec auter-debuild-test-${RELEASE} ls -1 /usr/bin/python3 &>/dev/null; then
+      docker exec auter-debuild-test-${RELEASE} ln -s /usr/bin/python3 /usr/bin/python
+    fi
+  fi
+
   docker exec auter-debuild-test-${RELEASE} chown -R builduser.builduser /home/builduser
   docker exec auter-debuild-test-${RELEASE} /home/builduser/21-container-debuild.sh
   EVALSUCCESS "Executed /home/builduser/21-container-debuild.sh"

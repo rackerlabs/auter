@@ -7,8 +7,8 @@ script:
     # Save changed files to a text file to narrow test scope
     - "git remote add upstream https://github.com/rackerlabs/auter.git"
     - "git fetch upstream master:rmaster"
-    - "git diff rmaster --name-only >CHANGEDFILES"
-    - "cat CHANGEDFILES"
+#    - "git diff rmaster --name-only >CHANGEDFILES"
+#    - "cat CHANGEDFILES"
 
     # Create docker image and run general code checks
     - "sudo docker run --rm=true --mount type=bind,source=$(pwd),destination=/auter --name auter-test -td centos:7"
