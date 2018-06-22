@@ -1,0 +1,2 @@
+#!/bin/bash
+[[ -f /usr/sbin/configsnap ]] && /usr/sbin/configsnap -d /root -t auter-configsnap-"$(date +%Y-%m-%d)" -p post-apply &> /root/auter-configsnap-"$(date +%Y-%m-%d)"/configsnap/post-apply.compare
