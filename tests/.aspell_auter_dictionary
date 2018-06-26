@@ -14,7 +14,7 @@ BuildArch
 crontabs
 cd
 removeFromAppPool
-EPEL
+epel
 VERSIONNUMBER
 ar
 MERCHANTABILITY
@@ -152,8 +152,8 @@ egrep
 sysv
 Iseconds
 google
-rpms
 RPMs
+rpms
 Rackspace
 eval
 MAXDELAY
@@ -188,3 +188,5 @@ aspell
 chown
 AUTERVERSION
 TRANSACTIONID
+APPLIST
+symlink
