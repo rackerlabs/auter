@@ -32,24 +32,16 @@ yum install configsnap
 
 # Files and explanations
 
- - /etc/auter/pre-apply.d/01-configsnap-pre
-  Captured data before the server is updated
-
- - /etc/auter/post-apply.d/50-configsnap-post-apply
-  Captured data aftere the server has been updated
-
- - /etc/auter/pre-reboot.d/50-configsnap-pre-reboot
-  Captured data before the server is rebooted
-
- - /etc/auter/post-reboot.d/99-configsnap-post-reboot
-  Captured data before the server has been rebooted
+ - /etc/auter/pre-apply.d/01-configsnap-pre : Captured data before the server is updated
+ - /etc/auter/post-apply.d/50-configsnap-post-apply : Captured data after the server has been updated
+ - /etc/auter/pre-reboot.d/50-configsnap-pre-reboot : Captured data before the server is rebooted
+ - /etc/auter/post-reboot.d/99-configsnap-post-reboot : Captured data before the server has been rebooted
 
 # Configsnap options used
 
  - The base directory for configsnap files has been set to /root
  - The tag has been set to auter-configsnap-$(date +%Y-%m-%d)
-  Note that this will need to be adjusted if updates span over the change of a day ie:
-  apply runs at 23:00
-  reboot runs at 02:00
-
-
+    - Note that this will need to be adjusted if updates span over the change of a day ie:
+    apply runs at 23:00
+    reboot runs at 02:00
+ - The --silent option has specifically NOT been used for all scripts except pre-apply. This is because the output is redirected to .compare files in /root/auter-configsnap-$(date +%Y-%m-%d)/configsnap/

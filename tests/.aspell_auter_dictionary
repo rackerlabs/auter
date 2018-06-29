@@ -1,4 +1,4 @@
-personal_ws-1.1 en 183 
+personal_ws-1.1 en 189 
 DOWNLOADLOGMSG
 sublicense
 Gigante
@@ -13,7 +13,8 @@ Testing
 BuildArch
 crontabs
 cd
-EPEL
+removeFromAppPool
+epel
 VERSIONNUMBER
 ar
 MERCHANTABILITY
@@ -42,6 +43,7 @@ licensable
 noarch
 PREPREPSCRIPTDIR
 devscripts
+ie
 rundir
 configset
 PREAPPLYSCRIPTDIR
@@ -86,6 +88,7 @@ ubuntu
 mv
 filename
 xargs
+notifyAvailablePatches
 rc
 chmod
 Cornwell
@@ -100,10 +103,12 @@ EXITCODE
 RHEL
 UPDATEACTION
 crontab
+configsnap
 qp
 czf
 yumdnfModule
 endif
+contrib
 mandir
 PIDDIR
 distributionrelease
@@ -146,8 +151,9 @@ pid
 egrep
 sysv
 Iseconds
-rpms
+google
 RPMs
+rpms
 Rackspace
 eval
 MAXDELAY
@@ -182,3 +188,5 @@ aspell
 chown
 AUTERVERSION
 TRANSACTIONID
+APPLIST
+symlink
