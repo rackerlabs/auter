@@ -107,9 +107,7 @@ function read_config() {
     logit "WARNING: Using default config values."
   fi
 
-  # Convert space separated list from the config file to an indexed array
-  # https://github.com/koalaman/shellcheck/wiki/SC2086
-  IFS=' ' read -r -a PACKAGEMANAGEROPTIONS <<< "$PACKAGEMANAGEROPTIONS"
+  IFS=' ' read -r -a PACKAGEMANAGEROPTIONS <<< "${PACKAGEMANAGEROPTIONS[*]}"
 }
 
 function rotate_file {
@@ -248,7 +246,8 @@ function log_last_run() {
 default_signal_handling
 
 
-ARGS=$@
+
+ARGS="$*"
 OPTS=$(getopt -n "$0" -o h,v --long prep,apply,enable,disable,reboot,postreboot,version,help,stdout,no-wall,status,config:,skip-all-scripts,skip-phase-scripts:,skip-scripts-by-name: -- "$@")
 if [[ $? -ne 0 ]]; then
   echo "Try '$0 --help' for more information."
