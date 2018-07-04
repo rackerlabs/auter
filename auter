@@ -42,7 +42,7 @@ declare -x PREAPPLYSCRIPTDIR="${SCRIPTDIR}/pre-apply.d"
 declare -x POSTAPPLYSCRIPTDIR="${SCRIPTDIR}/post-apply.d"
 declare -x PREREBOOTSCRIPTDIR="${SCRIPTDIR}/pre-reboot.d"
 declare -x POSTREBOOTSCRIPTDIR="${SCRIPTDIR}/post-reboot.d"
-declare -x -i SKIPALLSCRIPTS=1
+declare -x -i SKIPALLSCRIPTS=0
 declare -x -a SKIPPHASESCRIPTS
 declare -x -a SKIPSCRIPTNAMES
 
@@ -73,12 +73,12 @@ Options:
   --skip-all-scripts
                 Skip the executions of all custom scripts (Default in /etc/auter/*.d/)
 
-  --skip-phase-scripts=PHASE
+  --skip-scripts-by-phase=PHASE
                 Skip the execution of the custom scripts for the specified phase. You can specify myltiple phases.
 
                 Valid Phases: pre-prep, post-prep, pre-apply, post-apply, pre-reboot, post-reboot. 
 
-                Example: --skip-phase-scripts=\"pre-prep,post-apply,pre-reboot\"
+                Example: --skip-scripts-by-phase=\"pre-prep,post-apply,pre-reboot\"
 
   --skip-scripts-by-name=SCRIPTNAME
                 Skip specific scripts by name. You can specify myltiple phases. 
@@ -132,34 +132,34 @@ function run_script {
   PHASE=$2
   if [[ "${SKIPALLSCRIPTS}" -eq 0 ]]; then
     SKIP=0
-    # Check if the phase scripts have been skipped with --skip-phase-scripts
+    # Check if the phase scripts have been skipped with --skip-scripts-by-phase
     if [[ -n "${SKIPPHASESCRIPTS[*]}" ]]; then
-      shopt -s nocasematch
       for SKIPPHASESCRIPT in "${SKIPPHASESCRIPTS[@]}"; do
-        [[ ${SKIPPHASESCRIPT} == *"${PHASE}"* ]] && SKIP=1
+        [[ "${SKIPPHASESCRIPT,,}" == *"${PHASE,,}"* ]] && SKIP=1
       done
-      shopt -u nocasematch
     fi
 
     # Check if the script has been excluded with --skip-scripts-by-name
     if [[ -n "${SKIPSCRIPTNAMES[*]}" ]]; then
-      shopt -s nocasematch
       for SKIPSCRIPTNAME in "${SKIPSCRIPTNAMES[@]}"; do
-        [[ ${SKIPSCRIPTNAME} == *"${SCRIPT}"* ]] && SKIP=1
+        [[ ${SCRIPT,,} == *"${SKIPSCRIPTNAME,,}"* ]] && SKIP=1
       done
-      shopt -u nocasematch
     fi
 
-    if [[ -x "${SCRIPT}" ]] && [[ -f "${SCRIPT}" ]] && [[ "${SKIP}" -eq 0 ]]; then
-      logit "INFO: Running ${PHASE} script ${SCRIPT}"
-      ${SCRIPT}
-      local RC=$?
-      if [[ "${RC}" -ne 0 ]]; then
-        logit "ERROR: ${PHASE} script ${SCRIPT} exited with non-zero exit code ${RC}. Aborting auter run."
-        quit 8
+    if [[ "${SKIP}" -eq 0 ]]; then
+      if [[ -x "${SCRIPT}" ]] && [[ -f "${SCRIPT}" ]]; then
+        logit "INFO: Running ${PHASE} script ${SCRIPT}"
+        ${SCRIPT}
+        local RC=$?
+        if [[ "${RC}" -ne 0 ]]; then
+          logit "ERROR: ${PHASE} script ${SCRIPT} exited with non-zero exit code ${RC}. Aborting auter run."
+          quit 8
+        fi
+      elif [[ -f "${SCRIPT}" ]]; then
+        logit "ERROR: ${PHASE} script ${SCRIPT} exists but the execute bit is not set. Skipping."
       fi
-    elif [[ -f "${SCRIPT}" ]]; then
-      logit "ERROR: ${PHASE} script ${SCRIPT} exists but the execute bit is not set. Skipping."
+    else
+      logit "INFO: Skipping script ${SCRIPT}"
     fi
   else
     logit "INFO: The --skip-all-scripts flag was used. NOT executing ${SCRIPT} as part of the ${PHASE} phase"
@@ -245,10 +245,8 @@ function log_last_run() {
 # Make sure we trap signals and clean up the PID before exiting
 default_signal_handling
 
-
-
 ARGS="$*"
-OPTS=$(getopt -n "$0" -o h,v --long prep,apply,enable,disable,reboot,postreboot,version,help,stdout,no-wall,status,config:,skip-all-scripts,skip-phase-scripts:,skip-scripts-by-name: -- "$@")
+OPTS=$(getopt -n "$0" -o h,v --long prep,apply,enable,disable,reboot,postreboot,version,help,stdout,no-wall,status,config:,skip-all-scripts,skip-scripts-by-phase:,skip-scripts-by-name: -- "$@")
 if [[ $? -ne 0 ]]; then
   echo "Try '$0 --help' for more information."
   exit
@@ -270,7 +268,7 @@ while true ; do
     --enable) ENABLE=1 ; shift;;
     --disable) DISABLE=1 ; shift;;
     --skip-all-scripts) SKIPALLSCRIPTS=1 ; shift;;
-    --skip-phase-scripts) IFS=',' read -a SKIPPHASESCRIPTS <<< "$2" ; shift 2;;
+    --skip-scripts-by-phase) IFS=',' read -a SKIPPHASESCRIPTS <<< "$2" ; shift 2;;
     --skip-scripts-by-name) IFS=',' read -a SKIPSCRIPTNAMES <<< "$2" ; shift 2;;
     --status) print_status ; exit 0;;
     --) shift ; break;;
@@ -349,10 +347,10 @@ fi
 # Validate the SKIPPHASESCRIPTS values
 if [[ -n "${SKIPPHASESCRIPTS[*]}" ]]; then
   for SKIPPHASESCRIPT in "${SKIPPHASESCRIPTS[@]}"; do
-    if [[ ${SKIPPHASESCRIPT} =~ [pre,post]-[prep,apply,reboot] ]]; then
-       logit "INFO: The --skip-phase-scripts argument was used. Skipping ${SKIPPHASESCRIPT} scripts"
+    if [[ ${SKIPPHASESCRIPT} =~ ^(pre|post)-(prep|apply|reboot)$ ]]; then
+       logit "INFO: The --skip-scripts-by-phase argument was used. Skipping ${SKIPPHASESCRIPT} scripts"
     else
-       logit "ERROR: The --skip-phase-scripts argument was used with an invalid option: '${SKIPPHASESCRIPT}'. Exiting"
+       logit "ERROR: The --skip-scripts-by-phase argument was used with an invalid option: '${SKIPPHASESCRIPT}'. Exiting"
        quit 1
     fi
   done
