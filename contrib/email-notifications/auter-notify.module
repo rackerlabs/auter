@@ -20,23 +20,39 @@
 # specific language governing permissions and limitations under the License.
 #
 
+
+#######################################
+# Main auter-notify.module function
+# Globals:
+#   STAGE
+#   MAIL_TO
+#   MAIL_FROM
+#   MAIL_CC
+#   OUTPUT_FILE
+# Arguments:
+#   None
+# Returns:
+#   Success
+#######################################
 function main() {
   function logit() {
-    # If running on a tty, or the --stdout option is provided, print to screen
-    ( tty -s || [[ -n "$STDOUT" ]] ) && echo "$1"
-    logger -p INFO -t auter "$1"
+    # If running on a tty then print to screen
+    ( tty -s ) && echo "$1"
+    logger -p INFO -t "$(basename "$0")" "$1"
   }
 
   # Setup
   local STAGE="$1"
+  local MAIL_CC
   if [[ -f "${SCRIPTDIR}/auter-notify.conf" ]]; then
     source "${SCRIPTDIR}/auter-notify.conf"
   else
     logit "ERROR: auter-notify.conf is missing, skipping $0"
+    exit 0
   fi
 
-  local MAIL_CC
-  MAIL_CC="-c $(sed 's/ / -c /g' <<< "$MAIL_CC")"
+  # Convert space separated CC list to -c <email> -c <email> format
+  MAIL_CC="$(sed -r 's/\<[[:graph:]]+/-c &/g' <<< "$MAIL_CC")"
 
   if [[ "$STAGE" == "post-prep" ]] || [[ "$STAGE" == "pre-apply" ]]; then
     local OUTPUT_FILE="${DATADIR}/last-prep-output-${CONFIGSET}"
@@ -70,9 +86,11 @@ function main() {
   }
   function run_custom_scripts {
     for SCRIPT in ${SCRIPTDIR}/auter-notify.d/*$STAGE; do
-      if [[ -x "$SCRIPT" ]] && [[ -f "$SCRIPT" ]]; then
+      if [[ -x "$SCRIPT" ]]; then
         echo -e "\\nOutput from custom script: $SCRIPT\\n"
         $SCRIPT
+      else
+        logit "WARNING: skipping auter-notify ${SCRIPT} as the executable bit is missing"
       fi
     done
   }

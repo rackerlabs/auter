@@ -7,7 +7,7 @@ An auter module for sending brief reports on the auter patching stages.
 * Language: bash
 * Supported OS: CENTOS>=6 RHEL>=6 Fedora>=26 Ubuntu>=16.04 Debian>=9
 * Additional setup required: YES
-* Dependencies: auter, mailx
+* Dependencies: auter, mailx, configsnap
 
 # Description
 
@@ -33,10 +33,12 @@ Example post-apply script calling the auter-notify.module.
 
 ## report-configsnap.post-apply
 
-Example custom script which provides additional email body content customisation
-without having to edit the auter-notify.module script directly. This particular
-script outputs the content of the post-apply configsnap diff to show any state
-differences between pre and post apply.
+Example custom auter-notify script that provides additional body content. The
+script uses the post-apply configsnap diff to report any state differences
+between pre and post apply. It uses the default confignap BASEDIR (-d) of
+`/root`, and tag (-t) `auter-configsnap-"$(date +%Y-%m-%d)"` to determine the
+last files created by auter pre/post configsnap scripts. The script will need to
+be edited if you are not using the default configsnap contrib script setup.
 
 ## report-rpmnew.post-apply
 
