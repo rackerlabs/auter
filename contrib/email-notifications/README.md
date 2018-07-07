@@ -46,9 +46,10 @@ Example script to report on all updated config files post apply.
 
 # Pre-requisites and dependencies
 
-* auter
+* **auter**
 * **mailx** for sending email
-* configsnap for the report-configsnap.post-apply example
+* **all scripts must have the executable bit set**
+* **configsnap** for the report-configsnap.post-apply example
 
 # Files and explanations
 
