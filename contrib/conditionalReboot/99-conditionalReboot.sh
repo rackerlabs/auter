@@ -22,7 +22,7 @@ function logit() {
 
 # Calculated variables
 ###############################################################################
-DISTRIBUTION="$(python -c "import platform; print platform.linux_distribution()[0]")"
+DISTRIBUTION="$(python -c "import platform; print(platform.linux_distribution()[0])")"
 # for later use:
 # [[ "${DISTRIBUTION}" =~ debian|Ubuntu ]] && SYSTEMLOG="/var/log/syslog"
 # [[ "${DISTRIBUTION}" =~ CentOS|Red\ Hat|Fedora ]] && SYSTEMLOG="/var/log/messages"
@@ -50,12 +50,12 @@ if [[ "${DISTRIBUTION}" =~ CentOS|Red\ Hat|Fedora|Oracle\ Linux ]]; then
   fi
 fi
 
+# This is primarily for Debian and Ubuntu
+[[ -f /var/run/reboot-required ]] && REBOOTREQURIRED+=("/var/run/reboot-required exists")
+
 # Identify if there are any libraries that are running but deleted
 LIBCHECK=$(PATH=/usr/sbin:/usr/local/sbin:$PATH lsof | grep lib | grep DEL)
 [[ -n "${LIBCHECK}" ]] && REBOOTREQURIRED+=("detected deleted libraries")
-
-# This is primarily for Debian and Ubuntu
-[[ -f /var/run/reboot-required ]] && REBOOTREQURIRED+=("/var/run/reboot-required exists")
 
 # Check if any of the packages in the APPLIST were updated
 if [[ -n ${APPLIST} ]]; then
@@ -74,8 +74,7 @@ fi
 # Reboot the server using auter
 if [[ -n "${REBOOTREQURIRED[@]}" ]]; then
   logit "$0 assessed that the server needs to be rebooted. The assessments that triggered this requirement are:"
-  for REBOOTMATCH in "${REBOOTREQURIRED[@]}"
-  do
+  for REBOOTMATCH in "${REBOOTREQURIRED[@]}"; do
     logit "Rebooting because ${REBOOTMATCH}"
   done
   logit "Reboot required, rebooting server after running auter process completes"
