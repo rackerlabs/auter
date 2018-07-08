@@ -161,7 +161,7 @@ basefile
 AUTOREBOOT
 gpg
 useradd
-CentOS
+CentOSf
 scriptdir
 yyyy
 shellcheck
@@ -188,5 +188,10 @@ aspell
 chown
 AUTERVERSION
 TRANSACTIONID
+builduser
+sudo
+xzf
+qq
+td
 APPLIST
 symlink

@@ -1,7 +1,7 @@
 pkg_name := "auter"
 
 # Version info:
-#git_tag := $(shell git describe --exact-match --tags 2>/dev/null | sed "s/^v\?//g")
+
 git_tag := $(shell awk '/Version:/ {print $$2}' auter.spec)
 git_commit := $(shell git log --pretty=format:'%h' -n 1)
 release := $(shell awk '/Release:/ {gsub(/%.*/,""); print $$2}' auter.spec)
@@ -19,7 +19,8 @@ endif
 version_release := ${version}-${release}
 
 # Build release for debian
-distribution := $(shell python -c "import platform; print platform.linux_distribution()[0]")
+distribution := $(shell python -c "import platform; print(platform.linux_distribution()[0])")
+
 ifeq (${distribution}, Debian)
   distributionrelease := unstable
   lintian-standards-version := $(shell grep -o -m1 "^[0-9].* " /usr/share/lintian/data/standards-version/release-dates)
@@ -56,7 +57,7 @@ deb:
 	@rm -f ${pkg_name}-${version}/auter.yumdnfModule
 	@rm -f ${pkg_name}-${version}/LICENSE
 	@mkdir ${pkg_name}-${version}/docs
-	@/usr/bin/help2man --include=auter.help2man -n auter --no-info ./auter -o ${pkg_name}-${version}/docs/auter.1
+	@/usr/bin/help2man --section=1 ./auter -N -o ${pkg_name}-${version}/docs/auter.1 -n "Automatic Update Transaction Execution by Rackspace" --include=auter.help2man-sections
 	@echo "auter (${version}) ${distributionrelease}; urgency=medium" >${pkg_name}-${version}/debian/changelog
 	@echo "  * Release ${version}." >>${pkg_name}-${version}/debian/changelog
 	# DON'T FORGET TO CHANGE THIS VERSION AT NEXT RELEASE
