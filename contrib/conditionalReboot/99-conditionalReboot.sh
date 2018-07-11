@@ -55,30 +55,14 @@ fi
 
 # Identify if the kernel has been updated outside of auter
 if [[ "${DISTRIBUTION}" =~ CentOS|Red\ Hat|Fedora|Oracle\ Linux ]]; then
-  if [[ -f /sbin/grubby ]]; then
-    DEFKERNELVERSION=$(/sbin/grubby --default-kernel  | sed 's/^.*vmlinuz-//g')
-  elif [[ -f /usr/sbin/grubby ]]; then
-    DEFKERNELVERSION=$(/usr/sbin/grubby --default-kernel  | sed 's/^.*vmlinuz-//g')
-  fi
+  [[ -f /sbin/grubby ]] && GRUBBYEXEC="/sbin/grubby"
+  [[ -f /usr/sbin/grubby ]] && GRUBBYEXEC="/usr/sbin/grubby"
+  [[ -n "${GRUBBYEXEC}" ]] && DEFKERNELVERSION=$("${GRUBBYEXEC}" --default-kernel  | sed 's/^.*vmlinuz-//g')
 
   if [[ -n ${DEFKERNELVERSION} ]]; then
-    [[ ! "${DEFKERNELVERSION} == "$(uname -r) ]] && REBOOTREQURIRED+=("Default kernel ${DEFKERNELVERSION} does not match running kernel $(uname -r)")
+    [[ ! "${DEFKERNELVERSION}" == "$(uname -r)" ]] && REBOOTREQURIRED+=("Default kernel ${DEFKERNELVERSION} does not match running kernel $(uname -r)")
   fi
 fi
-
-# First check if grub 1 is in use
-#if [[ -f /boot/grub/grub.conf ]]; then
-#  logit "$0 Checking /boot/grub/grub.conf for default kernel"
-#  GRUBFILE="/boot/grub/grub.conf"
-#  DEFKERNELGRUBID="$(($(grep default $GRUBFILE | cut -d'=' -f2)+1))"
-#  DEFKERNELLINE=$(awk '/^title/,0 {if ($0~".*kernel.*") {{i++}; if (i=='"${DEFKERNELGRUBID}"') {print; exit}}}' $GRUBFILE) 
-#  DEFKERNELVERSION=$()
-#elif [[ -f /boot/grub2/grub.cfg ]]; then
-#  logit "$0 Checking /boot/grub/grub.conf for default kernel"
-#
-#else
-#  logit "$0 was unable to identify the default boot kernel in /boot/grub/grub.conf or /boot/grub2/grub.cfg"
-#fi
 
 # Identify if there are any libraries that are running but deleted
 LIBCHECK=$(PATH=/usr/sbin:/usr/local/sbin:$PATH lsof | grep lib | grep DEL)

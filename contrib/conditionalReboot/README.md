@@ -16,7 +16,9 @@ Dependencies: python
 
 1. This script will assess what Linux distribution is running based on the python "platform" library.
 2. Identify the list of packages that were updated
-3. If OS is RHEL/CentOS/Fedora/Oracle Linux run `/usr/bin/needs-restarting` if it exists
+3. If OS is RHEL/CentOS/Fedora/Oracle Linux:
+    * run `/usr/bin/needs-restarting` if it exists
+    * Compare the running kernel to the default kernel from grub.conf
 3. If OS is Debian/Ubuntu check if file `/var/run/reboot-required` exists
 4. Check if any deleted (updated) libraries have open file handles
 5. Check if any user-defined applications were updated (see APPLIST definition in script)
