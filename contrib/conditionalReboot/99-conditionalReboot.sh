@@ -53,6 +53,17 @@ fi
 # This is primarily for Debian and Ubuntu
 [[ -f /var/run/reboot-required ]] && REBOOTREQURIRED+=("/var/run/reboot-required exists")
 
+# Identify if the kernel has been updated outside of auter
+if [[ "${DISTRIBUTION}" =~ CentOS|Red\ Hat|Fedora|Oracle\ Linux ]]; then
+  [[ -f /sbin/grubby ]] && GRUBBYEXEC="/sbin/grubby"
+  [[ -f /usr/sbin/grubby ]] && GRUBBYEXEC="/usr/sbin/grubby"
+  [[ -n "${GRUBBYEXEC}" ]] && DEFKERNELVERSION=$("${GRUBBYEXEC}" --default-kernel  | sed 's/^.*vmlinuz-//g')
+
+  if [[ -n ${DEFKERNELVERSION} ]]; then
+    [[ ! "${DEFKERNELVERSION}" == "$(uname -r)" ]] && REBOOTREQURIRED+=("Default kernel ${DEFKERNELVERSION} does not match running kernel $(uname -r)")
+  fi
+fi
+
 # Identify if there are any libraries that are running but deleted
 LIBCHECK=$(PATH=/usr/sbin:/usr/local/sbin:$PATH lsof | grep lib | grep DEL)
 [[ -n "${LIBCHECK}" ]] && REBOOTREQURIRED+=("detected deleted libraries")
