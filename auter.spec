@@ -76,7 +76,6 @@ fi
 exit 0
 
 %files
-%defattr(-,root,root,-)
 %{!?_licensedir:%global license %doc}
 %license LICENSE
 %doc README.md
