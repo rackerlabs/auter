@@ -64,9 +64,13 @@ if [[ "${DISTRIBUTION}" =~ CentOS|Red\ Hat|Fedora|Oracle\ Linux ]]; then
   fi
 fi
 
-# Identify if there are any libraries that are running but deleted
-LIBCHECK=$(PATH=/usr/sbin:/usr/local/sbin:$PATH lsof | grep lib | grep DEL)
-[[ -n "${LIBCHECK}" ]] && REBOOTREQURIRED+=("detected deleted libraries")
+# If lsof is installed, Identify if there are any libraries that are running but deleted
+if LSOFEXEC="$(PATH=/usr/sbin:/usr/local/sbin:$PATH which lsof 2>/dev/null)"; then
+  LIBCHECK=$(${LSOFEXEC} | grep lib | grep DEL)
+  [[ -n "${LIBCHECK}" ]] && REBOOTREQURIRED+=("detected deleted libraries")
+else
+  logit "$0 - lsof not found: unable to check running libraries"
+fi
 
 # Check if any of the packages in the APPLIST were updated
 if [[ -n ${APPLIST} ]]; then
