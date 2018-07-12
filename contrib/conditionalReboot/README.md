@@ -9,7 +9,7 @@ This script will assess the running distribution and do some basic checks to ass
 Language: BASH
 Supported OS: CENTOS>=6 RHEL>=6 Fedora>=26 Ubuntu>=16.04 Debian>=9
 Additional setup required: NO
-Dependencies: python 
+Dependencies: python, lsof
 
 
 # Description
