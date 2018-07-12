@@ -27,8 +27,6 @@ set schedule, optionally rebooting to finish applying the updates.
 %build
 help2man --section=1 ./auter -N -o auter.man -n "Automatic Update Transaction Execution by Rackspace" --include=auter.help2man-sections
 
-#help2man --section=1 --include=auter.help2man --no-info ./auter -o auter.man
-
 %install
 %if 0%{?fedora} >= 15 || 0%{?rhel} >= 7
 mkdir -p %{buildroot}%{_tmpfilesdir}
@@ -107,8 +105,22 @@ exit 0
 %endif
 
 %changelog
+* Thu Jul 12 2018 Paolo Gigante <paolo.gigante.sa@gmail.com> 0.12-1
+- Added --skip-all-scripts to skip the executions of all custom scripts
+- Added --skip-scripts-by-phase to skip the executions of custom scripts for the specified phase
+- Added --skip-scripts-by-phase to skip the executions of custom scripts by name
+- Added man page for auter.conf
+- Updated auter.aptModule to reflect changes in auter.yumdnfModule
+- added no-wall option
+- Fix for --status when run as non-root user
+- Logs auter output in /var/lib/auter/ when no updates are available
+- Minor improvements to rotation of output files in /var/lib/auter/
 
-* Fri Mar 16 2018 Paolo Gigante <paolo.gigante@rackspace.co.uk> 0.11-1
+
+* Fri Mar 16 2018 Nick Rhodes <nrhodes91@gmail.com> 0.11-5
+- Hotfix for the AUTOREBOOT issue
+
+* Fri Mar 16 2018 Paolo Gigante <paolo.gigante@rackspace.co.uk> 0.11-4
 - Updated documentation and references to include apt for Ubuntu/debian
 - Removed debugging message that was printed during apt update
 - Added "Valid Options" in auter.conf
@@ -118,7 +130,7 @@ exit 0
 - Added --stdout option to force output to stdout even if there is no active tty
 - Added a package manager lock file check before prep and apply functions call the package manager
 - Improved checks to confirm prepared patches are still required
-
+- Adjusted some string arguments to arrays for better handling
 
 * Mon Oct 30 2017 Paolo Gigante <paolo.gigante@rackspace.co.uk> 0.10-1
 - Added pre and post prep script hooks

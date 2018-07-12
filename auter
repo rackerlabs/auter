@@ -19,7 +19,7 @@
 #
 
 
-declare -r -x AUTERVERSION="0.11"
+declare -r -x AUTERVERSION="0.12"
 declare -r -x SCRIPTDIR="/etc/auter"
 declare -r -x DATADIR="/var/lib/auter"
 declare -r -x LOCKFILE="${DATADIR}/enabled"
@@ -54,7 +54,7 @@ function default_signal_handling() {
 #   help2man --include=auter.help2man --no-info ./auter > auter.man
 function print_help() {
   echo "
-Usage: auter [--enable|--disable|--status] [--prep] [--apply] [--reboot] [--postreboot] [--config=<configfile>] [OPTIONS]
+Usage: auter [--enable|--disable|--status] [--prep] [--apply] [--reboot] [--postreboot] [OPTIONS]
 
 Automatic Update Transaction Execution by Rackspace. A wrapper around cron and yum/dnf/apt to manage system updates with the ability to configure automatic reboots and custom scripts.
 
