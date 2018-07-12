@@ -1,5 +1,5 @@
 Name:           auter
-Version:        0.11
+Version:        0.12
 Release:        1%{?dist}
 Summary:        Prepare and apply updates
 License:        ASL 2.0
