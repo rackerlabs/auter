@@ -232,7 +232,7 @@ while true ; do
   esac
 done
 
-[[ ! "$ARGS" =~ prep|apply|reboot|postreboot|enable|disable  ]] && print_help && quit 1
+[[ ! "$ARGS" =~ --(prep|apply|reboot|postreboot|enable|disable)  ]] && print_help && quit 1
 
 readonly PACKAGE_MANAGER=$(check_package_manager)
 
