@@ -36,19 +36,18 @@ chmod +x /etc/auter/*.d/*script
 1. Test the commands manually in a normal shell session.
 2. Test for both positive and negative outcomes.
 3. Test the effects of the change in the function. Again, if possible, test success and failure conditions
-4. Test the all functionality in auter that is affected by they code changes.
+4. Test all functionality in auter that is affected by the code changes.
 
 ##### Testing template
 
-This should be completed in all pull requests before being merged.
+This MUST be completed for all supported distrubutions in all pull requests to the master branch before being merged.
 
 ```md
 # <OS test version>
 # Steps taken to create install file:
-```
+    ```
 
-```
-
+    ```
 ---
 # Test 1: Basic auter status tests
 1) Do a fresh install of auter
@@ -118,10 +117,9 @@ Checks:
     - __[ pass/fail ]__ updates downloaded to **_/var/cache/yum/..._**
     - __[ pass/fail ]__ pre/post prep scripts ran successfully with messages logged to syslog
     ##### Output from prep:
-   ```
+    ```
 
-   ```
-
+    ```
 4) Execute `auter --apply`
     - __[ pass/fail ]__ prints the following block to stdout:
         ```
@@ -139,10 +137,9 @@ Checks:
     - __[ pass/fail ]__ pre/post apply scripts ran successfully, messages logged to syslog
     - __[ pass/fail ]__ no mail is sent to the root user with the stdout from auter
      ##### Output from apply:
-   ```
+    ```
 
-   ```
-
+    ```
 5) Execute 'auter --reboot`
     - __[ pass/fail ]__ prints the following block to stdout:
         ```
@@ -187,7 +184,6 @@ Checks:
     echo 'logger custom post reboot script ran' > /etc/auter/post-reboot.d/post_reboot_script
     chmod +x /etc/auter/*.d/*script
     ```
-
 3) Adjust the MAXDELAY value to avoid extented sleep times
     ```
     sed -i 's/MAXDELAY.*$/MAXDELAY="60"/g' /etc/auter/auter.conf
@@ -241,7 +237,6 @@ Checks:
     ```
 
     ```
-
 6) Schedule a cron job to run auter --reboot in 5 minutes and watch the logs:
     ```
     echo "$(date --date="5 minutes" +%_M" "%_H" "%d" "%_m" *") root $(which auter) --reboot --stdout" > /etc/cron.d/auter-reboot
@@ -264,7 +259,6 @@ Checks:
     ```
 
     ```
-
 7) After the server has booted, it may take up to 2 minutes for auter logs to appear. watch the logs:
     ```
     egrep "auter:|custom" /var/log/messages | awk '/auter --reboot/,0'
@@ -287,14 +281,12 @@ Checks:
     ```
 
     ```
-
 #### new functionality testing
 ### Config settings
 1) `egrep -v "^$|^#" /etc/auter/auter.conf`
     ```
 
     ```
-
 2) Details of new feature
 
 3) Test command
