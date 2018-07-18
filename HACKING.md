@@ -43,73 +43,267 @@ chmod +x /etc/auter/*.d/*script
 This should be completed in all pull requests before being merged.
 
 ```md
+# <OS test version>
+# Steps taken to create install file:
+```
+
+```
+
+---
+# Test 1: Basic auter status tests
+1) Do a fresh install of auter
+2) Execute: `auter --status`
+Checks:
+    - __[ pass/fail ]__ Exit code 0
+    - __[ pass/fail ]__ Prints "auter is currently enabled and not running" to screen
+    - __[ pass/fail ]__ /var/lib/auter/enabled exists
+
+3) Execute: `auter --disable`
+Checks:
+    - __[ pass/fail ]__ Exit code 0
+    - __[ pass/fail ]__ Prints "INFO: auter disabled" to screen
+    - __[ pass/fail ]__ /var/lib/auter/enabled does not exist
+
+4) Execute: `auter --status`
+Checks:
+    - __[ pass/fail ]__ Exit code 0
+    - __[ pass/fail ]__ Prints "auter is currently disabled" to screen
+    - __[ pass/fail ]__ /var/lib/auter/enabled does not exist
+
+5) Execute: `auter --enable`
+    - __[ pass/fail ]__ Exit code 0
+    - __[ pass/fail ]__ Prints "INFO: auter enabled" to screen
+    - __[ pass/fail ]__ /var/lib/auter/enabled exists
+
+6) Execute: `auter --help`
+    - __[ pass/fail ]__ Exit code 0
+    - __[ pass/fail ]__ Prints the auter help to screen
+
+7) Execute: `auter` (no arguments provided)
+    - __[ pass/fail ]__ Exit code 0
+    - __[ pass/fail ]__ Prints the auter help to screen
+
+
+8) Execute: `auter --version`
+    - __[ pass/fail ]__ Exit code 0
+    - __[ pass/fail ]__ Prints the correct auter version
+---
+
+# Test 2: Manual process - default config [ PASS/FAIL ]
 ### Config settings
+1) `egrep -v "^$|^#" /etc/auter/auter.conf`
+    ```
 
-AUTOREBOOT="no"
-ONLYINSTALLFROMPREP="yes"
-PREDOWNLOADUPDATES=yes
+    ```
+2) Prepare custom scripts: Execute:
+    ```
+    echo 'logger custom pre prep script ran' > /etc/auter/pre-prep.d/pre_prep_script
+    echo 'logger custom post prep script ran' > /etc/auter/post-prep.d/post_prep_script
+    echo 'logger custom pre apply script ran' > /etc/auter/pre-apply.d/pre_apply_script
+    echo 'logger custom post apply script ran' > /etc/auter/post-apply.d/pre_apply_script
+    echo 'logger custom pre reboot script ran' > /etc/auter/pre-reboot.d/pre_reboot_script
+    echo 'logger custom post reboot script ran' > /etc/auter/post-reboot.d/post_reboot_script
+    chmod +x /etc/auter/*.d/*script
+    ```
+3) Execute: `auter --prep`
+    - __[ pass/fail ]__ prints the following block to stdout:
+        ```
+        INFO: Running with: /usr/bin/auter --prep
+        INFO: Running in an interactive shell, disabling all random sleeps
+        INFO: Running Pre-Prep script /etc/auter/pre-prep.d/pre_prep_script
+        INFO: Updates downloaded
+        INFO: Running Post-Prep script /etc/auter/post-prep.d/post_prep_script
+        ```
+    - __[ pass/fail ]__ **_/var/lib/auter/last-prep-output-default_** contains yum download-only output
+    - __[ pass/fail ]__ updates downloaded to **_/var/cache/yum/..._**
+    - __[ pass/fail ]__ pre/post prep scripts ran successfully with messages logged to syslog
+    ##### Output from prep:
+   ```
 
-### <OS test version>
+   ```
 
-#### auter status
+4) Execute `auter --apply`
+    - __[ pass/fail ]__ prints the following block to stdout:
+        ```
+        INFO: Running with: /usr/bin/auter --apply
+        INFO: Running in an interactive shell, disabling all random sleeps
+        INFO: Running Pre-Apply script /etc/auter/pre-apply.d/pre_apply_script
+        INFO: Applying updates
+        INFO: Running Post-Apply script /etc/auter/post-apply.d/pre_apply_script
+        INFO: Updates complete (yum Transaction ID : <ID>). You may need to reboot for some updates to take effect
+        INFO: Auter successfully ran at <TIMESTAMP>
+        ```
+    - __[ pass/fail ]__ expected updates were applied. Check **_/var/log/apt/history.log_** or **_/var/log/yum.log_**
+    - __[ pass/fail ]__ **_/var/lib/auter/last-update-default_** contains update info
+    - __[ pass/fail ]__ no upates available after running. Check `yum update <<<n` or `apt-get --just-print upgrade`
+    - __[ pass/fail ]__ pre/post apply scripts ran successfully, messages logged to syslog
+    - __[ pass/fail ]__ no mail is sent to the root user with the stdout from auter
+     ##### Output from apply:
+   ```
 
-[ pass/fail ] auter --status
-    - Check: /var/lib/auter/enabled exists
+   ```
 
-[ pass/fail ] auter --disable
-    - Check: /var/lib/auter/enabled does not exist
+5) Execute 'auter --reboot`
+    - __[ pass/fail ]__ prints the following block to stdout:
+        ```
+        INFO: Running with: /usr/bin/auter --reboot
+        INFO: Running in an interactive shell, disabling all random sleeps
+        INFO: Running Pre-Reboot script /etc/auter/pre-reboot.d/pre_reboot_script
+        INFO: Adding post-reboot-hook to run scripts under /etc/auter/post-reboot.d to /etc/cron.d/auter-postreboot-default
+        INFO: Rebooting server
+        ```
+    - __[ pass/fail ]__ reboot scheduled in 2 minutes time
+    - __[ pass/fail ]__ pre reboot script ran successfully, messages logged to syslog
+    - __[ pass/fail ]__ **_/etc/cron.d/auter-postreboot-default_** contains `@reboot root /usr/bin/auter --postreboot --config /etc/auter/auter.conf`
+    - __[ pass/fail ]__ **_/etc/cron.d/auter-postreboot-default_** has the correct permissions: `root:root:0644`
+    ##### Output from reboot:
+    ```
 
-[ pass/fail ] auter --enable
-    - Check: /var/lib/auter/enabled exists
+    ```
+6) After server has rebooted:
+    - __[ pass/fail ]__ Server actually rebooted: Execute `uptime`
+    - __[ pass/fail ]__ **_ /etc/cron.d/auter-postreboot-default _** has been removed after the has fully completed the startup process
+    - __[ pass/fail ]__ post reboot script ran successfully, messages logged to syslog
+     ##### Full auter logs:
+     Execute: `grep "auter:" /var/log/messages` or `grep "auter:" /var/log/syslog`
+     ```
 
-[ pass/fail ] auter --help
-    - Check: same output when running 'auter' without arguments
+     ```
+---
 
-[ pass/fail ] auter --version
-    - Check: prints 'auter VERSION'
+# Test 3: Updates via cron - default config with `--stdout` option [ PASS/FAIL ]
+### Config settings
+1) `egrep -v "^$|^#" /etc/auter/auter.conf`
+    ```
 
-#### update manually
+    ```
+2) Prepare custom scripts: Execute:
+    ```
+    echo 'logger custom pre prep script ran' > /etc/auter/pre-prep.d/pre_prep_script
+    echo 'logger custom post prep script ran' > /etc/auter/post-prep.d/post_prep_script
+    echo 'logger custom pre apply script ran' > /etc/auter/pre-apply.d/pre_apply_script
+    echo 'logger custom post apply script ran' > /etc/auter/post-apply.d/pre_apply_script
+    echo 'logger custom pre reboot script ran' > /etc/auter/pre-reboot.d/pre_reboot_script
+    echo 'logger custom post reboot script ran' > /etc/auter/post-reboot.d/post_reboot_script
+    chmod +x /etc/auter/*.d/*script
+    ```
 
-[ pass/fail ] auter --prep
-    - Check: prints "INFO: Running with: ./auter --prep Updates downloaded" to stdout
-    - Check: /var/lib/auter/last-prep-default contains update info
-    - Check: updates downloaded to /var/cache/auter/default
-    - Check: pre/post prep scripts ran successfully with messages logged to syslog
+3) Adjust the MAXDELAY value to avoid extented sleep times
+    ```
+    sed -i 's/MAXDELAY.*$/MAXDELAY="60"/g' /etc/auter/auter.conf
+    ```
+4) Schedule a cron job for prep to run in 5 minutes and watch the logs:
+    ```
+    echo "$(date --date="5 minutes" +%_M" "%_H" "%d" "%_m" *") root $(which auter) --prep --stdout" > /etc/cron.d/auter-prep
+    tail -n0 -f /var/log/messages
+    ```
+    After auter has completed the prep:
+    - __[ pass/fail ]__ Expected logs:
+        ```
+        auter: INFO: Running with: /usr/bin/auter --prep --stdout
+        auter: INFO: Running Pre-Prep script /etc/auter/pre-prep.d/pre_prep_script
+        root: custom pre prep script ran
+        auter: INFO: Updates downloaded
+        auter: INFO: Running Post-Prep script /etc/auter/post-prep.d/post_prep_scrip
+        root: custom post prep script ran
+        ```
+    - __[ pass/fail ]__ **_/var/lib/auter/last-prep-output-default_** contains yum download-only output
+    - __[ pass/fail ]__ updates downloaded to **_/var/cache/yum/…_**
+    - __[ pass/fail ]__ pre/post prep scripts ran successfully with messages logged to syslog
+    - __[ pass/fail ]__ mail sent to root user with stdout output from auter. Debian will log stdout to syslog rather than mail
+    Output from logs:
+    ```
 
-[ pass/fail ] auter --apply
-    - Check: prints "INFO: Running with: /usr/bin/auter --apply; Applying updates; Updates complete, you may need to reboot for some updates to take effect" to stdout
-    - Check: expected updates were applied using 'yum history info' or 'dnf history info'
-    - Check: /var/lib/auter/last-update-default contains update info
-    - Check: no upates available after running
-    - Check: pre/post apply scripts ran successfully, messages logged to syslog
-    - Check: no mail is sent to the root user with the stdout from auter
+    ```
+5) Schedule a cron job for apply to run in 5 minutes and watch the logs:
+    ```
+    echo "$(date --date="5 minutes" +%_M" "%_H" "%d" "%_m" *") root $(which auter) --apply --stdout" > /etc/cron.d/auter-apply
+    tail -n0 -f /var/log/messages
+    ```
+    After auter has completed the apply:
+    - __[ pass/fail ]__ Expected logs:
+        ```
+        auter: INFO: Running with: /usr/bin/auter --apply --stdout
+        auter: INFO: Running Pre-Apply script /etc/auter/pre-apply.d/01-configsnap-pre
+        auter: INFO: Running Pre-Apply script /etc/auter/pre-apply.d/pre_apply_script
+        root: custom pre apply script ran
+        auter: INFO: Applying updates
+        auter: INFO: Running Post-Apply script /etc/auter/post-apply.d/50-configsnap-post-apply
+        auter: INFO: Running Post-Apply script /etc/auter/post-apply.d/pre_apply_script
+        root: custom post apply script ran
+        auter: INFO: Updates complete (yum Transaction ID : 86). You may need to reboot for some updates to take effect
+        auter: INFO: Auter successfully ran at 2018-07-18T14:59:24+0000
+        ```
+    - __[ pass/fail ]__ no updates available after running
+    - __[ pass/fail ]__ pre/post scripts ran successfully with messages logged to syslog
+    - __[ pass/fail ]__ mail sent to root user with stdout output from auter. Debian will log stdout to syslog rather than mail
+    Output from logs:
+    ```
 
-[ pass/fail ] auter --reboot
-    - Check: reboot scheduled in 2 minutes time
-    - Check: prints "INFO: Running with: ./auter --reboot; Rebooting server" followed by shutdown message to stdout
-    - Check: 5 minutes after reboot is complete pre/post reboot scripts ran successfully with messages logged to syslog
+    ```
 
-#### updates via cron
+6) Schedule a cron job to run auter --reboot in 5 minutes and watch the logs:
+    ```
+    echo "$(date --date="5 minutes" +%_M" "%_H" "%d" "%_m" *") root $(which auter) --reboot --stdout" > /etc/cron.d/auter-reboot
+    tail -n0 -f /var/log/messages
+    ```
+    - __[ pass/fail ]__ Expected logs:
+        ```
+        INFO: Running with: /usr/bin/auter --reboot --stdout
+        INFO: Running Pre-Reboot script /etc/auter/pre-reboot.d/98-configsnap-pre-reboot
+        INFO: Running Pre-Reboot script /etc/auter/pre-reboot.d/pre_reboot_script
+        custom pre reboot script ran
+        INFO: Adding post-reboot-hook to run scripts under /etc/auter/post-reboot.d to /etc/cron.d/auter-postreboot-default
+        INFO: Rebooting server
+        ```
+    - __[ pass/fail ]__ pre-reboot scripts ran successfully
+    - __[ pass/fail ]__ Wall message is printed
+    - __[ pass/fail ]__ mail sent to root user with stdout output from auter. Debian will log stdout to syslog rather than mail
+    - __[ pass/fail ]__ Server reboots
+    Output from logs:
+    ```
 
-[ pass/fail ] auter --prep --stdout
-    - Check: updates downloaded to /var/cache/auter/default
-    - Check: pre/post prep scripts ran successfully, messages logged to syslog
-    - Check: output from auter also mailed to root user on CentOS boxes, output logged to syslog on Fedora systems
+    ```
 
-[ pass/fail ] auter --apply --stdout
-    - Check: no updates available after running
-    - Check: pre/post scripts ran successfully with messages logged to syslog
-    - Check: output from auter also mailed to root user on CentOS boxes, output logged to syslog on Fedora systems
+7) After the server has booted, it may take up to 2 minutes for auter logs to appear. watch the logs:
+    ```
+    egrep "auter:|custom" /var/log/messages | awk '/auter --reboot/,0'
+    ```
+    - __[ pass/fail ]__ Expected logs:
+        ```
+        auter: INFO: Running with: /usr/bin/auter --reboot --stdout
+        auter: INFO: Running Pre-Reboot script /etc/auter/pre-reboot.d/pre_reboot_script
+        root: custom pre reboot script ran
+        auter: INFO: Adding post-reboot-hook to run scripts under /etc/auter/post-reboot.d to /etc/cron.d/auter-postreboot-default
+        auter: INFO: Rebooting server
+        auter: INFO: Running with: /usr/bin/auter --postreboot --config /etc/auter/auter.conf
+        auter: INFO: Removed post-reboot hook: /etc/cron.d/auter-postreboot-default
+        auter: INFO: Running Post-Reboot script /etc/auter/post-reboot.d/post_reboot_script
+        root: custom post reboot script ran
+        ```
+    - __[ pass/fail ]__ post-reboot scripts ran successfully
+    - __[ pass/fail ]__  output from auter also mailed to the root user on CentOS, output logged to syslog on Fedora
+    Output from logs:
+    ```
 
-[ pass/fail ] auter --reboot --stdout
-    - Check: server rebooted after 2 minutes
-    - Check: pre/post scripts ran successfully
-    - Check: output from auter also mailed to the root user on CentOS, output logged to syslog on Fedora
+    ```
 
 #### new functionality testing
+### Config settings
+1) `egrep -v "^$|^#" /etc/auter/auter.conf`
+    ```
 
-[ pass/fail ] <test new functionality added>
-    - Check:
+    ```
+
+2) Details of new feature
+
+3) Test command
+    Expected outome:
+    ```
+
+    ```
+4) Next Test:
+etc...
 ```
 
 #### Documentation
