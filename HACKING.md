@@ -9,14 +9,24 @@ auter --enable          # touches /var/lib/auter/enabled, prints "auter enabled"
 auter --status          # prints "auter is currently enabled and not running"
 auter --help            # shows help message
 auter --version         # prints "auter VERSIONNUMBER"
-man auter               # check the contents of the man page
+man auter               # check the contents of the man page reflect the relevant changes
 ```
 
-If you don't have any updates available do this:
+If you don't have any updates available, try downgrade a package. Normally openssl has multiple versions available. If multiple packages are not available in the base repo try enable one of the archive/vault repos:
 
+For RPM based distros try:
 ```sh
-yum install zsh
-yum downgrade zsh
+yum --showduplicates list curl
+yum downgrade curl libcurl
+```
+For deb based distros try (Note: You may need to also downgrade dependencies):
+```
+# This will give you a list of packages that have multiple versions available in the repos:
+for PKG in $(dpkg --list | awk '{print $2}'); do VERSIONS="$(apt-cache showpkg $PKG | awk '/Versions:/,/^Reverse Depends:/ {if ($1 ~ /^[0-9]/) print $1}' | xargs)";[[ $(echo ${VERSIONS} | wc -w) -gt 1 ]] && echo "$PKG -% $VERSIONS";done | column -t -s "%"
+
+apt-get update
+apt-get install <PACKAGE>=<VERSION>
+
 ```
 
 Use the following to setup auter's pre/post scripts:
