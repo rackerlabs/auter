@@ -10,6 +10,7 @@ auter --status          # prints "auter is currently enabled and not running"
 auter --help            # shows help message
 auter --version         # prints "auter VERSIONNUMBER"
 man auter               # check the contents of the man page reflect the relevant changes
+man auter.conf		# if relevant, check the contents of the man page reflect the changes
 ```
 
 If you don't have any updates available, try downgrade a package. Normally openssl has multiple versions available. If multiple packages are not available in the base repo try enable one of the archive/vault repos:
@@ -142,7 +143,7 @@ Checks:
         INFO: Auter successfully ran at <TIMESTAMP>
         ```
     - __[ pass/fail ]__ expected updates were applied. Check **_/var/log/apt/history.log_** or **_/var/log/yum.log_**
-    - __[ pass/fail ]__ **_/var/lib/auter/last-update-default_** contains update info
+    - __[ pass/fail ]__ **_/var/lib/auter/last-apply-output-default_** contains update info
     - __[ pass/fail ]__ no upates available after running. Check `yum update <<<n` or `apt-get --just-print upgrade`
     - __[ pass/fail ]__ pre/post apply scripts ran successfully, messages logged to syslog
     - __[ pass/fail ]__ no mail is sent to the root user with the stdout from auter
