@@ -1,4 +1,4 @@
-.TH AUTER.CONF "8" "May 2018" "auter 0.11" "File Formats"
+.TH AUTER.CONF "5" "May 2018" "auter 0.11" "File Formats"
 .SH NAME
 auter.conf \- Config file for auter
 .SH SYNOPSIS
