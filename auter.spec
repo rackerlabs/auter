@@ -43,7 +43,7 @@ mkdir -p %{buildroot}%{_bindir} %{buildroot}%{_sharedstatedir}/%{name} \
   %{buildroot}%{_var}/cache/auter \
   %{buildroot}%{_usr}/lib/%{name} \
   %{buildroot}%{_mandir}/man1 \
-  %{buildroot}%{_mandir}/man8 \
+  %{buildroot}%{_mandir}/man5 \
   %{buildroot}%{_sysconfdir}/%{name}/pre-reboot.d \
   %{buildroot}%{_sysconfdir}/%{name}/post-reboot.d \
   %{buildroot}%{_sysconfdir}/%{name}/pre-apply.d \
@@ -56,7 +56,7 @@ install -p -m 0755 %{name}.yumdnfModule %{buildroot}%{_usr}/lib/%{name}/auter.mo
 install -p -m 0644 %{name}.cron %{buildroot}%{_sysconfdir}/cron.d/%{name}
 install -p -m 0644 %{name}.conf %{buildroot}%{_sysconfdir}/%{name}/%{name}.conf
 install -p -m 0644 %{name}.man %{buildroot}%{_mandir}/man1/%{name}.1
-install -p -m 0644 %{name}.conf.man %{buildroot}%{_mandir}/man8/%{name}.conf.8
+install -p -m 0644 %{name}.conf.man %{buildroot}%{_mandir}/man5/%{name}.conf.5
 chmod 0755 %{buildroot}%{_sysconfdir}/%{name}/*.d
 
 %post
@@ -80,7 +80,7 @@ exit 0
 %doc NEWS
 %doc MAINTAINERS.md
 %{_mandir}/man1/%{name}.1*
-%{_mandir}/man8/%{name}.conf.8*
+%{_mandir}/man5/%{name}.conf.5*
 %{_sharedstatedir}/%{name}
 %dir %{_sysconfdir}/%{name}
 %dir %{_var}/cache/auter
