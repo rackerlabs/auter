@@ -65,6 +65,7 @@ Actions:
 Options:
   --config=FILE Specify the full path to an auter config file. Defaults to /etc/auter/auter.conf
   --stdout      Always log to STDOUT, regardless of not having a tty
+  --maxdelay    Override MAXDELAY from the command line
   -h, --help    Show this help text
   -v, --version Show the version
 "
@@ -208,6 +209,7 @@ while true ; do
     -h|--help) print_help ; exit 0;;
     -v|--version) echo "auter ${AUTERVERSION}" ; exit 0;;
     --stdout) STDOUT=1 ; shift;;
+    --maxdelay) __MAXDELAY="$2" ; shift 2;;
     --config) CONFIGSET="" ; CONFIGFILE="$2" ; CUSTOMCONFIG=1 ; shift 2;;
     --prep) PREP=1 ; shift;;
     --apply) APPLY=1 ; shift;;
@@ -291,8 +293,15 @@ fi
 
 logit "INFO: Running with: $0 ${ARGS}"
 
+# If --maxdelay is set on the command line, override the config file.
+if [[ -n "${__MAXDELAY}" ]]
+then
+   MAXDELAY="${__MAXDELAY}"
+   logit "INFO: Overriding MAXDELAY from command line: --maxdelay=${__MAXDELAY}"
+else
+  tty -s && MAXDELAY=1 && logit "INFO: Running in an interactive shell, disabling all random sleeps"
+fi
 [[ "${MAXDELAY}" -lt 1 ]] && MAXDELAY=1
-tty -s && MAXDELAY=1 && logit "INFO: Running in an interactive shell, disabling all random sleeps"
 
 # There is an explicit quit here to avoid auter automatically running any
 # other unexpected functions.
