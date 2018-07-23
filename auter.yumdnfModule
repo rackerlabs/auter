@@ -48,7 +48,9 @@ function prepare_updates() {
       # If check-update has an exit code of 100, updates are available.
       if [[ "${RC}" -eq 100 ]]; then
         # Run any pre-prep scripts
-        sleep $((RANDOM % MAXDELAY))
+        SLEEP_DELAY=$((RANDOM % MAXDELAY))
+        [[ ${SLEEP_DELAY} -gt 1 ]] && logit "INFO: Sleeping for ${SLEEP_DELAY} seconds"
+        sleep ${SLEEP_DELAY}
         if [[ "${ONLYINSTALLFROMPREP}" == "yes" ]]; then
           DOWNLOADOPTION=("--downloaddir=${DOWNLOADDIR}/${CONFIGSET}")
           rm -f "${DOWNLOADDIR}"/"${CONFIGSET}"/*.rpm
@@ -129,7 +131,9 @@ function apply_updates() {
       run_script "${SCRIPT}" "Pre-Apply"
     done
 
-    sleep $((RANDOM % MAXDELAY))
+    SLEEP_DELAY=$((RANDOM % MAXDELAY))
+    [[ ${SLEEP_DELAY} -gt 1 ]] && logit "INFO: Sleeping for ${SLEEP_DELAY} seconds"
+    sleep ${SLEEP_DELAY}
     logit "INFO: Applying updates"
     local HISTORY_BEFORE=$(${PACKAGE_MANAGER} history list)
 
