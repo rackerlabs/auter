@@ -48,9 +48,7 @@ declare -x -a SKIPSCRIPTNAMES
 
 # Adding extra super-user PATHS if required
 for p in /usr/local/sbin /usr/sbin /sbin; do
-  if [[ ! ${PATH} =~ :${p}([:]?|$) ]]; then
-    declare -x PATH=${p}:${PATH}
-  fi
+  [[ ! ${PATH} =~ (^|:)${p}(:|$) ]] && declare -x PATH="${p}:${PATH}"
 done
 
 function default_signal_handling() {
