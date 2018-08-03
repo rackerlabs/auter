@@ -36,7 +36,7 @@ Use the following to setup auter's pre/post scripts:
 echo 'logger custom pre prep script ran' > /etc/auter/pre-prep.d/pre_prep_script
 echo 'logger custom post prep script ran' > /etc/auter/post-prep.d/post_prep_script
 echo 'logger custom pre apply script ran' > /etc/auter/pre-apply.d/pre_apply_script
-echo 'logger custom post apply script ran' > /etc/auter/post-apply.d/pre_apply_script
+echo 'logger custom post apply script ran' > /etc/auter/post-apply.d/post_apply_script
 echo 'logger custom pre reboot script ran' > /etc/auter/pre-reboot.d/pre_reboot_script
 echo 'logger custom post reboot script ran' > /etc/auter/post-reboot.d/post_reboot_script
 chmod +x /etc/auter/*.d/*script
@@ -110,7 +110,7 @@ Checks:
     echo 'logger custom pre prep script ran' > /etc/auter/pre-prep.d/pre_prep_script
     echo 'logger custom post prep script ran' > /etc/auter/post-prep.d/post_prep_script
     echo 'logger custom pre apply script ran' > /etc/auter/pre-apply.d/pre_apply_script
-    echo 'logger custom post apply script ran' > /etc/auter/post-apply.d/pre_apply_script
+    echo 'logger custom post apply script ran' > /etc/auter/post-apply.d/post_apply_script
     echo 'logger custom pre reboot script ran' > /etc/auter/pre-reboot.d/pre_reboot_script
     echo 'logger custom post reboot script ran' > /etc/auter/post-reboot.d/post_reboot_script
     chmod +x /etc/auter/*.d/*script
@@ -132,7 +132,7 @@ Checks:
 
     ```
 4) Execute `auter --apply`
-    - __[ pass/fail ]__ prints the following block to stdout:
+    - __[ pass/fail ]__ prints the following block to stdout: Note: For debian based distros there will not be a transaction ID
         ```
         INFO: Running with: /usr/bin/auter --apply
         INFO: Running in an interactive shell, disabling all random sleeps
@@ -173,7 +173,7 @@ Checks:
     - __[ pass/fail ]__ **_ /etc/cron.d/auter-postreboot-default _** has been removed after the has fully completed the startup process
     - __[ pass/fail ]__ post reboot script ran successfully, messages logged to syslog
      ##### Full auter logs:
-     Execute: `grep "auter:" /var/log/messages` or `grep "auter:" /var/log/syslog`
+     Execute: `egrep "auter|custom" /var/log/messages` or `egrep "auter|custom" /var/log/syslog` or `journalctl -S today | egrep "auter|custom"`
      ```
 
      ```
@@ -190,7 +190,7 @@ Checks:
     echo 'logger custom pre prep script ran' > /etc/auter/pre-prep.d/pre_prep_script
     echo 'logger custom post prep script ran' > /etc/auter/post-prep.d/post_prep_script
     echo 'logger custom pre apply script ran' > /etc/auter/pre-apply.d/pre_apply_script
-    echo 'logger custom post apply script ran' > /etc/auter/post-apply.d/pre_apply_script
+    echo 'logger custom post apply script ran' > /etc/auter/post-apply.d/post_apply_script
     echo 'logger custom pre reboot script ran' > /etc/auter/pre-reboot.d/pre_reboot_script
     echo 'logger custom post reboot script ran' > /etc/auter/post-reboot.d/post_reboot_script
     chmod +x /etc/auter/*.d/*script
@@ -202,7 +202,7 @@ Checks:
 4) Schedule a cron job for prep to run in 5 minutes and watch the logs:
     ```
     echo "$(date --date="5 minutes" +%_M" "%_H" "%d" "%_m" *") root $(which auter) --prep --stdout" > /etc/cron.d/auter-prep
-    tail -n0 -f /var/log/messages
+    tail -n0 -f /var/log/messages or tail -f /var/log/syslog or journalctl -f
     ```
     After auter has completed the prep:
     - __[ pass/fail ]__ Expected logs:
@@ -215,7 +215,7 @@ Checks:
         root: custom post prep script ran
         ```
     - __[ pass/fail ]__ **_/var/lib/auter/last-prep-output-default_** contains yum download-only output
-    - __[ pass/fail ]__ updates downloaded to **_/var/cache/yum/…_**
+    - __[ pass/fail ]__ updates downloaded to **_/var/cache/yum/…_** or **_/var/cache/apt/archives/..._**
     - __[ pass/fail ]__ pre/post prep scripts ran successfully with messages logged to syslog
     - __[ pass/fail ]__ mail sent to root user with stdout output from auter. Debian will log stdout to syslog rather than mail
     Output from logs:
@@ -225,17 +225,15 @@ Checks:
 5) Schedule a cron job for apply to run in 5 minutes and watch the logs:
     ```
     echo "$(date --date="5 minutes" +%_M" "%_H" "%d" "%_m" *") root $(which auter) --apply --stdout" > /etc/cron.d/auter-apply
-    tail -n0 -f /var/log/messages
+    tail -n0 -f /var/log/messages or tail -f /var/log/syslog or journalctl -f
     ```
-    After auter has completed the apply:
+    After auter has completed the apply: Note: For debian based distros there will not be a transaction ID
     - __[ pass/fail ]__ Expected logs:
         ```
         auter: INFO: Running with: /usr/bin/auter --apply --stdout
-        auter: INFO: Running Pre-Apply script /etc/auter/pre-apply.d/01-configsnap-pre
         auter: INFO: Running Pre-Apply script /etc/auter/pre-apply.d/pre_apply_script
         root: custom pre apply script ran
         auter: INFO: Applying updates
-        auter: INFO: Running Post-Apply script /etc/auter/post-apply.d/50-configsnap-post-apply
         auter: INFO: Running Post-Apply script /etc/auter/post-apply.d/pre_apply_script
         root: custom post apply script ran
         auter: INFO: Updates complete (yum Transaction ID : 86). You may need to reboot for some updates to take effect
@@ -251,7 +249,7 @@ Checks:
 6) Schedule a cron job to run auter --reboot in 5 minutes and watch the logs:
     ```
     echo "$(date --date="5 minutes" +%_M" "%_H" "%d" "%_m" *") root $(which auter) --reboot --stdout" > /etc/cron.d/auter-reboot
-    tail -n0 -f /var/log/messages
+    tail -n0 -f /var/log/messages or tail -f /var/log/syslog or journalctl -f
     ```
     - __[ pass/fail ]__ Expected logs:
         ```
@@ -273,6 +271,10 @@ Checks:
 7) After the server has booted, it may take up to 2 minutes for auter logs to appear. watch the logs:
     ```
     egrep "auter:|custom" /var/log/messages | awk '/auter --reboot/,0'
+    or
+    egrep "auter:|custom" /var/log/syslog | awk '/auter --reboot/,0'
+    or
+    journalctl -S today | egrep auter|custom | awk '/auter --reboot/,0'
     ```
     - __[ pass/fail ]__ Expected logs:
         ```
