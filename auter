@@ -212,8 +212,7 @@ function post_reboot() {
 
 function print_status() {
   if [[ -f "${LOCKFILE}" ]] && [[ -f "${PIDFILE}" ]]; then
-    CURRENTPIDSTATUS="$(kill -0 "$(cat ${PIDFILE})" 2>&1 )"
-    if [[ $? -eq 0 ]]; then
+    if CURRENTPIDSTATUS="$(kill -0 "$(cat ${PIDFILE})" 2>&1 )"; then
       echo "auter is currently enabled and running"
     elif [[ "${CURRENTPIDSTATUS}" == *"No such process"* ]]; then
       echo "auter is currently enabled and pid file exists but process is dead"
@@ -268,8 +267,8 @@ while true ; do
     --enable) ENABLE=1 ; shift;;
     --disable) DISABLE=1 ; shift;;
     --skip-all-scripts) SKIPALLSCRIPTS=1 ; shift;;
-    --skip-scripts-by-phase) IFS=',' read -a SKIPPHASESCRIPTS <<< "$2" ; shift 2;;
-    --skip-scripts-by-name) IFS=',' read -a SKIPSCRIPTNAMES <<< "$2" ; shift 2;;
+    --skip-scripts-by-phase) IFS=',' read -r -a SKIPPHASESCRIPTS <<< "$2" ; shift 2;;
+    --skip-scripts-by-name) IFS=',' read -r -a SKIPSCRIPTNAMES <<< "$2" ; shift 2;;
     --status) print_status ; exit 0;;
     --) shift ; break;;
   esac
@@ -338,7 +337,7 @@ fi
 if [[ "${ONLYINSTALLFROMPREP}" == "yes" ]]; then
   if [[ ! -d "${DOWNLOADDIR}/${CONFIGSET}" ]]; then
     install -m 755 -o root -g root -d ${DOWNLOADDIR}/${CONFIGSET}
-  elif [[ $(stat -c %G%U%a "${DOWNLOADDIR}") != rootroot[0-9][0-9][0,1,4,5] ]]; then
+  elif [[ $(stat -c %G%U%a "${DOWNLOADDIR}") != rootroot[0-9][0-9][0145] ]]; then
     logit "ERROR: ${DOWNLOADDIR}/${CONFIGSET} does not have the correct permissions."
     quit 3
   fi
