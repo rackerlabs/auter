@@ -19,7 +19,7 @@
 #
 
 
-declare -r -x AUTERVERSION="0.11"
+declare -r -x AUTERVERSION="0.12"
 declare -r -x SCRIPTDIR="/etc/auter"
 declare -r -x DATADIR="/var/lib/auter"
 declare -r -x LOCKFILE="${DATADIR}/enabled"
@@ -45,6 +45,11 @@ declare -x POSTREBOOTSCRIPTDIR="${SCRIPTDIR}/post-reboot.d"
 declare -x -i SKIPALLSCRIPTS=0
 declare -x -a SKIPPHASESCRIPTS
 declare -x -a SKIPSCRIPTNAMES
+
+# Adding extra super-user PATHS if required
+for p in /usr/local/sbin /usr/sbin /sbin; do
+  [[ ! ${PATH} =~ (^|:)${p}(:|$) ]] && declare -x PATH="${p}:${PATH}"
+done
 
 function default_signal_handling() {
   trap 'rm -f "${PIDFILE}"' SIGINT SIGTERM
@@ -277,7 +282,7 @@ while true ; do
   esac
 done
 
-[[ "${PREP}${APPLY}${REBOOTCALL}${POSTREBOOT}${ENABLE}${DISABLE}" == "" ]] && print_help && quit 1
+[[ ! "$ARGS" =~ --(prep|apply|reboot|postreboot|enable|disable)  ]] && print_help && quit 1
 
 readonly PACKAGE_MANAGER=$(check_package_manager)
 

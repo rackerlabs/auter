@@ -61,7 +61,6 @@ function prepare_updates() {
         sleep ${SLEEP_DELAY}
         if [[ "${ONLYINSTALLFROMPREP}" == "yes" ]]; then
           DOWNLOADOPTION=("--downloaddir=${DOWNLOADDIR}/${CONFIGSET}")
-
           # DNF doesn't support downloaddir, so instead we download to the default
           # location and copy out the way
           if [[ "${PACKAGE_MANAGER}" == "dnf" ]]; then
@@ -70,7 +69,6 @@ function prepare_updates() {
           fi
           DOWNLOADLOGMSG=" to ${DOWNLOADDIR}/${CONFIGSET}"
         fi
-
 
         if PREPOUTPUT+="$("${PACKAGE_MANAGER}" "${PACKAGEMANAGEROPTIONS[@]}" "${DOWNLOADOPTION[@]}" update --downloadonly -y 2>&1)"; then
           if [[ "${ONLYINSTALLFROMPREP}" == "yes" && "${PACKAGE_MANAGER}" == "dnf" ]]; then

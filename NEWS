@@ -1,5 +1,16 @@
 Auter NEWS
 
+0.12
+ * Added --skip-all-scripts to skip the executions of all custom scripts
+ * Added --skip-scripts-by-phase to skip the executions of custom scripts for the specified phase
+ * Added --skip-scripts-by-phase to skip the executions of custom scripts by name
+ * Added man page for auter.conf
+ * Updated auter.aptModule to reflect changes in auter.yumdnfModule
+ * added no-wall option
+ * Fix for --status when run as non-root user
+ * Logs auter output in /var/lib/auter/ when no updates are available
+ * Minor improvements to rotation of output files in /var/lib/auter/
+
 0.11
  * Updated documentation and references to include apt for Ubuntu/debian
  * Removed debugging message that was printed during apt update
