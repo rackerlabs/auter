@@ -59,7 +59,7 @@ function default_signal_handling() {
 #   help2man --include=auter.help2man --no-info ./auter > auter.man
 function print_help() {
   echo "
-Usage: auter [--enable|--disable|--status] [--prep] [--apply] [--reboot] [--postreboot] [OPTIONS]
+Usage: auter [--enable|--disable|--status] [--prep] [--apply] [--reboot] [--postreboot] [--config=<configfile>] [OPTIONS]
 
 Automatic Update Transaction Execution by Rackspace. A wrapper around cron and yum/dnf/apt to manage system updates with the ability to configure automatic reboots and custom scripts.
 
@@ -75,18 +75,19 @@ Actions:
 Options:
   --config=FILE Specify the full path to an auter config file. Defaults to /etc/auter/auter.conf
   --stdout      Always log to STDOUT, regardless of not having a tty
+  --maxdelay    Override MAXDELAY from the command line
   --skip-all-scripts
                 Skip the executions of all custom scripts (Default in /etc/auter/*.d/)
 
   --skip-scripts-by-phase=PHASE
                 Skip the execution of the custom scripts for the specified phase. You can specify myltiple phases.
 
-                Valid Phases: pre-prep, post-prep, pre-apply, post-apply, pre-reboot, post-reboot. 
+                Valid Phases: pre-prep, post-prep, pre-apply, post-apply, pre-reboot, post-reboot.
 
                 Example: --skip-scripts-by-phase=\"pre-prep,post-apply,pre-reboot\"
 
   --skip-scripts-by-name=SCRIPTNAME
-                Skip specific scripts by name. You can specify myltiple phases. 
+                Skip specific scripts by name. You can specify myltiple phases.
 
                 Example: --skip-scripts-by-name=\"10-configsnap-pre, 20-startApp.sh\"
 
@@ -251,7 +252,7 @@ function log_last_run() {
 default_signal_handling
 
 ARGS="$*"
-OPTS=$(getopt -n "$0" -o h,v --long prep,apply,enable,disable,reboot,postreboot,version,help,stdout,no-wall,status,config:,skip-all-scripts,skip-scripts-by-phase:,skip-scripts-by-name: -- "$@")
+OPTS=$(getopt -n "$0" -o h,v --long prep,apply,enable,disable,reboot,postreboot,version,help,stdout,no-wall,status,config:,skip-all-scripts,skip-scripts-by-phase:,skip-scripts-by-name:,maxdelay: -- "$@")
 if [[ $? -ne 0 ]]; then
   echo "Try '$0 --help' for more information."
   exit
@@ -265,6 +266,7 @@ while true ; do
     -v|--version) echo "auter ${AUTERVERSION}" ; exit 0;;
     --stdout) STDOUT=1 ; shift;;
     --no-wall) NOWALLMSG=1 ; shift;;
+    --maxdelay) __MAXDELAY="$2" ; shift 2;;
     --config) CONFIGSET="" ; CONFIGFILE="$2" ; CUSTOMCONFIG=1 ; shift 2;;
     --prep) PREP=1 ; shift;;
     --apply) APPLY=1 ; shift;;
@@ -363,8 +365,15 @@ fi
 
 logit "INFO: Running with: $0 ${ARGS}"
 
+# If --maxdelay is set on the command line, override the config file.
+if [[ -n "${__MAXDELAY}" ]]
+then
+   MAXDELAY="${__MAXDELAY}"
+   logit "INFO: Overriding MAXDELAY from command line: --maxdelay=${__MAXDELAY}"
+else
+  tty -s && MAXDELAY=1 && logit "INFO: Running in an interactive shell, disabling all random sleeps"
+fi
 [[ "${MAXDELAY}" -lt 1 ]] && MAXDELAY=1
-tty -s && MAXDELAY=1 && logit "INFO: Running in an interactive shell, disabling all random sleeps"
 
 # There is an explicit quit here to avoid auter automatically running any
 # other unexpected functions.
