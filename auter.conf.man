@@ -1,0 +1,111 @@
+.TH AUTER.CONF "5" "May 2018" "auter 0.11" "File Formats"
+.SH NAME
+auter.conf \- Config file for auter
+.SH SYNOPSIS
+/etc/auter/auter.conf
+.SH DESCRIPTION
+This is the default config file for auter. 
+.SH OPTIONS
+
+.TP
+.B CONFIGSET
+This is the nametag for this config file. Log files, auter generated files and postreboot jobs will be named using this tag. 
+\fB IMPORTANT:\fR This auter tag MUST BE UNIQUE on a system
+\fB Valid options:\fR String with no special characters or spaces
+\fB Examples:\fR
+ CONFIGSET="default"
+ CONFIGSET="kernelonly"
+ CONFIGSET="dailyupdate" 
+
+.TP
+.B AUTOREBOOT
+This controls if auter will automatically reboot the server after updates have been installed. The system will only be rebooted if one or more updates were applied successfully. If you require a reboot even when no updates were applied, leave AUTOREBOOT set to "no" and add the --reboot option to the auter command.
+\fB NOTES:\fR
+ - If yum fails to complete the transaction, auter will exit before the reboot phase is initiated
+ - If there are no updates available (relevant to this profile) auter will not initiate the reboot
+ - All relevant pre-apply, post-apply and pre-reboot scripts must return a zero exit code
+\fB Valid options:\fR yes/no
+
+.TP
+.B PACKAGEMANAGEROPTIONS
+Options to pass to the (relevant) package manager (yum/dnf/apt) when the update/upgrade action is called. If dnf is installed, it will be the preferred package manager. 
+\fB Valid options:\fR Space separated packagemanager options
+\fB Examples:\fR
+ PACKAGEMANAGEROPTIONS="--disableexcludes=all"
+ PACKAGEMANAGEROPTIONS="--disablerepo=epel"
+ PACKAGEMANAGEROPTIONS="--enablerepo=epel --exclude=auter*"
+
+.TP
+.B PREDOWNLOADUPDATES
+If the --downloadonly option is available then updates will be downloaded during the --prep prep stage
+\fB NOTES:\fR
+ - This is only useful if you run the prep and apply phase's are run at different times.
+ - If you intend to use ONLYINSTALLFROMPREP this needs to be set to yes
+\fB Valid options:\fR yes/no
+
+.TP
+.B ONLYINSTALLFROMPREP
+Option to only install the downloaded packages. This option should be used when getting multiple servers to apply the same update list  (eg to keep a uat/staging/prod environment in sync), or when you would like to review the updates ahead of applying them. Not setting this option will result in auter installingthe latest available packages at the time apply runs.
+\fB NOTES:\fR
+ - The PREDOWNLOADUPDATES must be set to "yes" for this to take effect.
+ - The directory must be owned by user and group 'root' and must not be writable by other.
+\fB Valid options:\fR yes/no
+
+.TP
+.B MAXDELAY
+MAXDELAY is upper limit of a random time to wait before querying repositories. This applies to downloading updates (--prep) and installing updates (--apply). This is used to stagger load on the repository servers. Default is 3600 seconds so yum/dnf waits a random time between 1 and 3600 seconds.
+\fB NOTES:\fR
+ - Value is set in seconds
+ - This delay is ignored when auter is manually executed
+\fB Valid options:\fR 1-3600
+\fB Default:\fR 3600
+\fB Examples:\fR
+ MAXDELAY=60
+
+.TP
+.B PACKAGEMANAGERLOCKWAITTIME
+If there is a package manager lock then auter can be configured to wait for the lock to be released. PACKAGEMANAGERLOCKWAITTIME is the amount of time that auter will wait before retrying the update.
+\fB Valid options:\fR Any number greater than 1
+\fB Default:\fR 60
+
+.TP
+.B PACKAGEMANAGERLOCKRETRIES
+If there is a package manager lock then auter can be configured to wait for the lock to be released. PACKAGEMANAGERLOCKRETRIES is the amount of retry attempts that will be made.
+\fB Valid options:\fR Any number greater than 1
+\fB Default:\fR 5
+
+
+.TP
+.B Custom script hooks
+These are the options for setting directories containing scripts to execute before and after updates are prepared, applied, and before/after a reboot (if applicable). 
+\fB NOTES:\fR
+ - If you are using multiple auter profiles which require different scripts to be executed, this is where you should specify the script directories. 
+ - Scripts in these directories must be executable (+x) for auter to run them
+ - If any scripts run by auter exit with a non-zero exit code, auter will exit immediately before running any further actions
+
+.B PREPREPSCRIPTDIR
+\fB Default:\fR /etc/auter/pre-prep.d
+
+.B POSTPREPSCRIPTDIR
+\fB Default:\fR /etc/auter/post-prep.d
+
+.B PREAPPLYSCRIPTDIR
+\fB Default:\fR /etc/auter/pre-apply.d
+
+.B POSTAPPLYSCRIPTDIR
+\fB Default:\fR /etc/auter/post-apply.d
+
+.B PREREBOOTSCRIPTDIR
+\fB Default:\fR /etc/auter/pre-reboot.d
+
+.B POSTREBOOTSCRIPTDIR
+\fB Default:\fR /etc/auter/post-reboot.d
+
+.SH "REPORTING BUGS"
+.TP
+Please report any bugs by raising an issue against the github page or email us at:
+ https://github.com/rackerlabs/auter/issues
+ auter-devel@rackspace.com
+
+.SH "SEE ALSO"
+  auter(1), cron(8), crontab(5), yum(8)

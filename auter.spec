@@ -1,5 +1,5 @@
 Name:           auter
-Version:        0.11
+Version:        0.12
 Release:        1%{?dist}
 Summary:        Prepare and apply updates
 License:        ASL 2.0
@@ -25,7 +25,7 @@ set schedule, optionally rebooting to finish applying the updates.
 %setup -q
 
 %build
-help2man --include=auter.help2man --no-info ./auter -o auter.man
+help2man --section=1 ./auter -N -o auter.man -n "Automatic Update Transaction Execution by Rackspace" --include=auter.help2man-sections
 
 %install
 %if 0%{?fedora} >= 15 || 0%{?rhel} >= 7
@@ -43,6 +43,7 @@ mkdir -p %{buildroot}%{_bindir} %{buildroot}%{_sharedstatedir}/%{name} \
   %{buildroot}%{_var}/cache/auter \
   %{buildroot}%{_usr}/lib/%{name} \
   %{buildroot}%{_mandir}/man1 \
+  %{buildroot}%{_mandir}/man5 \
   %{buildroot}%{_sysconfdir}/%{name}/pre-reboot.d \
   %{buildroot}%{_sysconfdir}/%{name}/post-reboot.d \
   %{buildroot}%{_sysconfdir}/%{name}/pre-apply.d \
@@ -55,6 +56,7 @@ install -p -m 0755 %{name}.yumdnfModule %{buildroot}%{_usr}/lib/%{name}/auter.mo
 install -p -m 0644 %{name}.cron %{buildroot}%{_sysconfdir}/cron.d/%{name}
 install -p -m 0644 %{name}.conf %{buildroot}%{_sysconfdir}/%{name}/%{name}.conf
 install -p -m 0644 %{name}.man %{buildroot}%{_mandir}/man1/%{name}.1
+install -p -m 0644 %{name}.conf.man %{buildroot}%{_mandir}/man5/%{name}.conf.5
 chmod 0755 %{buildroot}%{_sysconfdir}/%{name}/*.d
 
 %post
@@ -72,13 +74,13 @@ fi
 exit 0
 
 %files
-%defattr(-,root,root,-)
 %{!?_licensedir:%global license %doc}
 %license LICENSE
 %doc README.md
 %doc NEWS
 %doc MAINTAINERS.md
 %{_mandir}/man1/%{name}.1*
+%{_mandir}/man5/%{name}.conf.5*
 %{_sharedstatedir}/%{name}
 %dir %{_sysconfdir}/%{name}
 %dir %{_var}/cache/auter
@@ -103,8 +105,22 @@ exit 0
 %endif
 
 %changelog
+* Thu Jul 12 2018 Paolo Gigante <paolo.gigante.sa@gmail.com> 0.12-1
+- Added --skip-all-scripts to skip the executions of all custom scripts
+- Added --skip-scripts-by-phase to skip the executions of custom scripts for the specified phase
+- Added --skip-scripts-by-phase to skip the executions of custom scripts by name
+- Added man page for auter.conf
+- Updated auter.aptModule to reflect changes in auter.yumdnfModule
+- added no-wall option
+- Fix for --status when run as non-root user
+- Logs auter output in /var/lib/auter/ when no updates are available
+- Minor improvements to rotation of output files in /var/lib/auter/
 
-* Fri Mar 16 2018 Paolo Gigante <paolo.gigante@rackspace.co.uk> 0.11-1
+
+* Fri Mar 16 2018 Nick Rhodes <nrhodes91@gmail.com> 0.11-5
+- Hotfix for the AUTOREBOOT issue
+
+* Fri Mar 16 2018 Paolo Gigante <paolo.gigante@rackspace.co.uk> 0.11-4
 - Updated documentation and references to include apt for Ubuntu/debian
 - Removed debugging message that was printed during apt update
 - Added "Valid Options" in auter.conf
@@ -114,7 +130,7 @@ exit 0
 - Added --stdout option to force output to stdout even if there is no active tty
 - Added a package manager lock file check before prep and apply functions call the package manager
 - Improved checks to confirm prepared patches are still required
-
+- Adjusted some string arguments to arrays for better handling
 
 * Mon Oct 30 2017 Paolo Gigante <paolo.gigante@rackspace.co.uk> 0.10-1
 - Added pre and post prep script hooks

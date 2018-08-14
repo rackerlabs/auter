@@ -1,12 +1,12 @@
 pkg_name := "auter"
 
 # Version info:
-git_tag := $(shell git describe --exact-match --tags 2>/dev/null | sed "s/^v\?//g")
+
+git_tag := $(shell awk '/Version:/ {print $$2}' auter.spec)
 git_commit := $(shell git log --pretty=format:'%h' -n 1)
-release := "1"
+release := $(shell awk '/Release:/ {gsub(/%.*/,""); print $$2}' auter.spec)
 date := $(shell date +%Y%m%d)
 datelong := $(shell date +"%a, %d %b %Y %T %z")
-lintian-standards-version := $(shell grep -o -m1 "^[0-9].* " /usr/share/lintian/data/standards-version/release-dates)
 
 
 ifeq ($(strip ${git_tag}),)
@@ -19,17 +19,20 @@ endif
 version_release := ${version}-${release}
 
 # Build release for debian
-distribution := $(shell lsb_release -is)
+distribution := $(shell python -c "import platform; print(platform.linux_distribution()[0])")
+
 ifeq (${distribution}, Debian)
   distributionrelease := unstable
+  lintian-standards-version := $(shell grep -o -m1 "^[0-9].* " /usr/share/lintian/data/standards-version/release-dates)
 else ifeq (${distribution}, Ubuntu)
   distributionrelease := $(shell lsb_release -cs)
+  lintian-standards-version := $(shell grep -o -m1 "^[0-9].* " /usr/share/lintian/data/standards-version/release-dates)
 else
   distributionrelease := "FAILED... distribution=${distribution}"
 endif
 
-ignore_files_regexp := "^Makefile\|${pkg_name}..*.tar.gz\|${pkg_name}.spec.*$$\|.*.md\|buildguide.txt"
-files := $(shell ls | egrep -ve ${ignore_files_regexp})
+ignore_files_regexp_rpmbuild := "^Makefile\|${pkg_name}.spec.*$$\|.*.md\|buildguide.txt\|contrib\|debian\|tests"
+files := $(shell ls -1 | egrep -ve ${ignore_files_regexp_rpmbuild})
 
 clean:
 	@rm -rf ${pkg_name}-*.tar.gz
@@ -38,11 +41,10 @@ clean:
 
 sources:
 	@mkdir -p ${pkg_name}-${version}
-	@cp -p ${files} ${pkg_name}-${version}
+	@cp -pr ${files} ${pkg_name}-${version}
+	@rm -rf ${pkg_name}-${version}/contrib ${pkg_name}-${version}/debian ${pkg_name}-${version}/tests
 	@tar -zcf ${pkg_name}-${version}.tar.gz ${pkg_name}-${version}
 	@rm -rf ${pkg_name}-${version}
-	@sed -r -i "s/^(Name:\s*).*\$$/\1${pkg_name}/g" ${pkg_name}.spec 
-	@sed -r -i "s/^(Version:\s*).*\$$/\1${version}/g" ${pkg_name}.spec
 
 deb:
 	@echo ${release_message}
@@ -55,7 +57,8 @@ deb:
 	@rm -f ${pkg_name}-${version}/auter.yumdnfModule
 	@rm -f ${pkg_name}-${version}/LICENSE
 	@mkdir ${pkg_name}-${version}/docs
-	@/usr/bin/help2man --include=auter.help2man -n auter --no-info ./auter -o ${pkg_name}-${version}/docs/auter.1
+	@/usr/bin/help2man --section=1 ./auter -N -o ${pkg_name}-${version}/docs/auter.1 -n "Automatic Update Transaction Execution by Rackspace" --include=auter.help2man-sections
+	@mv ${pkg_name}-${version}/auter.conf.man ${pkg_name}-${version}/docs/auter.conf.5
 	@echo "auter (${version}) ${distributionrelease}; urgency=medium" >${pkg_name}-${version}/debian/changelog
 	@echo "  * Release ${version}." >>${pkg_name}-${version}/debian/changelog
 	# DON'T FORGET TO CHANGE THIS VERSION AT NEXT RELEASE
