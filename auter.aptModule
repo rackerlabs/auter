@@ -1,3 +1,4 @@
+#!/bin/bash
 # This is a script that is intended to only be called by /usr/bin/auter and
 # contains linux package manager specific code for auter.
 
@@ -34,7 +35,9 @@ function prepare_updates() {
       if [[ ${ERROR_COUNT} -eq 0 ]]; then
         # If there are packages to be installed then download them.
         if [[ "${AVAILABLE_PACKAGE_COUNT}" -gt 0 ]]; then
-          sleep $((RANDOM % MAXDELAY))
+          SLEEP_DELAY=$((RANDOM % MAXDELAY))
+          [[ ${SLEEP_DELAY} -gt 1 ]] && logit "INFO: Sleeping for ${SLEEP_DELAY} seconds"
+          sleep ${SLEEP_DELAY}
           if [[ "${ONLYINSTALLFROMPREP}" == "yes" ]]; then
             [[ -d "${DOWNLOADDIR}/${CONFIGSET}" ]] || mkdir -p "${DOWNLOADDIR}/${CONFIGSET}"
             DOWNLOADOPTION=("-o" "dir::cache::archives=${DOWNLOADDIR}/${CONFIGSET}")
@@ -71,6 +74,9 @@ function prepare_updates() {
 }
 
 function apply_updates() {
+  # Prevent dialog box as we are not running the update in interactive mode
+  declare -x DEBIAN_FRONTEND=noninteractive
+
   # Set the list of debs to be installed
   if [[ "${ONLYINSTALLFROMPREP}" == "yes" ]]; then
     local AVAILABLE_PACKAGES
@@ -104,7 +110,9 @@ function apply_updates() {
         run_script "${SCRIPT}" "Pre-Apply"
       done
 
-      sleep $((RANDOM % MAXDELAY))
+      SLEEP_DELAY=$((RANDOM % MAXDELAY))
+      [[ ${SLEEP_DELAY} -gt 1 ]] && logit "INFO: Sleeping for ${SLEEP_DELAY} seconds"
+      sleep ${SLEEP_DELAY}
       logit "INFO: Applying updates"
       PACKAGES_BEFORE=$(dpkg --list)
 
@@ -130,6 +138,7 @@ function apply_updates() {
         run_script "${SCRIPT}" "Post-Apply"
       done
 
+      # Excluding this check because the REBOOTCALL variable is used by the main auter script
       # shellcheck disable=SC2034
       [[ "${AUTOREBOOT}" == "yes" ]] && REBOOTCALL=1
 
