@@ -38,12 +38,9 @@ mkdir -p %{buildroot}%{_localstatedir}/run/%{name}
 touch %{buildroot}%{_localstatedir}/run/%{name}/%{name}.pid
 %endif
 
-mkdir -p %{buildroot}%{_bindir} %{buildroot}%{_sharedstatedir}/%{name} \
-  %{buildroot}%{_sysconfdir}/cron.d %{buildroot}%{_sysconfdir}/%{name} \
-  %{buildroot}%{_var}/cache/auter \
-  %{buildroot}%{_usr}/lib/%{name} \
-  %{buildroot}%{_mandir}/man1 \
-  %{buildroot}%{_mandir}/man5 \
+install -d -p -m 0755 \
+  %{buildroot}%{_sharedstatedir}/%{name} \
+  %{buildroot}%{_var}/cache/%{name} \
   %{buildroot}%{_sysconfdir}/%{name}/pre-reboot.d \
   %{buildroot}%{_sysconfdir}/%{name}/post-reboot.d \
   %{buildroot}%{_sysconfdir}/%{name}/pre-apply.d \
@@ -51,13 +48,12 @@ mkdir -p %{buildroot}%{_bindir} %{buildroot}%{_sharedstatedir}/%{name} \
   %{buildroot}%{_sysconfdir}/%{name}/pre-prep.d \
   %{buildroot}%{_sysconfdir}/%{name}/post-prep.d
 
-install -p -m 0755 %{name} %{buildroot}%{_bindir}
-install -p -m 0755 %{name}.yumdnfModule %{buildroot}%{_usr}/lib/%{name}/auter.module
-install -p -m 0644 %{name}.cron %{buildroot}%{_sysconfdir}/cron.d/%{name}
-install -p -m 0644 %{name}.conf %{buildroot}%{_sysconfdir}/%{name}/%{name}.conf
-install -p -m 0644 %{name}.man %{buildroot}%{_mandir}/man1/%{name}.1
-install -p -m 0644 %{name}.conf.man %{buildroot}%{_mandir}/man5/%{name}.conf.5
-chmod 0755 %{buildroot}%{_sysconfdir}/%{name}/*.d
+install -D -p -m 0755 %{name} %{buildroot}%{_bindir}/%{name}
+install -D -p -m 0644 %{name}.cron %{buildroot}%{_sysconfdir}/cron.d/%{name}
+install -D -p -m 0755 %{name}.yumdnfModule %{buildroot}%{_usr}/lib/%{name}/auter.module
+install -D -p -m 0644 %{name}.man %{buildroot}%{_mandir}/man1/%{name}.1
+install -D -p -m 0644 %{name}.conf.man %{buildroot}%{_mandir}/man5/%{name}.conf.5
+install -D -p -m 0644 %{name}.conf %{buildroot}%{_sysconfdir}/%{name}/%{name}.conf
 
 %post
 # If this is the first time install, create the lockfile
