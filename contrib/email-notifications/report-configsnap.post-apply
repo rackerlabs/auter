@@ -1,5 +1,16 @@
 #!/bin/bash
 
+# This assumes that configsnap has been run pre/post with the following options:
+# Pre:
+# /usr/sbin/configsnap -d /root -t auter-configsnap-"$(date +%Y-%m-%d)" -p pre
+#
+# Post:
+# /usr/sbin/configsnap -d /root -t auter-configsnap-"$(date +%Y-%m-%d)" -p post-apply \
+#   &> /root/auter-configsnap-"$(date +%Y-%m-%d)"/configsnap/post-apply.compare
+#
+# See the configsnap contrib script for further details.
+
 if [[ -f /root/auter-configsnap-$(date +%Y-%m-%d)/configsnap/post-update.compare ]]; then
-    awk '/^(Differences|-|+|?)/{a=1;print}END{if (!a) print "No differences found"}' "/root/auter-configsnap-$(date +%Y-%m-%d)/configsnap/post-update.compare"
+    awk '/^(Differences|-|+|?)/{a=1;print}END{if (!a) print "No differences found"}' \
+      "/root/auter-configsnap-$(date +%Y-%m-%d)/configsnap/post-update.compare" || true
 fi

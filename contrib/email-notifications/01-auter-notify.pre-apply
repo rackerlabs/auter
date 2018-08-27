@@ -1,5 +1,3 @@
 #!/bin/bash
-#
 
 bash /usr/lib/auter/auter-notify.module "pre-apply"
-

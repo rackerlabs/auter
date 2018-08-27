@@ -1,3 +1,9 @@
 #!/bin/bash
 
-grep -o '.*\.rpmnew' "${OUTPUT_FILE}" || true
+# Pull out lines from /var/lib/auter/last-apply-output-<CONFIGSET>. An
+# example format would be:
+# warning: /etc/fail2ban/filter.d/sshd.conf created as /etc/fail2ban/filter.d/sshd.conf.rpmnew
+#
+# Avoid returning anything other than true as it will cause the auter pre/post
+# scripts to stop.
+grep '\.rpmnew' "${OUTPUT_FILE}" || true

@@ -20,6 +20,8 @@
 # specific language governing permissions and limitations under the License.
 #
 
+# This is the main script behind sending the automatic notifiction emails. It
+# should live in /usr/lib/auter/auter-notify.module.
 
 #######################################
 # Main auter-notify.module function
@@ -44,6 +46,7 @@ function main() {
   # Setup
   local STAGE="$1"
   local MAIL_CC
+
   if [[ -f "${SCRIPTDIR}/auter-notify.conf" ]]; then
     source "${SCRIPTDIR}/auter-notify.conf"
   else
@@ -60,7 +63,7 @@ function main() {
     local OUTPUT_FILE="${DATADIR}/last-apply-output-${CONFIGSET}"
   fi
 
-  # Sanity check some of the variables we can't live without
+  # Sanity check some of the variables we can't work without
   [[ -z "$STAGE" ]] &&  logit "ERROR: auter-notify requires a phase argument, skipping $0 script" && exit 0
   [[ -z "$MAIL_TO" ]] && logit "ERROR: \$MAIL_TO is undefined, skipping $0 script" && exit 0
   [[ ! -x $(which mailx) ]] && logit "ERROR: mailx is not installed, skipping $0 script" && exit 0
@@ -68,12 +71,15 @@ function main() {
   function get_prep_packages() {
     awk --posix '/={70,}/,/Total download size/' "$OUTPUT_FILE"
   }
+
   function get_apply_packages() {
     awk '/Updated:/,/Complete!/' "$OUTPUT_FILE"
   }
+
   function get_error_message() {
     awk '/Error Downloading Packages:|Error Summary/,0' "$OUTPUT_FILE"
   }
+
   function get_stage_result() {
     # Last $STAGE result, either FAIL or SUCCESS
     if grep -E 'Error Downloading Packages|Error Summary' "$OUTPUT_FILE" &>/dev/null; then
@@ -81,9 +87,11 @@ function main() {
     fi
     echo "${ret:-SUCCESS}"
   }
+
   function get_datetime() {
     date -d "${1:-now}" "+%T %Z"
   }
+
   function run_custom_scripts {
     for SCRIPT in ${SCRIPTDIR}/auter-notify.d/*$STAGE; do
       if [[ -x "$SCRIPT" ]]; then

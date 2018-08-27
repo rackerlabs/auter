@@ -1,6 +1,7 @@
 # Auter email notifications
 
-An auter module for sending brief reports on the auter patching stages.
+A collection of contrib scripts for sending email notifications containing
+details of auter patching stages.
 
 # Script Details
 
@@ -42,7 +43,7 @@ be edited if you are not using the default configsnap contrib script setup.
 
 ## report-rpmnew.post-apply
 
-Example script to report on all updated config files post apply.
+Script to report all rpmnew files that were created during the last update.
 
 # Pre-requisites and dependencies
 
@@ -61,10 +62,11 @@ Example script to report on all updated config files post apply.
 | report-configsnap.post-apply | Example custom script for displaying the diff result from configsnap |
 | report-rpmnew.post-apply     | Example custom script for finding updated config files               |
 
+The reporting scripts should be placed in the /etc/auter/auter-notify.d/ directory.
+
 # Any additional information or sections
 
 These scripts assume a correctly configured MTA on the server. The
 report-configsnap.post-apply script also assumes that configsnap is being run
 during the pre-apply or post-prep stages as well as the post-apply stage to
 generate state files to diff against.
-
