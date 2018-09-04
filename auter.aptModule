@@ -74,6 +74,9 @@ function prepare_updates() {
 }
 
 function apply_updates() {
+  # Prevent dialog box as we are not running the update in interactive mode
+  declare -x DEBIAN_FRONTEND=noninteractive
+
   # Set the list of debs to be installed
   if [[ "${ONLYINSTALLFROMPREP}" == "yes" ]]; then
     local AVAILABLE_PACKAGES

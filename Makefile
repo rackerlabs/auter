@@ -58,6 +58,7 @@ deb:
 	@rm -f ${pkg_name}-${version}/LICENSE
 	@mkdir ${pkg_name}-${version}/docs
 	@/usr/bin/help2man --section=1 ./auter -N -o ${pkg_name}-${version}/docs/auter.1 -n "Automatic Update Transaction Execution by Rackspace" --include=auter.help2man-sections
+	@mv ${pkg_name}-${version}/auter.conf.man ${pkg_name}-${version}/docs/auter.conf.5
 	@echo "auter (${version}) ${distributionrelease}; urgency=medium" >${pkg_name}-${version}/debian/changelog
 	@echo "  * Release ${version}." >>${pkg_name}-${version}/debian/changelog
 	# DON'T FORGET TO CHANGE THIS VERSION AT NEXT RELEASE
