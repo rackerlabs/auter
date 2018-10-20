@@ -117,7 +117,7 @@ function apply_updates() {
     if [[ $(find "${DOWNLOADDIR}/${CONFIGSET}" -name "*.rpm" | wc -l) -gt 0 ]]; then
       local RPMS=()
       # Check if the updates staged are still required
-      for PACKAGE in ${DOWNLOADDIR}/${CONFIGSET}/*.rpm; do
+      for PACKAGE in "${DOWNLOADDIR}"/"${CONFIGSET}"/*.rpm; do
         # Check if the local rpm is an update to the installed package and if it is then add the file to RPMS
         # list. We are using rpm directly for this check because "yum check-update" does not support local rpm
         # files. This also avoids connecting to the repos. And finally this avoids an issue when updating the
