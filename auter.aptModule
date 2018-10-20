@@ -58,7 +58,12 @@ function prepare_updates() {
         logit "ERROR: There were errors returned by \`${PACKAGE_MANAGER} -u upgrade --assume-no ${PACKAGEMANAGEROPTIONS[*]}\`. Exiting."
       fi
     else
-      logit "WARNING: downloadonly option is not available"
+      if [[ "${ONLYINSTALLFROMPREP}" == "yes" ]]; then
+        logit "ERROR: DOWNLOADOPTION set to 'yes' but the '--downloadonly' option is not available in the current version of ${PACKAGE_MANAGER}"
+        quit 3
+      else
+        logit "WARNING: downloadonly option is not available"
+      fi
     fi
   else
     PREPOUTPUT=$("${PACKAGE_MANAGER}" "${PACKAGEMANAGEROPTIONS[@]}" -s dist-upgrade 2>&1)
