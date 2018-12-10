@@ -124,7 +124,7 @@ function apply_updates() {
       # We don't want to allow the user to interrupt a yum/dnf/apt transaction or Bad Things Happen.
       echo "Trying to update"
       trap '' SIGINT SIGTERM
-      RUN_OUTPUT=$("${PACKAGE_MANAGER}" "${UPDATEACTION}" "${PACKAGEMANAGEROPTIONS[@]}" -y "${DEBS[@]}")
+      RUN_OUTPUT=$("${PACKAGE_MANAGER}" "${UPDATEACTION}" "${PACKAGEMANAGEROPTIONS[@]}" -y "${DEBS[@]}" 2>&1)
       rotate_file "${DATADIR}/last-apply-output-${CONFIGSET}"
       echo "${RUN_OUTPUT}" &>"${DATADIR}/last-apply-output-${CONFIGSET}"
       default_signal_handling
