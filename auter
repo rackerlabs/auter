@@ -19,7 +19,7 @@
 #
 
 
-declare -r -x AUTERVERSION="0.12"
+declare -r -x AUTERVERSION="0.12.1"
 declare -r -x SCRIPTDIR="/etc/auter"
 declare -r -x DATADIR="/var/lib/auter"
 declare -r -x LOCKFILE="${DATADIR}/enabled"
