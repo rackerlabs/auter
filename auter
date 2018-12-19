@@ -28,6 +28,7 @@ declare -r -x PIDFILE="/var/run/auter/auter.pid"
 # Set default options - these can be overridden in the config file or with a command line argument
 declare -x -l AUTOREBOOT="no"
 declare -x -i REBOOTCALL=0
+declare -x -i POSTREBOOTDELAY=300
 declare -x -a PACKAGEMANAGEROPTIONS
 declare -x -l PREDOWNLOADUPDATES="yes"
 declare -x -l ONLYINSTALLFROMPREP="no"
@@ -209,7 +210,7 @@ function reboot_server() {
 function post_reboot() {
   logit "INFO: Removed post-reboot hook: /etc/cron.d/auter-postreboot-${CONFIGSET}"
   rm -f "/etc/cron.d/auter-postreboot-${CONFIGSET}"
-  tty -s || sleep 300
+  tty -s || sleep ${POSTREBOOTDELAY}
 
   for SCRIPT in "${POSTREBOOTSCRIPTDIR}"/*; do
     run_script "${SCRIPT}" "Post-Reboot"
