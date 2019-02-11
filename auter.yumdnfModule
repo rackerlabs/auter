@@ -19,17 +19,19 @@ function check_package_manager_lock() {
   [[ "${PACKAGEMANAGERLOCKWAITTIME}" -lt 1 ]] && PACKAGEMANAGERLOCKWAITTIME=60
 
   if [[ -f /var/run/yum.pid ]]; then
-    for LOCKCHECKATTEMPT in $(seq 1 $((PACKAGEMANAGERLOCKRETRIES + 1))); do
-      # If this has reached the retry limit configured then abort
-      if [[ ${LOCKCHECKATTEMPT} -eq $((PACKAGEMANAGERLOCKRETRIES + 1)) ]]; then
-        logit "ERROR: Final attempt to wait for yum to release lock file failed. Aborting auter run"
-        quit 3
-      fi
+    if { pgrep --pidfile /var/run/yum.pid >/dev/null ; } ; then
+      for LOCKCHECKATTEMPT in $(seq 1 $((PACKAGEMANAGERLOCKRETRIES + 1))); do
+        # If this has reached the retry limit configured then abort
+        if [[ ${LOCKCHECKATTEMPT} -eq $((PACKAGEMANAGERLOCKRETRIES + 1)) ]]; then
+          logit "ERROR: Final attempt to wait for yum to release lock file failed. Aborting auter run"
+          quit 3
+        fi
 
-      logit "INFO: /var/run/yum.pid exists. Waiting ${PACKAGEMANAGERLOCKWAITTIME} seconds for yum lock to be released: Attempt ${LOCKCHECKATTEMPT} of ${PACKAGEMANAGERLOCKRETRIES}"
-      sleep ${PACKAGEMANAGERLOCKWAITTIME}
-      [[ ! -f /var/run/yum.pid ]] && logit "INFO: yum lock has been released" && break
-    done
+        logit "INFO: /var/run/yum.pid exists and process runnning. Waiting ${PACKAGEMANAGERLOCKWAITTIME} seconds for yum lock to be released: Attempt ${LOCKCHECKATTEMPT} of ${PACKAGEMANAGERLOCKRETRIES}"
+        sleep ${PACKAGEMANAGERLOCKWAITTIME}
+        { pgrep --pidfile /var/run/yum.pid >/dev/null ; } || { logit "INFO: yum lock has been released" && break ; }
+      done
+    fi
   fi
 }
 
