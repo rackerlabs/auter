@@ -1,5 +1,5 @@
 Name:           auter
-Version:        0.12
+Version:        0.12.1
 Release:        1%{?dist}
 Summary:        Prepare and apply updates
 License:        ASL 2.0
@@ -101,6 +101,10 @@ exit 0
 %endif
 
 %changelog
+* Tue Dec 11 2018 Nick Rhodes <nrhodes91@gmail.com> 0.12.1-1
+- Add max-delay option to override MAXDLAY via command line
+- Redirect stderr to stdout and capture in APPLYOUTPUT variable
+
 * Thu Jul 12 2018 Paolo Gigante <paolo.gigante.sa@gmail.com> 0.12-1
 - Added --skip-all-scripts to skip the executions of all custom scripts
 - Added --skip-scripts-by-phase to skip the executions of custom scripts for the specified phase
