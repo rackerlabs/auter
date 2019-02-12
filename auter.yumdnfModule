@@ -56,10 +56,12 @@ function prepare_updates() {
       # If check-update has an exit code of 100, updates are available.
       if [[ "${RC}" -eq 100 ]]; then
         # Run any pre-prep scripts
-        sleep $((RANDOM % MAXDELAY))
+        SLEEP_DELAY=$((RANDOM % MAXDELAY))
+        [[ ${SLEEP_DELAY} -gt 1 ]] && logit "INFO: Sleeping for ${SLEEP_DELAY} seconds"
+        sleep ${SLEEP_DELAY}
         if [[ "${ONLYINSTALLFROMPREP}" == "yes" ]]; then
           DOWNLOADOPTION=("--downloaddir=${DOWNLOADDIR}/${CONFIGSET}")
-          
+
           # DNF doesn't support downloaddir, so instead we download to the default
           # location and copy out the way
           if [[ "${PACKAGE_MANAGER}" == "dnf" ]]; then
@@ -69,7 +71,7 @@ function prepare_updates() {
           DOWNLOADLOGMSG=" to ${DOWNLOADDIR}/${CONFIGSET}"
         fi
 
-        
+
         if PREPOUTPUT+="$("${PACKAGE_MANAGER}" "${PACKAGEMANAGEROPTIONS[@]}" "${DOWNLOADOPTION[@]}" update --downloadonly -y 2>&1)"; then
           if [[ "${ONLYINSTALLFROMPREP}" == "yes" && "${PACKAGE_MANAGER}" == "dnf" ]]; then
             find /var/cache/dnf -name "*.rpm" -exec mv {} "${DOWNLOADDIR}/${CONFIGSET}" \;
@@ -85,7 +87,12 @@ function prepare_updates() {
         logit "INFO: No updates are available to be downloaded."
       fi
     else
-      logit "WARNING: downloadonly option is not available"
+      if [[ "${ONLYINSTALLFROMPREP}" == "yes" ]]; then
+        logit "ERROR: DOWNLOADOPTION set to 'yes' but the '--downloadonly' option is not available in the current version of ${PACKAGE_MANAGER}"
+        quit 3
+      else
+        logit "WARNING: downloadonly option is not available"
+      fi
     fi
   else
     PREPOUTPUT+="$("${PACKAGE_MANAGER}" "${PACKAGEMANAGEROPTIONS[@]}" check-update 2>&1)"
@@ -115,7 +122,7 @@ function apply_updates() {
     if [[ $(find "${DOWNLOADDIR}/${CONFIGSET}" -name "*.rpm" | wc -l) -gt 0 ]]; then
       local RPMS=()
       # Check if the updates staged are still required
-      for PACKAGE in ${DOWNLOADDIR}/${CONFIGSET}/*.rpm; do
+      for PACKAGE in "${DOWNLOADDIR}"/"${CONFIGSET}"/*.rpm; do
         # Check if the local rpm is an update to the installed package and if it is then add the file to RPMS
         # list. We are using rpm directly for this check because "yum check-update" does not support local rpm
         # files. This also avoids connecting to the repos. And finally this avoids an issue when updating the
@@ -144,14 +151,16 @@ function apply_updates() {
       run_script "${SCRIPT}" "Pre-Apply"
     done
 
-    sleep $((RANDOM % MAXDELAY))
+    SLEEP_DELAY=$((RANDOM % MAXDELAY))
+    [[ ${SLEEP_DELAY} -gt 1 ]] && logit "INFO: Sleeping for ${SLEEP_DELAY} seconds"
+    sleep ${SLEEP_DELAY}
     logit "INFO: Applying updates"
     HISTORY_BEFORE=$(${PACKAGE_MANAGER} history list)
 
     # We don't want to allow the user to interrupt a yum/dnf transaction or Bad Things Happen.
     trap '' SIGINT SIGTERM
     rotate_file "${DATADIR}/last-apply-output-${CONFIGSET}"
-    APPLYOUTPUT=$("${PACKAGE_MANAGER}" "${UPDATEACTION}" -y "${PACKAGEMANAGEROPTIONS[@]}" "${RPMS[@]}")
+    APPLYOUTPUT+=$("${PACKAGE_MANAGER}" "${UPDATEACTION}" -y "${PACKAGEMANAGEROPTIONS[@]}" "${RPMS[@]}" 2>&1)
     default_signal_handling
     echo -e "$APPLYOUTPUT" &>"${DATADIR}/last-apply-output-${CONFIGSET}"
 

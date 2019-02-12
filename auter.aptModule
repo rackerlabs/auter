@@ -35,7 +35,9 @@ function prepare_updates() {
       if [[ ${ERROR_COUNT} -eq 0 ]]; then
         # If there are packages to be installed then download them.
         if [[ "${AVAILABLE_PACKAGE_COUNT}" -gt 0 ]]; then
-          sleep $((RANDOM % MAXDELAY))
+          SLEEP_DELAY=$((RANDOM % MAXDELAY))
+          [[ ${SLEEP_DELAY} -gt 1 ]] && logit "INFO: Sleeping for ${SLEEP_DELAY} seconds"
+          sleep ${SLEEP_DELAY}
           if [[ "${ONLYINSTALLFROMPREP}" == "yes" ]]; then
             [[ -d "${DOWNLOADDIR}/${CONFIGSET}" ]] || mkdir -p "${DOWNLOADDIR}/${CONFIGSET}"
             DOWNLOADOPTION=("-o" "dir::cache::archives=${DOWNLOADDIR}/${CONFIGSET}")
@@ -56,7 +58,12 @@ function prepare_updates() {
         logit "ERROR: There were errors returned by \`${PACKAGE_MANAGER} -u upgrade --assume-no ${PACKAGEMANAGEROPTIONS[*]}\`. Exiting."
       fi
     else
-      logit "WARNING: downloadonly option is not available"
+      if [[ "${ONLYINSTALLFROMPREP}" == "yes" ]]; then
+        logit "ERROR: DOWNLOADOPTION set to 'yes' but the '--downloadonly' option is not available in the current version of ${PACKAGE_MANAGER}"
+        quit 3
+      else
+        logit "WARNING: downloadonly option is not available"
+      fi
     fi
   else
     PREPOUTPUT=$("${PACKAGE_MANAGER}" "${PACKAGEMANAGEROPTIONS[@]}" -s dist-upgrade 2>&1)
@@ -108,14 +115,16 @@ function apply_updates() {
         run_script "${SCRIPT}" "Pre-Apply"
       done
 
-      sleep $((RANDOM % MAXDELAY))
+      SLEEP_DELAY=$((RANDOM % MAXDELAY))
+      [[ ${SLEEP_DELAY} -gt 1 ]] && logit "INFO: Sleeping for ${SLEEP_DELAY} seconds"
+      sleep ${SLEEP_DELAY}
       logit "INFO: Applying updates"
       PACKAGES_BEFORE=$(dpkg --list)
 
       # We don't want to allow the user to interrupt a yum/dnf/apt transaction or Bad Things Happen.
       echo "Trying to update"
       trap '' SIGINT SIGTERM
-      RUN_OUTPUT=$("${PACKAGE_MANAGER}" "${UPDATEACTION}" "${PACKAGEMANAGEROPTIONS[@]}" -y "${DEBS[@]}")
+      RUN_OUTPUT=$("${PACKAGE_MANAGER}" "${UPDATEACTION}" "${PACKAGEMANAGEROPTIONS[@]}" -y "${DEBS[@]}" 2>&1)
       rotate_file "${DATADIR}/last-apply-output-${CONFIGSET}"
       echo "${RUN_OUTPUT}" &>"${DATADIR}/last-apply-output-${CONFIGSET}"
       default_signal_handling
