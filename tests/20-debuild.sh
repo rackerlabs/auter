@@ -29,7 +29,7 @@ function quit() {
   exit "$1"
 }
 
-for RELEASE in 16.04 17.10 18.04; do
+for RELEASE in 18.04; do
   # build the container
   DOCKERCONTAINERS+=" $(docker run --rm=true --name auter-debuild-test-${RELEASE} -e DEBIAN_FRONTEND=noninteractive -td ubuntu:${RELEASE})"
   EVALSUCCESS "Created ${RELEASE} docker image"
