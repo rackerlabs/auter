@@ -111,13 +111,16 @@ function apply_updates() {
     if [[ "${AVAILABLE_PACKAGE_COUNT}" -gt 0 ]]; then
       local PACKAGES_BEFORE
       local PACKAGES_AFTER
+
+      # Sleep before running pre-scripts and updates
+      SLEEP_DELAY=$((RANDOM % MAXDELAY))
+      [[ ${SLEEP_DELAY} -gt 1 ]] && logit "INFO: Sleeping for ${SLEEP_DELAY} seconds"
+      sleep ${SLEEP_DELAY}
+
       for SCRIPT in "${PREAPPLYSCRIPTDIR}"/*; do
         run_script "${SCRIPT}" "Pre-Apply"
       done
 
-      SLEEP_DELAY=$((RANDOM % MAXDELAY))
-      [[ ${SLEEP_DELAY} -gt 1 ]] && logit "INFO: Sleeping for ${SLEEP_DELAY} seconds"
-      sleep ${SLEEP_DELAY}
       logit "INFO: Applying updates"
       PACKAGES_BEFORE=$(dpkg --list)
 
