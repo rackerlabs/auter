@@ -29,6 +29,7 @@ function quit() {
   exit "$1"
 }
 
+date
 # shellcheck disable=SC2043
 for RELEASE in 17.04 18.10; do
   {
@@ -102,3 +103,4 @@ for RELEASE in 17.04 18.10; do
 done
 
 wait
+date
