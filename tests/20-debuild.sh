@@ -100,3 +100,5 @@ for RELEASE in 17.04 18.10; do
   docker stop auter-debuild-test-${RELEASE}
   } &
 done
+
+wait
