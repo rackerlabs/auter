@@ -146,6 +146,11 @@ function apply_updates() {
 
   # If check-update has an exit code of 100, updates are available.
   if [[ "${RC}" -eq 100 ]]; then
+    # Sleep before continuing with pre-scripts and updates
+    SLEEP_DELAY=$((RANDOM % MAXDELAY))
+    [[ ${SLEEP_DELAY} -gt 1 ]] && logit "INFO: Sleeping for ${SLEEP_DELAY} seconds"
+    sleep ${SLEEP_DELAY}
+
     # Check for yum.lock file
     check_package_manager_lock
 
@@ -153,9 +158,6 @@ function apply_updates() {
       run_script "${SCRIPT}" "Pre-Apply"
     done
 
-    SLEEP_DELAY=$((RANDOM % MAXDELAY))
-    [[ ${SLEEP_DELAY} -gt 1 ]] && logit "INFO: Sleeping for ${SLEEP_DELAY} seconds"
-    sleep ${SLEEP_DELAY}
     logit "INFO: Applying updates"
     HISTORY_BEFORE=$(${PACKAGE_MANAGER} history list)
 
