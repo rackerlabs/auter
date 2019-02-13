@@ -29,6 +29,7 @@ function quit() {
   exit "$1"
 }
 
+# shellcheck disable=SC2043
 for RELEASE in 18.10; do
   # build the container
   DOCKERCONTAINERS+=" $(docker run --rm=true --name auter-debuild-test-${RELEASE} -e DEBIAN_FRONTEND=noninteractive -td ubuntu:${RELEASE})"
