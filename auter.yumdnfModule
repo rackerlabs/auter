@@ -202,11 +202,13 @@ function apply_updates() {
 
   elif [[ "${RC}" -eq 0 ]]; then
     logit "INFO: No updates are available to be applied."
-    echo "\\nSTATUS:SUCCESS:No updates available" >> "${DATADIR}/last-apply-output-${CONFIGSET}"
+    APPLYOUTPUT+="\\nSTATUS:SUCCESS:No updates available"
+    echo -e "$APPLYOUTPUT" > "${DATADIR}/last-apply-output-${CONFIGSET}"
     log_last_run
   else
     logit "ERROR: Exit status ${RC} returned by \`${PACKAGE_MANAGER} check-update ${PACKAGEMANAGEROPTIONS[*]}\`. Exiting."
-    echo "\\nSTATUS:FAILED:Yum failed with status $RC" >> "${DATADIR}/last-apply-output-${CONFIGSET}"
+    APPLYOUTPUT+="\\nSTATUS:FAILED:Yum failed with status $RC"
+    echo -e "$APPLYOUTPUT" > "${DATADIR}/last-apply-output-${CONFIGSET}"
     quit 3
   fi
 }
