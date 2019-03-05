@@ -23,12 +23,15 @@ function prepare_updates() {
     run_script "${SCRIPT}" "Pre-Prep"
   done
 
+  PREPOUTPUT="$(date '+%F %T')\\n"
   if [[ "${PREDOWNLOADUPDATES}" == "yes" ]]; then
     if [[ $(man "${PACKAGE_MANAGER}" | grep -c download-only) -gt 0 ]]; then
       ${PACKAGE_MANAGER} update &>/dev/null
       # Check if there are any errors when checking for updates
       local ERROR_COUNT
       local AVAILABLE_PACKAGE_COUNT
+
+
       ERROR_COUNT=$("${PACKAGE_MANAGER}" -u upgrade --assume-no "${PACKAGEMANAGEROPTIONS[@]}" | grep -c '^[WE]:')
       AVAILABLE_PACKAGE_COUNT=$("${PACKAGE_MANAGER}" -u upgrade --assume-no "${PACKAGEMANAGEROPTIONS[@]}" | awk '/upgraded,.*newly installed,/ {sum=$1+$3} END {print sum}')
 
@@ -48,14 +51,18 @@ function prepare_updates() {
           PREPOUTPUT=$("${PACKAGE_MANAGER}" "${PACKAGEMANAGEROPTIONS[@]}" "${DOWNLOADOPTION[@]}" --download-only dist-upgrade -y 2>&1)
           if [[ $(echo "${PREPOUTPUT}" | grep -c '^[WE]:') -gt 0 ]]; then
             logit "ERROR: There were errors returned by \`${PACKAGE_MANAGER} ${PACKAGEMANAGEROPTIONS[*]} ${DOWNLOADOPTION[*]} --download-only dist-upgrade -y\`. Exiting."
+            PREPOUTPUT+="\\nSTATUS:FAILED:Errors returned by package manager"
           else
             logit "INFO: Updates downloaded${DOWNLOADLOGMSG}"
+            PREPOUTPUT+="\\nSTATUS:SUCCESS:Package download complete"
           fi
         else [[ "${AVAILABLE_PACKAGE_COUNT}" -eq 0 ]]
           logit "INFO: No updates are available to be downloaded."
+          PREPOUTPUT+="STATUS:SUCCESS:No updates available"
         fi
       else
         logit "ERROR: There were errors returned by \`${PACKAGE_MANAGER} -u upgrade --assume-no ${PACKAGEMANAGEROPTIONS[*]}\`. Exiting."
+        PREPOUTPUT+="\\nSTATUS:FAILED:Errors returned by package manager"
       fi
     else
       if [[ "${ONLYINSTALLFROMPREP}" == "yes" ]]; then
@@ -63,13 +70,14 @@ function prepare_updates() {
         quit 3
       else
         logit "WARNING: downloadonly option is not available"
+      PREPOUTPUT+="\\nSTATUS:Download only not available"
       fi
     fi
   else
-    PREPOUTPUT=$("${PACKAGE_MANAGER}" "${PACKAGEMANAGEROPTIONS[@]}" -s dist-upgrade 2>&1)
+    PREPOUTPUT+=$("${PACKAGE_MANAGER}" "${PACKAGEMANAGEROPTIONS[@]}" -s dist-upgrade 2>&1)
   fi
   rotate_file "${DATADIR}/last-prep-output-${CONFIGSET}"
-  [[ "${PREPOUTPUT}" ]] && echo "${PREPOUTPUT}" > "${DATADIR}/last-prep-output-${CONFIGSET}"
+  [[ "${PREPOUTPUT}" ]] && echo -e "${PREPOUTPUT}" > "${DATADIR}/last-prep-output-${CONFIGSET}"
 
   # Run any post-prep scripts
   for SCRIPT in "${POSTPREPSCRIPTDIR}"/*; do
@@ -82,6 +90,7 @@ function apply_updates() {
   # Prevent dialog box as we are not running the update in interactive mode
   declare -x DEBIAN_FRONTEND=noninteractive
 
+  APPLYOUTPUT="$(date '+%F %T')\\n"
   # Set the list of debs to be installed
   if [[ "${ONLYINSTALLFROMPREP}" == "yes" ]]; then
     local AVAILABLE_PACKAGES
@@ -127,15 +136,19 @@ function apply_updates() {
       # We don't want to allow the user to interrupt a yum/dnf/apt transaction or Bad Things Happen.
       echo "Trying to update"
       trap '' SIGINT SIGTERM
-      RUN_OUTPUT=$("${PACKAGE_MANAGER}" "${UPDATEACTION}" "${PACKAGEMANAGEROPTIONS[@]}" -y "${DEBS[@]}" 2>&1)
+      if APPLYOUTPUT=$("${PACKAGE_MANAGER}" "${UPDATEACTION}" "${PACKAGEMANAGEROPTIONS[@]}" -y "${DEBS[@]}" 2>&1); then
+        APPLYOUTPUT+="\\nSTATUS:SUCCESS:Package updates applied"
+      else
+        APPLYOUTPUT+="\\nSTATUS:FAILED:Package updates failed"
+      fi
       rotate_file "${DATADIR}/last-apply-output-${CONFIGSET}"
-      echo "${RUN_OUTPUT}" &>"${DATADIR}/last-apply-output-${CONFIGSET}"
+      echo -e "${APPLYOUTPUT}" &>"${DATADIR}/last-apply-output-${CONFIGSET}"
       default_signal_handling
 
       PACKAGES_AFTER=$(dpkg --list)
 
       if [[ "${PACKAGES_BEFORE}" == "${PACKAGES_AFTER}" ]]; then
-        logit "WARNING: No updates were applied. $(echo "${RUN_OUTPUT}" | grep 'upgraded,.*installed,')"
+        logit "WARNING: No updates were applied. $(echo "${APPLYOUTPUT}" | grep 'upgraded,.*installed,')"
         quit 3
       fi
 
@@ -152,10 +165,14 @@ function apply_updates() {
 
     else
       logit "INFO: No updates are available to be applied."
+      APPLYOUTPUT+="\\nSTATUS:SUCCESS:No updates available"
+      echo -e "$APPLYOUTPUT" > "${DATADIR}/last-apply-output-${CONFIGSET}"
       log_last_run
     fi
   else
     logit "ERROR: Exit status ${RC} returned by \`${PACKAGE_MANAGER} -u upgrade --assume-no ${PACKAGEMANAGEROPTIONS[*]}\`. Exiting."
+    APPLYOUTPUT+="\\nSTATUS:FAILED:Updates failed with status $RC"
+    echo -e "$APPLYOUTPUT" > "${DATADIR}/last-apply-output-${CONFIGSET}"
     quit 3
   fi
 }
