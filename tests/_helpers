@@ -1,0 +1,10 @@
+red='\033[31m'
+rst='\033[0m'
+grn='\033[32m'
+
+log_success () { printf "[$grn  OK   $rst] $1\n"; }
+log_fail () { printf "[$red  OK   $rst] $1\n"; }
+
+AUTERDIR="$(dirname `pwd`)"
+TESTDIR="$AUTERDIR/tests"
+CHANGEDFILES="$(find "$AUTERDIR" -name CHANGEDFILES)"

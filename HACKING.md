@@ -30,7 +30,7 @@ apt-get install <PACKAGE>=<VERSION>
 
 ```
 
-Use the following to setup auter's pre/post scripts:
+Use the following to setup auter pre/post scripts:
 
 ```sh
 echo 'logger custom pre prep script ran' > /etc/auter/pre-prep.d/pre_prep_script
@@ -51,7 +51,7 @@ chmod +x /etc/auter/*.d/*script
 
 ##### Testing template
 
-This MUST be completed for all supported distrubutions in all pull requests to the master branch before being merged.
+This MUST be completed for all supported distributions in all pull requests to the master branch before being merged.
 
 ```md
 # <OS test version>
@@ -144,7 +144,7 @@ Checks:
         ```
     - __[ pass/fail ]__ expected updates were applied. Check **_/var/log/apt/history.log_** or **_/var/log/yum.log_**
     - __[ pass/fail ]__ **_/var/lib/auter/last-apply-output-default_** contains update info
-    - __[ pass/fail ]__ no upates available after running. Check `yum update <<<n` or `apt-get --just-print upgrade`
+    - __[ pass/fail ]__ no updates available after running. Check `yum update <<<n` or `apt-get --just-print upgrade`
     - __[ pass/fail ]__ pre/post apply scripts ran successfully, messages logged to syslog
     - __[ pass/fail ]__ no mail is sent to the root user with the stdout from auter
      ##### Output from apply:
@@ -195,7 +195,7 @@ Checks:
     echo 'logger custom post reboot script ran' > /etc/auter/post-reboot.d/post_reboot_script
     chmod +x /etc/auter/*.d/*script
     ```
-3) Adjust the MAXDELAY value to avoid extented sleep times
+3) Adjust the MAXDELAY value to avoid extended sleep times
     ```
     sed -i 's/MAXDELAY.*$/MAXDELAY="60"/g' /etc/auter/auter.conf
     ```
@@ -303,7 +303,7 @@ Checks:
 2) Details of new feature
 
 3) Test command
-    Expected outome:
+    Expected outcome:
     ```
 
     ```
@@ -339,6 +339,6 @@ git push origin Release-<NEW_VERSION>
 ```
 
 4. Any new PRs should be made to the develop branch. The only changes to the Release-<NEW_VERSION> should be fixing of any review issues for that branch.
-5. Full testing for all supported OSs should be carried out and tracked in a github project created for the release. Example: https://github.com/rackerlabs/auter/projects/1
+5. Full testing for all supported distributions should be carried out and tracked in a github project created for the release. Example: https://github.com/rackerlabs/auter/projects/1
 6. Once all testing has been completed for Release-<NEW_VERSION>, the reviewer should merge the Release-<NEW_VERSION> branch to both master and develop branches.
-7. Tag a new release named <NEW_VERSION> using template <major ver>.<minor ver> (Eg: Release 0.11)
+7. Tag a new release named <NEW_VERSION> using template <MAJOR_VERSION>.<MINOR_VERSION> (Eg: Release 0.11)
