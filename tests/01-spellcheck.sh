@@ -1,6 +1,6 @@
 #!/bin/bash
 
-. _helpers
+. "$(dirname "$0")"/_helpers
 
 if ! command -v aspell &>/devnull; then echo "apsell not installed. Aborting test"; exit 1; fi
 
@@ -15,9 +15,9 @@ FILELIST+=( "$AUTERDIR/buildGuide.md" )
 FILELIST+=( "$AUTERDIR/contrib/README.md" )
 
 for FILE in "${FILELIST[@]}"; do
-  if aspel_out=$(aspell -a --personal="${TESTDIR}"/.aspell_auter_dictionary 2>&1 < "${FILE}"); then
+  if aspel_out="$(aspell -a --personal="${TESTDIR}"/.aspell_auter_dictionary 2>&1 < "${FILE}")"; then
     spelling_mistakes="$(awk '/^&/{print $2}' <<< "$aspel_out")"
-    if [[ -n "${spelling_mistakes}" ]]; then
+    if [[ -n "$spelling_mistakes" ]]; then
       log_fail "$FILE failed SpellCheck"
       EXITCODE=1
       sort <<< "$spelling_mistakes" | uniq -c
@@ -27,7 +27,8 @@ for FILE in "${FILELIST[@]}"; do
 
   else
     log_fail "$aspel_out"
+    exit 1
   fi
 
 done
-exit "${EXITCODE}"
+exit $EXITCODE
