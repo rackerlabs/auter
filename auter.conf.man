@@ -9,7 +9,7 @@ This is the default config file for auter.
 
 .TP
 .B CONFIGSET
-This is the nametag for this config file. Log files, auter generated files and postreboot jobs will be named using this tag. 
+This is the name tag for this config file. Log files, auter generated files and postreboot jobs will be named using this tag. 
 \fB IMPORTANT:\fR This auter tag MUST BE UNIQUE on a system
 \fB Valid options:\fR String with no special characters or spaces
 \fB Examples:\fR
@@ -29,7 +29,7 @@ This controls if auter will automatically reboot the server after updates have b
 .TP
 .B PACKAGEMANAGEROPTIONS
 Options to pass to the (relevant) package manager (yum/dnf/apt) when the update/upgrade action is called. If dnf is installed, it will be the preferred package manager. 
-\fB Valid options:\fR Space separated packagemanager options
+\fB Valid options:\fR Space separated package manager options
 \fB Examples:\fR
  PACKAGEMANAGEROPTIONS="--disableexcludes=all"
  PACKAGEMANAGEROPTIONS="--disablerepo=epel"
@@ -45,7 +45,7 @@ If the --downloadonly option is available then updates will be downloaded during
 
 .TP
 .B ONLYINSTALLFROMPREP
-Option to only install the downloaded packages. This option should be used when getting multiple servers to apply the same update list  (eg to keep a uat/staging/prod environment in sync), or when you would like to review the updates ahead of applying them. Not setting this option will result in auter installingthe latest available packages at the time apply runs.
+Option to only install the downloaded packages. This option should be used when getting multiple servers to apply the same update list  (eg to keep a uat/staging/prod environment in sync), or when you would like to review the updates ahead of applying them. Not setting this option will result in auter installing the latest available packages at the time apply runs.
 \fB NOTES:\fR
  - The PREDOWNLOADUPDATES must be set to "yes" for this to take effect.
  - The directory must be owned by user and group 'root' and must not be writable by other.

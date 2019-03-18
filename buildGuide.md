@@ -79,7 +79,7 @@ notes:
     # cd auter
     # git checkout <TAG>          eg: git checkout 0.11
     ```
-7) Make the sources files and copy them to the builduser's home:
+7) Make the sources files and copy them to /home/builduser:
     ```
     make sources
     cp auter-*.tar.gz /home/builduser/

@@ -13,12 +13,12 @@ script:
     # Create docker image and run general code checks
     - "sudo docker run --rm=true --mount type=bind,source=$(pwd),destination=/auter --name auter-test -td centos:7"
     - "docker exec auter-test yum -y -q install epel-release &>/dev/null"
-    - "docker exec auter-test yum -y -q install ShellCheck aspell &>/dev/null"
+    - "docker exec auter-test yum -y -q install findutils ShellCheck aspell aspell-en &>/dev/null"
     - "docker exec auter-test /auter/tests/01-spellcheck.sh"
     - "docker exec auter-test /auter/tests/05-shellcheck.sh"
 
     # RPM Build test
-    - "tests/10-rpmbuild.sh"
+    - "$TRAVIS_BUILD_DIR/tests/10-rpmbuild.sh"
 
     # DEB Build test
-    - "tests/20-debuild.sh"
+    - "$TRAVIS_BUILD_DIR/tests/20-debuild.sh"
