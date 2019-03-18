@@ -6,13 +6,13 @@ if ! command -v aspell &>/devnull; then echo "apsell not installed. Aborting tes
 
 EXITCODE=0
 
-FILELIST=( "$AUTERDIR/auter.conf.man" )
-FILELIST+=( "$AUTERDIR/auter.help2man-sections" )
-FILELIST+=( "$AUTERDIR/HACKING.md" )
-FILELIST+=( "$AUTERDIR/README.md" )
-FILELIST+=( "$AUTERDIR/NEWS" )
-FILELIST+=( "$AUTERDIR/buildGuide.md" )
-FILELIST+=( "$AUTERDIR/contrib/README.md" )
+FILELIST=("$AUTERDIR/auter.conf.man")
+FILELIST+=("$AUTERDIR/auter.help2man-sections")
+FILELIST+=("$AUTERDIR/HACKING.md")
+FILELIST+=("$AUTERDIR/README.md")
+FILELIST+=("$AUTERDIR/NEWS")
+FILELIST+=("$AUTERDIR/buildGuide.md")
+FILELIST+=("$AUTERDIR/contrib/README.md")
 
 for FILE in "${FILELIST[@]}"; do
   if aspel_out="$(aspell -a --personal="${TESTDIR}"/.aspell_auter_dictionary 2>&1 < "${FILE}")"; then
