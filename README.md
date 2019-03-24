@@ -27,8 +27,8 @@ across environments that have different installation dates.
 There are also cases when other options are more suitable:
  - I want to update nightly and handle reboots manually: yum-cron or
    dnf-automatic
- - I want to manage updates via a central management console: RHN Satellite
-   configuration management systems such as Chef or Puppet
+ - I want to manage updates via a central management console: RHN Satellite,
+   or configuration management systems such as Chef or Puppet
 
 ## Installation
 Auter is available for RHEL and its derivatives via the EPEL repository.
