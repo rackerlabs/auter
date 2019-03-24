@@ -1,38 +1,73 @@
-### Test Plan
+# Contributing
 
-For any changes that are made, the following should be considered the bare minimum to be tested:
+When contributing to this repository, please feel free to first start a
+discussion either via issue or our mailing list
+[auter-devel@rackspace.com](mailto://auter-devel@rackspace.com) before working
+on the change.
 
-```sh
-auter --disable         # deletes /var/lib/auter/enabled, prints "auter disabled"
-auter --status          # prints "auter is currently disabled"
-auter --enable          # touches /var/lib/auter/enabled, prints "auter enabled"
-auter --status          # prints "auter is currently enabled and not running"
-auter --help            # shows help message
-auter --version         # prints "auter VERSIONNUMBER"
-man auter               # check the contents of the man page reflect the relevant changes
-man auter.conf		# if relevant, check the contents of the man page reflect the changes
+## Pull Requests
+
+- Ensure all tests pass on your forked branch prior to submitting the PR; if
+  necessary add words flagged by the 01-spellcheck.sh test to the dictionary
+- All pull requests should be made against the develop branch
+- Update the help and man pages with any additional functionality being added by
+  the PR; try to do this in independent commits to make reviewing easier
+- Update the file list in 01-spellcheck.sh if adding a new documentation file
+- Don't bump version numbers - this will be done during a release
+
+### Code standards
+
+We adhere to Google's [shell style
+guide](https://google.github.io/styleguide/shell.xml). One of the current
+exceptions is to declare all variables in capitals, not just global variables.
+
+### Testing changes
+
+For all changes, the following should be considered the bare minimum to be
+tested:
+
+```bash
+auter --disable      # deletes /var/lib/auter/enabled, prints "auter disabled"
+auter --status       # prints "auter is currently disabled"
+auter --enable       # touches /var/lib/auter/enabled, prints "auter enabled"
+auter --status       # prints "auter is currently enabled and not running"
+auter --help         # shows help message
+auter --version      # prints "auter VERSIONNUMBER"
+man auter            # check the contents of the man page reflect the relevant changes
+man auter.conf		 # if relevant, check the contents of the man page reflect the changes
 ```
 
-If you don't have any updates available, try downgrade a package. Normally openssl has multiple versions available. If multiple packages are not available in the base repo try enable one of the archive/vault repos:
+If no updates are available, try downgrading a package like openssl or curl
+which often has several versions available.
 
-For RPM based distros try:
-```sh
-yum --showduplicates list curl
-yum downgrade curl libcurl
+RHEL based distributions:
+
+```bash
+$ yum --showduplicates list curl
+$ yum downgrade curl libcurl
 ```
-For deb based distros try (Note: You may need to also downgrade dependencies):
-```
+
+Debian based distributions:
+
+```bash
 # This will give you a list of packages that have multiple versions available in the repos:
-for PKG in $(dpkg --list | awk '{print $2}'); do VERSIONS="$(apt-cache showpkg $PKG | awk '/Versions:/,/^Reverse Depends:/ {if ($1 ~ /^[0-9]/) print $1}' | xargs)";[[ $(echo ${VERSIONS} | wc -w) -gt 1 ]] && echo "$PKG -% $VERSIONS";done | column -t -s "%"
+for PKG in $(dpkg --list | awk '{print $2}'); do
+    VERSIONS="$(apt-cache showpkg $PKG | awk '/Versions:/,/^Reverse Depends:/ {if ($1 ~ /^[0-9]/) print $1}' | xargs)"
 
-apt-get update
-apt-get install <PACKAGE>=<VERSION>
+    [[ $(echo ${VERSIONS} | wc -w) -gt 1 ]] && echo "$PKG -% $VERSIONS"
+done | column -t -s "%"
 
+$ apt-get update
+$ apt-get install <PACKAGE>=<VERSION>
 ```
 
-Use the following to setup auter pre/post scripts:
+_Note: You may need to also downgrade dependencies._
 
-```sh
+#### Pre/Post script functionality
+
+Use the following to setup the pre/post scripts:
+
+```bash
 echo 'logger custom pre prep script ran' > /etc/auter/pre-prep.d/pre_prep_script
 echo 'logger custom post prep script ran' > /etc/auter/post-prep.d/post_prep_script
 echo 'logger custom pre apply script ran' > /etc/auter/pre-apply.d/pre_apply_script
@@ -42,22 +77,54 @@ echo 'logger custom post reboot script ran' > /etc/auter/post-reboot.d/post_rebo
 chmod +x /etc/auter/*.d/*script
 ```
 
-#### Basic guidelines for testing:
+#### General guidelines for testing
 
-1. Test the commands manually in a normal shell session.
-2. Test for both positive and negative outcomes.
-3. Test the effects of the change in the function. Again, if possible, test success and failure conditions
-4. Test all functionality in auter that is affected by the code changes.
+1. Run the base commands directly via command line testing for both positive and
+   negative outcomes
+2. Run the base commands via `at` job, again testing both positive and negative
+   outcomes
+3. Test the effects of the change in the function. Again, if possible, test
+   success and failure conditions
+4. Test all functionality in Auter that is affected by the code changes.
+
+
+#### Release Process
+
+1. A new issue should be raised with the title of "Prep for <VERSION> Release"
+2. Ensure all required pull requests for the new release have been merged to the
+   develop branch
+3. A maintainer with admin rights to the master branch in rackerlabs/auter
+   should create a new branch based from the develop branch:
+
+```sh
+git clone --branch=develop https://github.com/rackerlabs/auter.git rackerlabs/auter
+cd rackerlabs/auter
+git checkout -b Release-<NEW_VERSION>
+git push origin Release-<NEW_VERSION>
+```
+
+4. Any new pull requests should be made to the develop branch. The only changes
+   to the Release-<NEW_VERSION> should be fixing of any review issues for that
+   branch.
+5. Full testing for all supported distributions should be carried out and
+   tracked in a github project created for the release. Example:
+   https://github.com/rackerlabs/auter/projects/1
+6. Once all testing has been completed for Release-<NEW_VERSION>, the reviewer
+   should merge the Release-<NEW_VERSION> branch to both master and develop
+   branches.
+7. Tag a new release named <NEW_VERSION> using template
+   <major_version>.<minor_version> (Eg: Release 0.11)
+
 
 ##### Testing template
 
-This MUST be completed for all supported distributions in all pull requests to the master branch before being merged.
+This should be completed for all supported distributions in all pull requests to
+the master branch before being merged.
 
-```md
+```
 # <OS test version>
 # Steps taken to create install file:
     ```
-
     ```
 ---
 # Test 1: Basic auter status tests
@@ -310,35 +377,3 @@ Checks:
 4) Next Test:
 etc...
 ```
-
-#### Documentation
-
-When making any changes to code, make sure documentation (--help, man page) has been updated with the new functionality.
-
-#### Pull Request Rules
-
-- All pull requests should be made against the develop branch
-- All pull requests MUST be reviewed and approved before merging
-- Pull request reviews and merges MUST be completed by another maintainer
-- Always squash and merge commits prior to submitting a pull request
-- All travis-ci tests should pass before merging
-    - If the spellcheck test fails, adding the problematic words to the dictionary is a valid option
-    - If the shellcheck test fails, you should fix the issues mentioned or add a shellcheck ignore directive to the previous line along with a comment on why it is being ignored
-
-#### Release Process
-
-1. A new issue should be raised with the title of "Prep for <VERSION> Release"
-2. Ensure all required PRs for the new release have been merged to the develop branch
-3. A maintainer with admin rights to the master branch in rackerlabs/auter should create a new branch based from the develop branch:
-
-```sh
-git clone --branch=develop https://github.com/rackerlabs/auter.git rackerlabs/auter
-cd rackerlabs/auter
-git checkout -b Release-<NEW_VERSION>
-git push origin Release-<NEW_VERSION>
-```
-
-4. Any new PRs should be made to the develop branch. The only changes to the Release-<NEW_VERSION> should be fixing of any review issues for that branch.
-5. Full testing for all supported distributions should be carried out and tracked in a github project created for the release. Example: https://github.com/rackerlabs/auter/projects/1
-6. Once all testing has been completed for Release-<NEW_VERSION>, the reviewer should merge the Release-<NEW_VERSION> branch to both master and develop branches.
-7. Tag a new release named <NEW_VERSION> using template <MAJOR_VERSION>.<MINOR_VERSION> (Eg: Release 0.11)
