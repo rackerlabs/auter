@@ -79,7 +79,7 @@ function prepare_updates() {
             find /var/cache/dnf -name "*.rpm" -exec mv {} "${DOWNLOADDIR}/${CONFIGSET}" \;
           fi
           logit "INFO: Updates downloaded${DOWNLOADLOGMSG}"
-          read -d '\n' -ra pkglist <<< "$(awk '/Background downloading/,/exiting because/{if ($0 ~ /rpm/) print $1}' <<< "$PREPOUTPUT")"
+          read -d '\n' -ra pkglist <<< "$(awk '/Package.*Arch/,/Transaction Summary/{if ($2 ~ /x86|686|noarch/) print $1}' <<< "$PREPOUTPUT")"
           PREPOUTPUT+="\\nSTATUS:SUCCESS:Package download complete:${#pkglist[@]}"
         else
           logit "ERROR: Updates could not be pre-downloaded${DOWNLOADLOGMSG}. See the ${DATADIR}/last-prep-output-${CONFIGSET} file for details."
@@ -173,7 +173,7 @@ function apply_updates() {
     rotate_file "${DATADIR}/last-apply-output-${CONFIGSET}"
 
     if APPLYOUTPUT+=$("${PACKAGE_MANAGER}" "${UPDATEACTION}" -y "${PACKAGEMANAGEROPTIONS[@]}" "${RPMS[@]}" 2>&1); then
-      read -d '\n' -ra pkglist <<< "$(awk '/(Updating|Upgrading)\s+/{print $3}' <<< "$APPLYOUTPUT")"
+      read -d '\n' -ra pkglist <<< "$( sed -r 's/^[[:space:]]+//g' <<< "$APPLYOUTPUT" | awk '/(Updating|Upgrading|Installing)[[:space:]]+/{print $3}')"
       APPLYOUTPUT+="\\nSTATUS:SUCCESS:Package updates applied:${#pkglist[@]}"
     else
       APPLYOUTPUT+="\\nSTATUS:FAILED:Package updates failed"
@@ -204,7 +204,7 @@ function apply_updates() {
       REBOOTCALL=1
     elif [[ ! "${AUTOREBOOT}" == "no" ]]; then
       for _pkg in "${pkglist[@]}"; do
-        if [[ "$_pkg" =~ ^(${AUTOREBOOT// /\|}) ]]; then
+        if [[ "${_pkg%-*-*}" =~ ^(${AUTOREBOOT// /\|})$ ]]; then
           REBOOTCALL=1
           break
         fi
