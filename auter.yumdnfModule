@@ -200,16 +200,16 @@ function apply_updates() {
 
     # Excluding this check because the REBOOTCALL variable is used by the main auter script
     # shellcheck disable=SC2034
-    for _pkg in "${pkglist[@]}"; do
-      if [[ "${AUTOREBOOT}" == "no" ]]; then
-        # This remains true
-        # REBOOTCALL=0
-        break
-      elif [[ "${AUTOREBOOT}" == "yes" ]] || [[ "$_pkg" =~ ^(${AUTOREBOOT// /\|}) ]]; then
-        REBOOTCALL=1
-        break
-      fi
-    done
+    if [[ "${AUTOREBOOT}" == "yes" ]]; then
+      REBOOTCALL=1
+    elif [[ ! "${AUTOREBOOT}" == "no" ]]; then
+      for _pkg in "${pkglist[@]}"; do
+        if [[ "$_pkg" =~ ^(${AUTOREBOOT// /\|}) ]]; then
+          REBOOTCALL=1
+          break
+        fi
+      done
+    fi
 
     # Remove the old RPMS from the auter cache
     [[ "${ONLYINSTALLFROMPREP}" == "yes" ]] && rm -f "${DOWNLOADDIR}"/"${CONFIGSET}"/*.rpm
