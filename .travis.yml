@@ -20,7 +20,7 @@ script:
   - "docker exec auter-test /auter/tests/05-shellcheck.sh"
 
     # RPM Build test
-  - "$TRAVIS_BUILD_DIR/tests/10-rpmbuild.sh"
+    #  - "$TRAVIS_BUILD_DIR/tests/10-rpmbuild.sh"
 
     # DEB Build test
-  - "$TRAVIS_BUILD_DIR/tests/20-debuild.sh"
+    #  - "$TRAVIS_BUILD_DIR/tests/20-debuild.sh"
