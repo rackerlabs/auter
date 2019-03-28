@@ -78,3 +78,7 @@ who started the project.
 The Auter team can be reached via our mailing list
 [auter-devel@rackspace.com](mailto://auter-devel@rackspace.com).
 
+## Related projects
+- [Auter Manager](https://github.com/rackerlabs/auter-manager): Simplify the
+  installation of Auter across multiple servers with a single master
+  configuration file written in CSV.
