@@ -79,7 +79,8 @@ function prepare_updates() {
             find /var/cache/dnf -name "*.rpm" -exec mv {} "${DOWNLOADDIR}/${CONFIGSET}" \;
           fi
           logit "INFO: Updates downloaded${DOWNLOADLOGMSG}"
-          PREPOUTPUT+="\\nSTATUS:SUCCESS:Package download complete"
+          read -d '\n' -ra pkglist <<< "$(awk '/Package.*Arch/,/Transaction Summary/{if ($2 ~ /x86|686|noarch/) print $1}' <<< "$PREPOUTPUT")"
+          PREPOUTPUT+="\\nSTATUS:SUCCESS:Package download complete:${#pkglist[@]}"
         else
           logit "ERROR: Updates could not be pre-downloaded${DOWNLOADLOGMSG}. See the ${DATADIR}/last-prep-output-${CONFIGSET} file for details."
           PREPOUTPUT+="\\nSTATUS:FAILED:Package download failed"
@@ -170,11 +171,14 @@ function apply_updates() {
     # We don't want to allow the user to interrupt a yum/dnf transaction or Bad Things Happen.
     trap '' SIGINT SIGTERM
     rotate_file "${DATADIR}/last-apply-output-${CONFIGSET}"
+
     if APPLYOUTPUT+=$("${PACKAGE_MANAGER}" "${UPDATEACTION}" -y "${PACKAGEMANAGEROPTIONS[@]}" "${RPMS[@]}" 2>&1); then
-      APPLYOUTPUT+="\\nSTATUS:SUCCESS:Package updates applied"
+      read -d '\n' -ra pkglist <<< "$( sed -r 's/^[[:space:]]+//g' <<< "$APPLYOUTPUT" | awk '/(Updating|Upgrading|Installing)[[:space:]]+/{print $3}')"
+      APPLYOUTPUT+="\\nSTATUS:SUCCESS:Package updates applied:${#pkglist[@]}"
     else
       APPLYOUTPUT+="\\nSTATUS:FAILED:Package updates failed"
     fi
+
     default_signal_handling
     echo -e "$APPLYOUTPUT" > "${DATADIR}/last-apply-output-${CONFIGSET}"
 
@@ -196,7 +200,16 @@ function apply_updates() {
 
     # Excluding this check because the REBOOTCALL variable is used by the main auter script
     # shellcheck disable=SC2034
-    [[ "${AUTOREBOOT}" == "yes" ]] && REBOOTCALL=1
+    if [[ "${AUTOREBOOT}" == "yes" ]]; then
+      REBOOTCALL=1
+    elif [[ ! "${AUTOREBOOT}" == "no" ]]; then
+      for _pkg in "${pkglist[@]}"; do
+        if [[ "${_pkg%-*-*}" =~ ^(${AUTOREBOOT// /\|})$ ]]; then
+          REBOOTCALL=1
+          break
+        fi
+      done
+    fi
 
     # Remove the old RPMS from the auter cache
     [[ "${ONLYINSTALLFROMPREP}" == "yes" ]] && rm -f "${DOWNLOADDIR}"/"${CONFIGSET}"/*.rpm
