@@ -2,7 +2,7 @@
 
 . "$(dirname "$0")"/_helpers
 
-if ! command -v aspell &>/devnull; then echo "apsell not installed. Aborting test"; exit 1; fi
+run_cmd "Check for aspell" command -v aspell
 
 EXITCODE=0
 
@@ -14,15 +14,15 @@ FILELIST+=("$AUTERDIR/NEWS")
 FILELIST+=("$AUTERDIR/buildGuide.md")
 FILELIST+=("$AUTERDIR/contrib/README.md")
 
-for FILE in "${FILELIST[@]}"; do
-  if aspel_out="$(aspell -a --personal="${TESTDIR}"/.aspell_auter_dictionary 2>&1 < "${FILE}")"; then
+for _file in "${FILELIST[@]}"; do
+  if aspel_out="$(aspell -a --personal="$TESTDIR"/.aspell_auter_dictionary 2>&1 < "$_file")"; then
     spelling_mistakes="$(awk '/^&/{print $2}' <<< "$aspel_out")"
     if [[ -n "$spelling_mistakes" ]]; then
-      log_fail "$FILE failed SpellCheck"
+      log_fail "$_file failed SpellCheck"
       EXITCODE=1
       sort <<< "$spelling_mistakes" | uniq -c
     else
-      log_success "$FILE passed SpellCheck"
+      log_success "$_file passed SpellCheck"
     fi
 
   else
