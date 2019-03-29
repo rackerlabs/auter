@@ -91,6 +91,8 @@ if [[ -n "${REBOOTREQURIRED[*]}" ]]; then
     logit "Rebooting because $_rebootmatch"
   done
   logit "Reboot required, rebooting server after running auter process completes"
+  # Not valid as PIDFILE has been exported, and will be expanded in subshell
+  # shellcheck disable=SC2016
   (timeout 600 bash -c 'while test -f "$PIDFILE"; do sleep 5; done; auter --reboot') &
 else
   logit "Reboot not required"
