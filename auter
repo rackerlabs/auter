@@ -19,7 +19,7 @@
 #
 
 
-declare -r -x AUTERVERSION="0.12.3"
+declare -r -x AUTERVERSION="1.0.0"
 declare -r -x SCRIPTDIR="/etc/auter"
 declare -r -x DATADIR="/var/lib/auter"
 declare -r -x LOCKFILE="${DATADIR}/enabled"
@@ -134,8 +134,8 @@ function rotate_file {
 }
 
 function run_script {
-  SCRIPT=$1
-  PHASE=$2
+  SCRIPT="$1"
+  PHASE="$2"
   if [[ "${SKIPALLSCRIPTS}" -eq 0 ]]; then
     SKIP=0
     # Check if the phase scripts have been skipped with --skip-scripts-by-phase
@@ -191,11 +191,11 @@ function reboot_server() {
     run_script "${SCRIPT}" "Pre-Reboot"
   done
 
-  if [[ $(ls "${POSTREBOOTSCRIPTDIR}/" 2>/dev/null) ]]; then
-    logit "INFO: Adding post-reboot-hook to run scripts under ${POSTREBOOTSCRIPTDIR} to /etc/cron.d/auter-postreboot-${CONFIGSET}"
-    echo -e "@reboot root /usr/bin/auter --postreboot --config ${CONFIGFILE}" > /etc/cron.d/auter-postreboot-${CONFIGSET}
-    chown root.root /etc/cron.d/auter-postreboot-${CONFIGSET}
-    chmod 0644 /etc/cron.d/auter-postreboot-${CONFIGSET}
+  if [[ -d "${POSTREBOOTSCRIPTDIR}" ]]; then
+    logit "INFO: Creating post-reboot hook /etc/cron.d/auter-postreboot-${CONFIGSET}"
+    echo -e "@reboot root /usr/bin/auter --postreboot --config ${CONFIGFILE}" > "/etc/cron.d/auter-postreboot-${CONFIGSET}"
+    chown root.root "/etc/cron.d/auter-postreboot-${CONFIGSET}"
+    chmod 0644 "/etc/cron.d/auter-postreboot-${CONFIGSET}"
   fi
 
   logit "INFO: Rebooting server"
@@ -234,9 +234,7 @@ function print_status() {
 
 # Needed to cleanup our PID file. The only argument is the exit code to use.
 function quit() {
-  if [[ -f "${PIDFILE}" ]]; then
-    rm -f "${PIDFILE}"
-  fi
+  [[ -f "$PIDFILE" ]] && rm -f "$PIDFILE"
   exit "$1"
 }
 
@@ -251,13 +249,13 @@ function log_last_run() {
 default_signal_handling
 
 ARGS="$*"
-OPTS=$(getopt -n "$0" -o h,v --long prep,apply,enable,disable,reboot,postreboot,version,help,stdout,no-wall,status,config:,skip-all-scripts,skip-scripts-by-phase:,skip-scripts-by-name:,maxdelay: -- "$@")
-if [[ $? -ne 0 ]]; then
-  echo "Try '$0 --help' for more information."
-  exit
+if ! OPTS=$(getopt -n "$0" -o h,v --long prep,apply,enable,disable,reboot,postreboot,version,help,stdout,no-wall,status,config:,skip-all-scripts,skip-scripts-by-phase:,skip-scripts-by-name:,maxdelay: -- "$@"); then
+  echo "See '$0 --help' for valid options."
+  quit 1
 fi
 
 eval set -- "$OPTS"
+unset OPTS
 
 while true ; do
   case "$1" in
@@ -276,7 +274,7 @@ while true ; do
     --skip-all-scripts) SKIPALLSCRIPTS=1 ; shift;;
     --skip-scripts-by-phase) IFS=',' read -r -a SKIPPHASESCRIPTS <<< "$2" ; shift 2;;
     --skip-scripts-by-name) IFS=',' read -r -a SKIPSCRIPTNAMES <<< "$2" ; shift 2;;
-    --status) print_status ; exit 0;;
+    --status) print_status ; quit 0;;
     --) shift ; break;;
   esac
 done
@@ -343,7 +341,7 @@ fi
 
 if [[ "${ONLYINSTALLFROMPREP}" == "yes" ]]; then
   if [[ ! -d "${DOWNLOADDIR}/${CONFIGSET}" ]]; then
-    install -m 755 -o root -g root -d ${DOWNLOADDIR}/${CONFIGSET}
+    install -m 755 -o root -g root -d "${DOWNLOADDIR}/${CONFIGSET}"
   elif [[ $(stat -c %G%U%a "${DOWNLOADDIR}") != rootroot[0-9][0-9][0145] ]]; then
     logit "ERROR: ${DOWNLOADDIR}/${CONFIGSET} does not have the correct permissions."
     quit 3
@@ -353,7 +351,7 @@ fi
 # Validate the SKIPPHASESCRIPTS values
 if [[ -n "${SKIPPHASESCRIPTS[*]}" ]]; then
   for SKIPPHASESCRIPT in "${SKIPPHASESCRIPTS[@]}"; do
-    if [[ ${SKIPPHASESCRIPT} =~ ^(pre|post)-(prep|apply|reboot)$ ]]; then
+    if [[ "${SKIPPHASESCRIPT}" =~ ^(pre|post)-(prep|apply|reboot)$ ]]; then
        logit "INFO: The --skip-scripts-by-phase argument was used. Skipping ${SKIPPHASESCRIPT} scripts"
     else
        logit "ERROR: The --skip-scripts-by-phase argument was used with an invalid option: '${SKIPPHASESCRIPT}'. Exiting"
