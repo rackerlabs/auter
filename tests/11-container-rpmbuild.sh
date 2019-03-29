@@ -1,7 +1,7 @@
 #!/bin/bash
 
 
-cd /root
+cd /root || exit
 useradd -m builduser
 su - builduser -c 'rpmdev-setuptree'
 
