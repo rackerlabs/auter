@@ -1,26 +1,12 @@
+dist: xenial
 language: bash
-notifications:
-  email: false
-services:
-  - docker
 before_install:
-  - docker pull centos
-script:
-  # Save changed files to a text file to narrow test scope
-  - "git remote add upstream https://github.com/rackerlabs/auter.git"
-  - "git fetch upstream develop:rdevelop"
-    #    - "git diff rmaster --name-only >CHANGEDFILES"
-    #    - "cat CHANGEDFILES"
-
-    # Create docker image and run general code checks
-  - "sudo docker run --rm=true --mount type=bind,source=$(pwd),destination=/auter --name auter-test -td centos:7"
-  - "docker exec auter-test yum -y -q install epel-release &>/dev/null"
-  - "docker exec auter-test yum -y -q install findutils ShellCheck aspell aspell-en &>/dev/null"
-  - "docker exec auter-test /auter/tests/01-spellcheck.sh"
-  - "docker exec auter-test /auter/tests/05-shellcheck.sh"
-
-    # RPM Build test
-    #  - "$TRAVIS_BUILD_DIR/tests/10-rpmbuild.sh"
-
-    # DEB Build test
-    #  - "$TRAVIS_BUILD_DIR/tests/20-debuild.sh"
+  - sudo apt-get update
+  - sudo apt-get install -y aspell aspell-en
+jobs:
+  include:
+    - stage: Basic Tests
+      name: SpellCheck
+      script: ./tests/01-spellcheck.sh
+    - name: ShellCheck
+      script: ./tests/05-shellcheck.sh
