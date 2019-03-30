@@ -1,5 +1,5 @@
 Name:           auter
-Version:        0.12.3
+Version:        1.0.0
 Release:        1%{?dist}
 Summary:        Prepare and apply updates
 License:        ASL 2.0
@@ -101,14 +101,20 @@ exit 0
 %endif
 
 %changelog
+* Fri Mar 29 2019 Nick Rhodes <nrhodes91@gmail.com> 1.0.0-1
+- #220 Introduce package dependant reboots using AUTOREBOOT option
+- #215 Remove rpm and deb package build tests from travis
+- #223 Parallelize the travis jobs
+- #224/#225 Clean up ShellCheck warnings
+
 * Tue Mar 05 2019 Nick Rhodes <nrhodes91@gmail.com> 0.12.3-1
 - #214 Log a machine readable status to the last-{prep,apply} output files
 
 * Tue Feb 12 2019 Nick Rhodes <nrhodes91@gmail.com> 0.12.2-1
 - #207 check for process matching PID file content
 
-+* Thu Jan 31 2019 Fedora Release Engineering <releng@fedoraproject.org> - 0.12.1-2
-+- Rebuilt for https://fedoraproject.org/wiki/Fedora_30_Mass_Rebuild
+* Thu Jan 31 2019 Fedora Release Engineering <releng@fedoraproject.org> - 0.12.1-2
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_30_Mass_Rebuild
 
 * Tue Dec 11 2018 Nick Rhodes <nrhodes91@gmail.com> 0.12.1-1
 - Add max-delay option to override MAXDLAY via command line
@@ -124,7 +130,6 @@ exit 0
 - Fix for --status when run as non-root user
 - Logs auter output in /var/lib/auter/ when no updates are available
 - Minor improvements to rotation of output files in /var/lib/auter/
-
 
 * Fri Mar 16 2018 Nick Rhodes <nrhodes91@gmail.com> 0.11-5
 - Hotfix for the AUTOREBOOT issue
