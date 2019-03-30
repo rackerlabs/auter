@@ -15,7 +15,7 @@ FILELIST+=("$AUTERDIR/buildGuide.md")
 FILELIST+=("$AUTERDIR/contrib/README.md")
 
 for _file in "${FILELIST[@]}"; do
-  if aspel_out="$(aspell -a --personal="$TESTDIR"/.aspell_auter_dictionary 2>&1 < "$_file")"; then
+  if aspel_out="$(aspell -a --personal="$AUTERDIR"/tests/.aspell_auter_dictionary 2>&1 < "$_file")"; then
     spelling_mistakes="$(awk '/^&/{print $2}' <<< "$aspel_out")"
     if [[ -n "$spelling_mistakes" ]]; then
       log_fail "$_file failed SpellCheck"
