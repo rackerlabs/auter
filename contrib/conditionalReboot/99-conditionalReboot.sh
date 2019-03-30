@@ -23,77 +23,77 @@ function logit() {
 # Calculated variables
 ###############################################################################
 DISTRIBUTION="$(python -c "import platform; print(platform.linux_distribution()[0])")"
-# for later use:
-# [[ "${DISTRIBUTION}" =~ debian|Ubuntu ]] && SYSTEMLOG="/var/log/syslog"
-# [[ "${DISTRIBUTION}" =~ CentOS|Red\ Hat|Fedora ]] && SYSTEMLOG="/var/log/messages"
-# TRANSACTIONID="$(awk -F'[()]' '/auter:.*Transaction/{print substr($2,22)}' "${SYSTEMLOG}" | sort | tail -n1)"
-if [[ "${DISTRIBUTION}" =~ CentOS|Red\ Hat|Fedora|Oracle\ Linux ]]; then
-  PACKAGESUPDATED=($(awk -F" : " '/Running transaction$/,/Updated:/ {print $2}' /var/lib/auter/last-apply-output-default | awk '{print $1}' | sort -u))
-elif [[ "${DISTRIBUTION}" =~ debian|Ubuntu ]]; then
-  PACKAGESUPDATED=($(grep "$(date +%Y-%m-%d)" /var/log/dpkg.log | awk '{if ($3=="upgrade" || $3=="install") {print $4}}'))
-else
-  logit "Distribution not detected by $0. Exiting"
-  exit 1
-fi
 REBOOTREQURIRED=()
-###############################################################################
 
-# If the OS is CentOS or Red Hat, check if the /usr/bin/needs-restarting script
-# is available
+function _deleted_file_check() {
+  if LSOFEXEC="$(PATH=/usr/sbin:/usr/local/sbin:$PATH command -v lsof 2>/dev/null)"; then
+    LIBCHECK=$(${LSOFEXEC} | grep lib | grep DEL)
+    [[ -n "${LIBCHECK}" ]] && REBOOTREQURIRED+=("detected deleted libraries")
+  else
+    logit "$0 - lsof not found: unable to check running libraries"
+  fi
+}
+
+function _check_applist() {
+  local _pkglist=("$@")
+
+  if [[ -n "${APPLIST}" ]]; then
+    for _packagematch in $APPLIST; do
+      # Excluding SC2001 for readability purposes
+      # shellcheck disable=SC2001
+      _packagematch=$(sed 's/*/.*/g' <<< "$_packagematch")
+      for _package in "${_pkglist[@]}"; do
+        if [[ "$_package" =~ $_packagematch ]]; then
+          REBOOTREQURIRED+=("package $_package was updated and is in the $0 APPLIST config")
+        fi
+      done
+    done
+  fi
+}
+
+# This is primarily for Debian and Ubuntu
+[[ -f /var/run/reboot-required ]] && REBOOTREQURIRED+=("/var/run/reboot-required exists")
+
+_deleted_file_check
+
 if [[ "${DISTRIBUTION}" =~ CentOS|Red\ Hat|Fedora|Oracle\ Linux ]]; then
+  _check_applist "$(awk -F" : " '/Running transaction$/,/Updated:/ {print $2}' /var/lib/auter/last-apply-output-default | awk '{print $1}' | sort -u)"
+
+
+  [[ -f /sbin/grubby ]] && GRUBBYEXEC="/sbin/grubby"
+  [[ -f /usr/sbin/grubby ]] && GRUBBYEXEC="/usr/sbin/grubby"
+  [[ -n "$GRUBBYEXEC" ]] && DEFKERNELVERSION=$($GRUBBYEXEC --default-kernel | sed 's/^.*vmlinuz-//g')
+  if [[ -n $DEFKERNELVERSION ]]; then
+    [[ ! "$DEFKERNELVERSION" == "$(uname -r)" ]] && REBOOTREQURIRED+=("Default kernel ${DEFKERNELVERSION} does not match running kernel $(uname -r)")
+  fi
+
+
   if [[ -f /usr/bin/needs-restarting ]]; then
-    if needs-restarting -h | egrep -q "^[[:space:]]*-r"; then
+    if needs-restarting -h | grep -E -q "^[[:space:]]*-r"; then
       needs-restarting -r &>/dev/null || REBOOTREQURIRED+=("/usr/bin/needs-restarting -r assessment")
     else
       [[ $(needs-restarting | wc -l) -gt 0 ]] && REBOOTREQURIRED+=("/usr/bin/needs-restarting assesment")
     fi
   fi
-fi
 
-# This is primarily for Debian and Ubuntu
-[[ -f /var/run/reboot-required ]] && REBOOTREQURIRED+=("/var/run/reboot-required exists")
+elif [[ "$DISTRIBUTION" =~ debian|Ubuntu ]]; then
+  _check_applist "$(grep "$(date +%Y-%m-%d)" /var/log/dpkg.log | awk '{if ($3=="upgrade" || $3=="install") {print $4}}')"
 
-# Identify if the kernel has been updated outside of auter
-if [[ "${DISTRIBUTION}" =~ CentOS|Red\ Hat|Fedora|Oracle\ Linux ]]; then
-  [[ -f /sbin/grubby ]] && GRUBBYEXEC="/sbin/grubby"
-  [[ -f /usr/sbin/grubby ]] && GRUBBYEXEC="/usr/sbin/grubby"
-  [[ -n "${GRUBBYEXEC}" ]] && DEFKERNELVERSION=$("${GRUBBYEXEC}" --default-kernel  | sed 's/^.*vmlinuz-//g')
-
-  if [[ -n ${DEFKERNELVERSION} ]]; then
-    [[ ! "${DEFKERNELVERSION}" == "$(uname -r)" ]] && REBOOTREQURIRED+=("Default kernel ${DEFKERNELVERSION} does not match running kernel $(uname -r)")
-  fi
-fi
-
-# If lsof is installed, Identify if there are any libraries that are running but deleted
-if LSOFEXEC="$(PATH=/usr/sbin:/usr/local/sbin:$PATH which lsof 2>/dev/null)"; then
-  LIBCHECK=$(${LSOFEXEC} | grep lib | grep DEL)
-  [[ -n "${LIBCHECK}" ]] && REBOOTREQURIRED+=("detected deleted libraries")
 else
-  logit "$0 - lsof not found: unable to check running libraries"
-fi
-
-# Check if any of the packages in the APPLIST were updated
-if [[ -n ${APPLIST} ]]; then
-  for PACKAGEMATCH in $APPLIST; do
-    # Excluding SC2001 for readability purposes
-    # shellcheck disable=SC2001
-    PACKAGEMATCH=$(echo "$PACKAGEMATCH" | sed 's/*/.*/g')
-    for PACKAGE in "${PACKAGESUPDATED[@]}"; do
-      if echo "${PACKAGE}" | grep -q "${PACKAGEMATCH}"; then
-        REBOOTREQURIRED+=("package ${PACKAGE} was updated and is in the $0 APPLIST config")
-      fi
-    done
-  done
+  logit "Distribution not detected by $0. Exiting"
+  exit 1
 fi
 
 # Reboot the server using auter
-if [[ -n "${REBOOTREQURIRED[@]}" ]]; then
+if [[ -n "${REBOOTREQURIRED[*]}" ]]; then
   logit "$0 assessed that the server needs to be rebooted. The assessments that triggered this requirement are:"
-  for REBOOTMATCH in "${REBOOTREQURIRED[@]}"; do
-    logit "Rebooting because ${REBOOTMATCH}"
+  for _rebootmatch in "${REBOOTREQURIRED[@]}"; do
+    logit "Rebooting because $_rebootmatch"
   done
   logit "Reboot required, rebooting server after running auter process completes"
-  (while test -f "${PIDFILE}"; do sleep 5; done; auter --reboot) &
+  # Not valid as PIDFILE has been exported, and will be expanded in subshell
+  # shellcheck disable=SC2016
+  (timeout 600 bash -c 'while test -f "$PIDFILE"; do sleep 5; done; auter --reboot') &
 else
   logit "Reboot not required"
 fi

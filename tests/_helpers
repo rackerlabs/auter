@@ -30,7 +30,7 @@ function run_cmd ()
 }
 export -f run_cmd
 
-TESTDIR="$(dirname "$0")"
+TESTDIR="$(dirname "$(realpath "$0")")"
 AUTERDIR="$(dirname "$TESTDIR")"
 AUTERPARENTDIR="$(dirname "$AUTERDIR")"
 VERSION="$(grep "Version" "$AUTERDIR"/auter.spec | awk '{print $2}')"
