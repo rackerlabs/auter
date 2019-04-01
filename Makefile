@@ -1,15 +1,3 @@
-# Makefile for configsnap
-# Required packages:
-#   RPM
-#     rpmbuild
-#     gawk
-#
-#   DEB
-#     build-essential
-#     devscripts
-#     gawk
-#
-# package details
 NAME := "auter"
 BUILD_FILES =  auter.conf auter.cron auter.help2man-sections Makefile
 BUILD_FILES += auter.yumdnfModule auter.aptModule auter.conf.man
