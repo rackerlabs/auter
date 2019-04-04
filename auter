@@ -48,11 +48,11 @@ declare -x -a SKIPSCRIPTNAMES
 
 # Adding extra super-user PATHS if required
 for p in /usr/local/sbin /usr/sbin /sbin; do
-  [[ ! ${PATH} =~ (^|:)${p}(:|$) ]] && declare -x PATH="${p}:${PATH}"
+  [[ ! $PATH =~ (^|:)$p(:|$) ]] && declare -x PATH="$p:$PATH"
 done
 
 function default_signal_handling() {
-  trap 'rm -f "${PIDFILE}"' SIGINT SIGTERM
+  trap 'rm -f "$PIDFILE"' SIGINT SIGTERM
 }
 
 # The man page is generated in part from the print_help() text by running:
@@ -107,10 +107,10 @@ function logit() {
 }
 
 function read_config() {
-  if [[ -f "${CONFIGFILE}" ]]; then
-    source "${CONFIGFILE}"
-  elif [[ "${CUSTOMCONFIG}" ]]; then
-    logit "ERROR: Custom config file ${CONFIGFILE} does not exist"
+  if [[ -f "$CONFIGFILE" ]]; then
+    source "$CONFIGFILE"
+  elif [[ "$CUSTOMCONFIG" ]]; then
+    logit "ERROR: Custom config file $CONFIGFILE does not exist"
     quit 5
   else
     logit "WARNING: Using default config values."
@@ -120,58 +120,57 @@ function read_config() {
 }
 
 function rotate_file {
-  declare OUTPUT_FILE="$1"
-  declare -a REMOVE_FILES
+  declare output_file="$1"
 
   #Rotate old file
   for i in $(seq $((ROTATE-1)) -1 1); do
-    [[ -e "${OUTPUT_FILE}.$i" ]] && mv -f "${OUTPUT_FILE}.$i" "${OUTPUT_FILE}.$((i+1))"
+    [[ -e "$output_file.$i" ]] && mv -f "$output_file.$i" "$output_file.$((i+1))"
   done
 
   # Move base files to basefile.1
-  [[ -e "${OUTPUT_FILE}" ]] && mv "${OUTPUT_FILE}" "${OUTPUT_FILE}.1"
+  [[ -e "$output_file" ]] && mv "$output_file" "$output_file.1"
 
-  readarray -t REMOVE_FILES <<< "$(find "$DATADIR" -type f -name "$(basename "$OUTPUT_FILE").*" | awk -F'.' -v s="$ROTATE" '($NF+1)>s')"
+  readarray -t remove_files <<< "$(find "$DATADIR" -type f -name "$(basename "$output_file").*" | awk -F'.' -v s="$ROTATE" '($NF+1)>s')"
   # Finally check for extra file from the rotation, and remove if it exists
-  [[ -n "${REMOVE_FILES[*]}" ]] && rm -f "${REMOVE_FILES[@]}"
+  [[ -n "${remove_files[*]}" ]] && rm -f "${remove_files[@]}"
 }
 
 function run_script {
-  SCRIPT="$1"
-  PHASE="$2"
-  if [[ "${SKIPALLSCRIPTS}" -eq 0 ]]; then
-    SKIP=0
+  local script="$1"
+  local phase="$2"
+  if [[ "$SKIPALLSCRIPTS" -eq 0 ]]; then
+    local skip=0
     # Check if the phase scripts have been skipped with --skip-scripts-by-phase
     if [[ -n "${SKIPPHASESCRIPTS[*]}" ]]; then
       for SKIPPHASESCRIPT in "${SKIPPHASESCRIPTS[@]}"; do
-        [[ "${SKIPPHASESCRIPT,,}" == *"${PHASE,,}"* ]] && SKIP=1
+        [[ "${SKIPPHASESCRIPT,,}" == *"${phase,,}"* ]] && skip=1
       done
     fi
 
     # Check if the script has been excluded with --skip-scripts-by-name
     if [[ -n "${SKIPSCRIPTNAMES[*]}" ]]; then
       for SKIPSCRIPTNAME in "${SKIPSCRIPTNAMES[@]}"; do
-        [[ ${SCRIPT,,} == *"${SKIPSCRIPTNAME,,}"* ]] && SKIP=1
+        [[ ${script,,} == *"${SKIPSCRIPTNAME,,}"* ]] && skip=1
       done
     fi
 
-    if [[ "${SKIP}" -eq 0 ]]; then
-      if [[ -x "${SCRIPT}" ]] && [[ -f "${SCRIPT}" ]]; then
-        logit "INFO: Running ${PHASE} script ${SCRIPT}"
-        ${SCRIPT}
+    if [[ "$skip" -eq 0 ]]; then
+      if [[ -x "$script" ]] && [[ -f "$script" ]]; then
+        logit "INFO: Running $phase script $script"
+        $script
         local RC=$?
-        if [[ "${RC}" -ne 0 ]]; then
-          logit "ERROR: ${PHASE} script ${SCRIPT} exited with non-zero exit code ${RC}. Aborting auter run."
+        if [[ "$RC" -ne 0 ]]; then
+          logit "ERROR: $phase script $script exited with non-zero exit code $RC. Aborting auter run."
           quit 8
         fi
-      elif [[ -f "${SCRIPT}" ]]; then
-        logit "ERROR: ${PHASE} script ${SCRIPT} exists but the execute bit is not set. Skipping."
+      elif [[ -f "$script" ]]; then
+        logit "ERROR: $phase script $script exists but the execute bit is not set. Skipping."
       fi
     else
-      logit "INFO: Skipping script ${SCRIPT}"
+      logit "INFO: Skipping script $script"
     fi
   else
-    logit "INFO: The --skip-all-scripts flag was used. NOT executing ${SCRIPT} as part of the ${PHASE} phase"
+    logit "INFO: The --skip-all-scripts flag was used. NOT executing $script as part of the $phase phase"
   fi
 }
 
@@ -190,19 +189,19 @@ function check_package_manager() {
 }
 
 function reboot_server() {
-  for SCRIPT in "${PREREBOOTSCRIPTDIR}"/*; do
-    run_script "${SCRIPT}" "Pre-Reboot"
+  for SCRIPT in "$PREREBOOTSCRIPTDIR"/*; do
+    run_script "$SCRIPT" "Pre-Reboot"
   done
 
-  if [[ -d "${POSTREBOOTSCRIPTDIR}" ]]; then
-    logit "INFO: Creating post-reboot hook /etc/cron.d/auter-postreboot-${CONFIGSET}"
-    echo -e "@reboot root /usr/bin/auter --postreboot --config ${CONFIGFILE}" > "/etc/cron.d/auter-postreboot-${CONFIGSET}"
-    chown root.root "/etc/cron.d/auter-postreboot-${CONFIGSET}"
-    chmod 0644 "/etc/cron.d/auter-postreboot-${CONFIGSET}"
+  if [[ -d "$POSTREBOOTSCRIPTDIR" ]]; then
+    logit "INFO: Creating post-reboot hook /etc/cron.d/auter-postreboot-$CONFIGSET"
+    echo -e "@reboot root /usr/bin/auter --postreboot --config $CONFIGFILE" > "/etc/cron.d/auter-postreboot-$CONFIGSET"
+    chown root.root "/etc/cron.d/auter-postreboot-$CONFIGSET"
+    chmod 0644 "/etc/cron.d/auter-postreboot-$CONFIGSET"
   fi
 
   logit "INFO: Rebooting server"
-  if [[ ${NOWALLMSG} -eq 1 ]] && shutdown --help | grep -q "no-wall"; then
+  if [[ $NOWALLMSG -eq 1 ]] && shutdown --help | grep -q "no-wall"; then
     /sbin/shutdown --no-wall -r +2 "auter: System reboot to apply updates" &>/dev/null &
   else
     /sbin/shutdown -r +2 "auter: System reboot to apply updates" &>/dev/null &
@@ -210,25 +209,25 @@ function reboot_server() {
 }
 
 function post_reboot() {
-  logit "INFO: Removed post-reboot hook: /etc/cron.d/auter-postreboot-${CONFIGSET}"
-  rm -f "/etc/cron.d/auter-postreboot-${CONFIGSET}"
+  logit "INFO: Removed post-reboot hook: /etc/cron.d/auter-postreboot-$CONFIGSET"
+  rm -f "/etc/cron.d/auter-postreboot-$CONFIGSET"
   tty -s || sleep 300
 
-  for SCRIPT in "${POSTREBOOTSCRIPTDIR}"/*; do
-    run_script "${SCRIPT}" "Post-Reboot"
+  for SCRIPT in "$POSTREBOOTSCRIPTDIR"/*; do
+    run_script "$SCRIPT" "Post-Reboot"
   done
 }
 
 function print_status() {
-  if [[ -f "${LOCKFILE}" ]] && [[ -f "${PIDFILE}" ]]; then
-    if CURRENTPIDSTATUS="$(kill -0 "$(cat ${PIDFILE})" 2>&1 )"; then
+  if [[ -f "$LOCKFILE" ]] && [[ -f "$PIDFILE" ]]; then
+    if currentpidstatus="$(kill -0 "$(cat $PIDFILE)" 2>&1 )"; then
       echo "auter is currently enabled and running"
-    elif [[ "${CURRENTPIDSTATUS}" == *"No such process"* ]]; then
+    elif [[ "$currentpidstatus" == *"No such process"* ]]; then
       echo "auter is currently enabled and pid file exists but process is dead"
-    elif [[ "${CURRENTPIDSTATUS}" == *"Operation not permitted"* ]]; then
-      echo "auter is enabled but permission denied on ${PIDFILE}. Run 'auter --status' as root"
+    elif [[ "$currentpidstatus" == *"Operation not permitted"* ]]; then
+      echo "auter is enabled but permission denied on $PIDFILE. Run 'auter --status' as root"
     fi
-  elif [[ -f "${LOCKFILE}" ]] && [[ ! -f "${PIDFILE}" ]]; then
+  elif [[ -f "$LOCKFILE" ]] && [[ ! -f "$PIDFILE" ]]; then
     echo "auter is currently enabled and not running"
   else
     echo "auter is currently disabled"
@@ -363,22 +362,22 @@ if [[ "$(whoami)" != "root" ]]; then
   quit 5
 fi
 
-if [[ ! -d "${DATADIR}" ]]; then
-  logit "FATAL ERROR: auter DATADIR ${DATADIR} does not exist."
+if [[ ! -d "$DATADIR" ]]; then
+  logit "FATAL ERROR: auter DATADIR $DATADIR does not exist."
   quit 5
 fi
 
-if [[ "${ENABLE}" ]] ; then
-  touch "${LOCKFILE}"
-  echo "DO NOT DELETE THIS FILE. This file is automatically generated by auter. To disable auter, run auter --disable instead." > "${LOCKFILE}"
+if [[ "$ENABLE" ]] ; then
+  touch "$LOCKFILE"
+  echo "DO NOT DELETE THIS FILE. This file is automatically generated by auter. To disable auter, run auter --disable instead." > "$LOCKFILE"
   logit "INFO: auter enabled"
   quit 0
 fi
 
-if [[ "${DISABLE}" ]] ; then
-  rm -f "${LOCKFILE}"
-  if [[ -f "${PIDFILE}" ]] && ! kill -0 "$(cat ${PIDFILE})" &>/dev/null; then
-      rm -f "${PIDFILE}"
+if [[ "$DISABLE" ]] ; then
+  rm -f "$LOCKFILE"
+  if [[ -f "$PIDFILE" ]] && ! kill -0 "$(cat $PIDFILE)" &>/dev/null; then
+      rm -f "$PIDFILE"
       logit "INFO: auter disabled and cleared pid file"
   else
     logit "INFO: auter disabled"
@@ -386,38 +385,38 @@ if [[ "${DISABLE}" ]] ; then
   quit 0
 fi
 
-if [[ ! -f "${LOCKFILE}" ]]; then
+if [[ ! -f "$LOCKFILE" ]]; then
   logit "WARNING: auter disabled. Please run auter --enable to enable automatic updates."
   quit 4
 fi
 
 # PID file checking to make sure multiple copies of auter don't run at once.
-PIDDIR=$(dirname "${PIDFILE}")
-if [[ ! -d "${PIDDIR}" ]]; then
-  install -m 755 -o root -g root -d "${PIDDIR}"
+PIDDIR=$(dirname "$PIDFILE")
+if [[ ! -d "$PIDDIR" ]]; then
+  install -m 755 -o root -g root -d "$PIDDIR"
 fi
 
 # Note: ALL script exits after this block must use the quit() function instead so the PIDfile is cleaned up.
-if [[ -f "${PIDFILE}" ]]; then
-  logit "ERROR: auter is already running or ${PIDFILE} exists."
+if [[ -f "$PIDFILE" ]]; then
+  logit "ERROR: auter is already running or $PIDFILE exists."
   quit 6
 else
-  echo "$$" > "${PIDFILE}"
+  echo "$$" > "$PIDFILE"
 fi
 
 read_config
 
 # CONFIGSET needs to be set if we're using a custom configuration file.
-if [[ -z "${CONFIGSET}" ]]; then
-  logit "ERROR: You must specify the CONFIGSET variable in custom config file ${CONFIGFILE} to avoid naming collisions"
+if [[ -z "$CONFIGSET" ]]; then
+  logit "ERROR: You must specify the CONFIGSET variable in custom config file $CONFIGFILE to avoid naming collisions"
   quit 5
 fi
 
-if [[ "${ONLYINSTALLFROMPREP}" == "yes" ]]; then
-  if [[ ! -d "${DOWNLOADDIR}/${CONFIGSET}" ]]; then
-    install -m 755 -o root -g root -d "${DOWNLOADDIR}/${CONFIGSET}"
-  elif [[ $(stat -c %G%U%a "${DOWNLOADDIR}") != rootroot[0-9][0-9][0145] ]]; then
-    logit "ERROR: ${DOWNLOADDIR}/${CONFIGSET} does not have the correct permissions."
+if [[ "$ONLYINSTALLFROMPREP" == "yes" ]]; then
+  if [[ ! -d "$DOWNLOADDIR/$CONFIGSET" ]]; then
+    install -m 755 -o root -g root -d "$DOWNLOADDIR/$CONFIGSET"
+  elif [[ $(stat -c %G%U%a "$DOWNLOADDIR") != rootroot[0-9][0-9][0145] ]]; then
+    logit "ERROR: $DOWNLOADDIR/$CONFIGSET does not have the correct permissions."
     quit 3
   fi
 fi
@@ -425,38 +424,38 @@ fi
 # Validate the SKIPPHASESCRIPTS values
 if [[ -n "${SKIPPHASESCRIPTS[*]}" ]]; then
   for SKIPPHASESCRIPT in "${SKIPPHASESCRIPTS[@]}"; do
-    if [[ "${SKIPPHASESCRIPT}" =~ ^(pre|post)-(prep|apply|reboot)$ ]]; then
-       logit "INFO: The --skip-scripts-by-phase argument was used. Skipping ${SKIPPHASESCRIPT} scripts"
+    if [[ "$SKIPPHASESCRIPT" =~ ^(pre|post)-(prep|apply|reboot)$ ]]; then
+       logit "INFO: The --skip-scripts-by-phase argument was used. Skipping $SKIPPHASESCRIPT scripts"
     else
-       logit "ERROR: The --skip-scripts-by-phase argument was used with an invalid option: '${SKIPPHASESCRIPT}'. Exiting"
+       logit "ERROR: The --skip-scripts-by-phase argument was used with an invalid option: '$SKIPPHASESCRIPT'. Exiting"
        quit 1
     fi
   done
 fi
 
-logit "INFO: Running with: $0 ${ARGS}"
+logit "INFO: Running with: $0 $ARGS"
 
 # If --maxdelay is set on the command line, override the config file.
-if [[ -n "${__MAXDELAY}" ]]
+if [[ -n "$__MAXDELAY" ]]
 then
-   MAXDELAY="${__MAXDELAY}"
-   logit "INFO: Overriding MAXDELAY from command line: --maxdelay=${__MAXDELAY}"
+   MAXDELAY="$__MAXDELAY"
+   logit "INFO: Overriding MAXDELAY from command line: --maxdelay=$__MAXDELAY"
 else
   tty -s && MAXDELAY=1 && logit "INFO: Running in an interactive shell, disabling all random sleeps"
 fi
-[[ "${MAXDELAY}" -lt 1 ]] && MAXDELAY=1
+[[ "$MAXDELAY" -lt 1 ]] && MAXDELAY=1
 
 # There is an explicit quit here to avoid auter automatically running any
 # other unexpected functions.
-[[ "${POSTREBOOT}" ]] && post_reboot && quit 0
+[[ "$POSTREBOOT" ]] && post_reboot && quit 0
 
 # Source the module for the specific package manager.
 . /usr/lib/auter/auter.module
 
 # The following 3 functions are provided by the previously sourced /usr/lib/auter/auter.module
 # Run the package manager specific check for locks
-[[ "${PREP}" ]] && prepare_updates
-[[ "${APPLY}" ]] && apply_updates
+[[ "$PREP" ]] && prepare_updates
+[[ "$APPLY" ]] && apply_updates
 
 [[ $REBOOTCALL -eq 1 ]] && reboot_server
 
