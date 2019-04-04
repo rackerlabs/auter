@@ -18,8 +18,8 @@ Requires:       yum
 %endif
 
 %description
-auter (optionally) pre-downloads updates and then runs automatically on a
-set schedule, optionally rebooting to finish applying the updates.
+Auter performs automated, transactional patching, with options to pre-cache
+packages and perform package update dependent reboots.
 
 %prep
 %setup -q
