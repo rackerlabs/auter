@@ -1,4 +1,8 @@
 #!/usr/bin/make -f
+
+override_dh_auto_build:
+	/usr/bin/help2man --section=1 ./auter -N -o auter.1 -n "Automatic Update Transaction Execution by Rackspace" --include=auter.help2man-sections
+
 %:
 	dh $@ 
 
