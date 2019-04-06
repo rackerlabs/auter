@@ -1,5 +1,5 @@
 NAME := "auter"
-BUILD_FILES =  auter.conf auter.cron auter.help2man-sections Makefile
+BUILD_FILES  = auter.conf auter.cron auter.help2man-sections Makefile
 BUILD_FILES += auter.yumdnfModule auter.aptModule auter.conf.man
 BUILD_FILES += LICENSE README.md MAINTAINERS.md NEWS
 EXEC_FILES = auter
