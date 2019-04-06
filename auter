@@ -58,8 +58,7 @@ function default_signal_handling() {
 # The man page is generated in part from the print_help() text by running:
 #   help2man --include=auter.help2man --no-info ./auter > auter.man
 function print_help() {
-  echo "
-Usage: auter [--enable|--disable|--status] [--prep] [--apply] [--reboot] [--postreboot] [--config=<configfile>] [OPTIONS]
+  echo "Usage: auter [--enable|--disable|--status] [--prep] [--apply] [--reboot] [--postreboot] [--config=<configfile>] [OPTIONS]
 
 Automatic Update Transaction Execution by Rackspace. A wrapper around cron and
 yum/dnf/apt to manage system updates with the ability to configure automatic
@@ -98,8 +97,7 @@ Options:
 
   --no-wall	If possible, suppress shutdown wall messages in the reboot phase
   -h, --help        Show this help text
-  -v, --version     Show the version
-"
+  -v, --version     Show the version"
 }
 
 function logit() {
@@ -254,37 +252,100 @@ function log_last_run() {
 default_signal_handling
 
 ARGS="$*"
-if ! OPTS=$(getopt -n "$0" -o e,d,h,v,s --long prep,apply,enable,disable,reboot,postreboot,version,help,stdout,no-wall,status,config:,skip-all-scripts,skip-scripts-by-phase:,skip-scripts-by-name:,maxdelay: -- "$@"); then
+if ! OPTS=$(getopt -n "$0" -o 'edhvs' --long 'prep,apply,enable,disable,reboot,postreboot,version,help,stdout,no-wall,status,config:,skip-all-scripts,skip-scripts-by-phase:,skip-scripts-by-name:,maxdelay:' -- "$@"); then
   echo "See '$0 --help' for valid options."
   quit 1
 fi
 
 eval set -- "$OPTS"
-unset OPTS
 
+_required=false
 while true ; do
   case "$1" in
-    -h|--help) print_help ; exit 0;;
-    -v|--version) echo "auter ${AUTERVERSION}" ; exit 0;;
-    --stdout) STDOUT=1 ; shift;;
-    --no-wall) NOWALLMSG=1 ; shift;;
-    --maxdelay) __MAXDELAY="$2" ; shift 2;;
-    --config) CONFIGSET="" ; CONFIGFILE="$2" ; CUSTOMCONFIG=1 ; shift 2;;
-    --prep) PREP=1 ; shift;;
-    --apply) APPLY=1 ; shift;;
-    --reboot) REBOOTCALL=1 ; shift;;
-    --postreboot) POSTREBOOT=1 ; shift;;
-    -e|--enable) ENABLE=1 ; shift;;
-    -d|--disable) DISABLE=1 ; shift;;
-    --skip-all-scripts) SKIPALLSCRIPTS=1 ; shift;;
-    --skip-scripts-by-phase) IFS=',' read -r -a SKIPPHASESCRIPTS <<< "$2" ; shift 2;;
-    --skip-scripts-by-name) IFS=',' read -r -a SKIPSCRIPTNAMES <<< "$2" ; shift 2;;
-    -s|--status) print_status ; quit 0;;
-    --) shift ; break;;
+    '-h'|'--help')
+      print_help
+      quit 0
+      ;;
+    '-v'|'--version')
+      echo "auter ${AUTERVERSION}"
+      exit 0
+      ;;
+    '--stdout')
+      STDOUT=1
+      shift
+      ;;
+    '--no-wall')
+      NOWALLMSG=1
+      shift
+      ;;
+    '--maxdelay')
+      __MAXDELAY="$2"
+      shift 2
+      ;;
+    '--config')
+      CONFIGSET=""
+      CONFIGFILE="$2"
+      CUSTOMCONFIG=1
+      shift 2
+      ;;
+    '--prep')
+      _required=true
+      PREP=1
+      shift
+      ;;
+    '--apply')
+      _required=true
+      APPLY=1
+      shift
+      ;;
+    '--reboot')
+      _required=true
+      REBOOTCALL=1
+      shift
+      ;;
+    '--postreboot')
+      _required=true
+      POSTREBOOT=1
+      shift
+      ;;
+    '-e'|'--enable')
+      _required=true
+      ENABLE=1
+      shift
+      ;;
+    '-d'|'--disable')
+      _required=true
+      DISABLE=1
+      shift
+      ;;
+    '--skip-all-scripts')
+      SKIPALLSCRIPTS=1
+      shift
+      ;;
+    '--skip-scripts-by-phase')
+      IFS=',' read -r -a SKIPPHASESCRIPTS <<< "$2"
+      shift 2
+      ;;
+    '--skip-scripts-by-name')
+      IFS=',' read -r -a SKIPSCRIPTNAMES <<< "$2"
+      shift 2
+      ;;
+    '-s'|'--status')
+      print_status
+      quit 0
+      ;;
+    '--')
+      shift
+      break
+      ;;
+    *)
+      quit 1
+      ;;
   esac
 done
 
-[[ ! "$ARGS" =~ --(prep|apply|reboot|postreboot|enable|disable)  ]] && print_help && quit 1
+if ! $_required; then print_help; quit 1; fi
+unset OPTS _required
 
 readonly PACKAGE_MANAGER=$(check_package_manager)
 
