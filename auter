@@ -58,7 +58,7 @@ function default_signal_handling() {
 # The man page is generated in part from the print_help() text by running:
 #   help2man --include=auter.help2man --no-info ./auter > auter.man
 function print_help() {
-  echo "Usage: auter [--enable|--disable|--status] [--prep] [--apply] [--reboot] [--postreboot] [--config=<configfile>] [OPTIONS]
+  echo "Usage: auter [--enable|--disable|--status|--prep|--apply|--reboot|--postreboot] [OPTIONS]
 
 Automatic Update Transaction Execution by Rackspace. A wrapper around cron and
 yum/dnf/apt to manage system updates with the ability to configure automatic
@@ -347,7 +347,12 @@ while true ; do
   esac
 done
 
-if ! $_required; then print_help; quit 1; fi
+if ! $_required; then
+  echo "Auter must be run with one of the following:
+  $0 [--enable|--disable|--status|--prep|--apply|--reboot|--postreboot]"
+  echo "See auter --help for details."
+  quit 1
+fi
 unset _required
 
 readonly PACKAGE_MANAGER=$(check_package_manager)
