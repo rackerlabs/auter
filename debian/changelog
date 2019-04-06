@@ -1,6 +1,6 @@
 auter (1.0.0) unstable; urgency=low
 
-  * #220 Introduce package dependant reboots using AUTOREBOOT option
+  * #220 Introduce package dependent reboots using AUTOREBOOT option
   * #215 Remove rpm and deb package build tests from travis
   * #223 Parallelize the travis jobs
   * #224/#225 Clean up ShellCheck warnings
