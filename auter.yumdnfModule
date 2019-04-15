@@ -38,8 +38,8 @@ function check_package_manager_lock() {
 function prepare_updates() {
   # Check for yum.lock file
   check_package_manager_lock
-  declare prepoutput
-  declare -i rc
+  local prepoutput
+  local -i rc
 
   prepoutput="$(date '+%F %T')\\n"
   # Run any pre-prep scripts
@@ -117,11 +117,7 @@ function prepare_updates() {
 function apply_updates() {
   # Default rc to 0 which means no updates are available
   local -i rc=0
-  local applyoutput
-  local updateaction
-  local history_before
-  local history_after
-  local transactionid
+  local applyoutput updateaction history_before history_after transactionid
 
   applyoutput="$(date '+%F %T')\\n"
   # Set the list of rpms to be installed
