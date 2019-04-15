@@ -28,8 +28,7 @@ function prepare_updates() {
     if [[ $(man "$PACKAGE_MANAGER" | grep -c download-only) -gt 0 ]]; then
       $PACKAGE_MANAGER update &>/dev/null
       # Check if there are any errors when checking for updates
-      local error_count
-      local available_package_count
+      local error_count available_package_count
 
 
       error_count=$("$PACKAGE_MANAGER" -u upgrade --assume-no "${PACKAGEMANAGEROPTIONS[@]}" | grep -c '^[WE]:')
@@ -93,9 +92,8 @@ function apply_updates() {
   applyoutput="$(date '+%F %T')\\n"
   # Set the list of debs to be installed
   if [[ "$ONLYINSTALLFROMPREP" == "yes" ]]; then
-    local available_packages
-    local available_package_count
-    local error_count
+    local available_packages available_package_count error_count
+
     if [[ $(find "$DOWNLOADDIR/$CONFIGSET" -name "*.deb" | wc -l) -gt 0 ]]; then
       available_packages=$("$PACKAGE_MANAGER" -u --just-print install --assume-no "${PACKAGEMANAGEROPTIONS[@]}" "${DOWNLOADDIR}/${CONFIGSET}"/*.deb 2>&1)
       echo "$available_packages" >"$DATADIR/last-apply-output-$CONFIGSET"
@@ -118,8 +116,7 @@ function apply_updates() {
 
   if [[ $error_count -eq 0 ]]; then
     if [[ "$available_package_count" -gt 0 ]]; then
-      local packages_before
-      local packages_after
+      local packages_before packages_after
 
       # Sleep before running pre-scripts and updates
       sleep_delay=$((RANDOM % MAXDELAY))
