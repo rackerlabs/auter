@@ -20,14 +20,14 @@ function check_package_manager_lock() {
 
   if [[ -f /var/run/yum.pid ]]; then
     if { pgrep --pidfile /var/run/yum.pid &>/dev/null ; } ; then
-      for LOCKCHECKATTEMPT in $(seq 1 $((PACKAGEMANAGERLOCKRETRIES + 1))); do
+      for _lockcheckattempt in $(seq 1 $((PACKAGEMANAGERLOCKRETRIES + 1))); do
         # If this has reached the retry limit configured then abort
-        if [[ $LOCKCHECKATTEMPT -eq $((PACKAGEMANAGERLOCKRETRIES + 1)) ]]; then
+        if [[ $_lockcheckattempt -eq $((PACKAGEMANAGERLOCKRETRIES + 1)) ]]; then
           logit "ERROR: Final attempt to wait for yum to release lock file failed. Aborting auter run"
           quit 3
         fi
 
-        logit "INFO: /var/run/yum.pid exists and process runnning. Waiting $PACKAGEMANAGERLOCKWAITTIME seconds for yum lock to be released: Attempt $LOCKCHECKATTEMPT of $PACKAGEMANAGERLOCKRETRIES"
+        logit "INFO: /var/run/yum.pid exists and process runnning. Waiting $PACKAGEMANAGERLOCKWAITTIME seconds for yum lock to be released: Attempt $_lockcheckattempt of $PACKAGEMANAGERLOCKRETRIES"
         sleep $PACKAGEMANAGERLOCKWAITTIME
         { pgrep --pidfile /var/run/yum.pid &>/dev/null ; } || { logit "INFO: yum lock has been released" && break ; }
       done
@@ -130,12 +130,12 @@ function apply_updates() {
     if [[ $(find "$DOWNLOADDIR/$CONFIGSET" -name "*.rpm" | wc -l) -gt 0 ]]; then
       local rpms=()
       # Check if the updates staged are still required
-      for PACKAGE in "$DOWNLOADDIR/$CONFIGSET"/*.rpm; do
+      for _package in "$DOWNLOADDIR/$CONFIGSET"/*.rpm; do
         # Check if the local rpm is an update to the installed package and if it is then add the file to rpms
         # list. We are using rpm directly for this check because "yum check-update" does not support local rpm
         # files. This also avoids connecting to the repos. And finally this avoids an issue when updating the
         # kernel to the same version.
-        rpm -U --nodeps --test "$PACKAGE" &>/dev/null && rpms+=("$PACKAGE")
+        rpm -U --nodeps --test "$_package" &>/dev/null && rpms+=("$_package")
       done
 
       # We are manually setting the rc to 100 if there are updates to be applied. This is the return code that

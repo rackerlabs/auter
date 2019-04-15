@@ -120,7 +120,7 @@ function read_config() {
 }
 
 function rotate_file {
-  declare output_file="$1"
+  local output_file="$1"
 
   #Rotate old file
   for i in $(seq $((ROTATE-1)) -1 1); do
@@ -142,15 +142,15 @@ function run_script {
     local skip=0
     # Check if the phase scripts have been skipped with --skip-scripts-by-phase
     if [[ -n "${SKIPPHASESCRIPTS[*]}" ]]; then
-      for SKIPPHASESCRIPT in "${SKIPPHASESCRIPTS[@]}"; do
-        [[ "${SKIPPHASESCRIPT,,}" == *"${phase,,}"* ]] && skip=1
+      for _skipphasescript in "${SKIPPHASESCRIPTS[@]}"; do
+        [[ "${_skipphasescript,,}" == *"${phase,,}"* ]] && skip=1
       done
     fi
 
     # Check if the script has been excluded with --skip-scripts-by-name
     if [[ -n "${SKIPSCRIPTNAMES[*]}" ]]; then
-      for SKIPSCRIPTNAME in "${SKIPSCRIPTNAMES[@]}"; do
-        [[ ${script,,} == *"${SKIPSCRIPTNAME,,}"* ]] && skip=1
+      for _skipscriptname in "${SKIPSCRIPTNAMES[@]}"; do
+        [[ ${script,,} == *"${_skipscriptname,,}"* ]] && skip=1
       done
     fi
 
@@ -189,8 +189,8 @@ function check_package_manager() {
 }
 
 function reboot_server() {
-  for SCRIPT in "$PREREBOOTSCRIPTDIR"/*; do
-    run_script "$SCRIPT" "Pre-Reboot"
+  for _script in "$PREREBOOTSCRIPTDIR"/*; do
+    run_script "$_script" "Pre-Reboot"
   done
 
   if [[ -d "$POSTREBOOTSCRIPTDIR" ]]; then
@@ -213,8 +213,8 @@ function post_reboot() {
   rm -f "/etc/cron.d/auter-postreboot-$CONFIGSET"
   tty -s || sleep 300
 
-  for SCRIPT in "$POSTREBOOTSCRIPTDIR"/*; do
-    run_script "$SCRIPT" "Post-Reboot"
+  for _script in "$POSTREBOOTSCRIPTDIR"/*; do
+    run_script "$_script" "Post-Reboot"
   done
 }
 
@@ -423,11 +423,11 @@ fi
 
 # Validate the SKIPPHASESCRIPTS values
 if [[ -n "${SKIPPHASESCRIPTS[*]}" ]]; then
-  for SKIPPHASESCRIPT in "${SKIPPHASESCRIPTS[@]}"; do
-    if [[ "$SKIPPHASESCRIPT" =~ ^(pre|post)-(prep|apply|reboot)$ ]]; then
-       logit "INFO: The --skip-scripts-by-phase argument was used. Skipping $SKIPPHASESCRIPT scripts"
+  for _skipphasescript in "${SKIPPHASESCRIPTS[@]}"; do
+    if [[ "$_skipphasescript" =~ ^(pre|post)-(prep|apply|reboot)$ ]]; then
+       logit "INFO: The --skip-scripts-by-phase argument was used. Skipping $_skipphasescript scripts"
     else
-       logit "ERROR: The --skip-scripts-by-phase argument was used with an invalid option: '$SKIPPHASESCRIPT'. Exiting"
+       logit "ERROR: The --skip-scripts-by-phase argument was used with an invalid option: '$_skipphasescript'. Exiting"
        quit 1
     fi
   done
