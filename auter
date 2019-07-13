@@ -176,16 +176,11 @@ function run_script {
 
 # Check whether yum, or dnf is available
 function check_package_manager() {
-  if [[ -x /usr/bin/dnf ]]; then
-    echo dnf
-  elif [[ -x /usr/bin/yum ]]; then
-    echo yum
-  elif [[ -x /usr/bin/apt-get ]]; then
-    echo apt-get
-  else
-    logit "ERROR: Cannot find yum, dnf or apt-get"
-    exit 7
-  fi
+  for pkg_mgr in dnf yum apt-get; do
+    command -v "$pkg_mgr" && return 0
+  done
+  logit "ERROR: Cannot find yum, dnf or apt-get"
+  exit 7
 }
 
 function reboot_server() {
