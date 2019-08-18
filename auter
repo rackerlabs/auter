@@ -179,8 +179,7 @@ function check_package_manager() {
   for pkg_mgr in dnf yum apt-get; do
     command -v "$pkg_mgr" && return 0
   done
-  logit "ERROR: Cannot find yum, dnf or apt-get"
-  exit 7
+  return 1
 }
 
 function reboot_server() {
@@ -349,7 +348,7 @@ if ! $_required; then
 fi
 unset _required
 
-readonly PACKAGE_MANAGER=$(check_package_manager)
+if ! PACKAGE_MANAGER=$(check_package_manager); then logit "ERROR: Cannot find yum, dnf or apt-get"; quit 7; fi
 
 # Do this after option processing so --help and --status still work.
 if [[ "$(whoami)" != "root" ]]; then
