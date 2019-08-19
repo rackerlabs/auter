@@ -1,0 +1,15 @@
+name: CI
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v1
+
+    - name: Run 01-spellcheck.sh
+      run: ./tests/01-spellcheck.sh
+    - name: Run 05-shellcheck.sh
+      run: ./tests/05-shellcheck.sh
