@@ -1,6 +1,6 @@
 Name:           auter
 Version:        1.0.0
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Prepare and apply updates
 License:        ASL 2.0
 URL:            https://github.com/rackerlabs/%{name}
@@ -18,8 +18,8 @@ Requires:       yum
 %endif
 
 %description
-Auter performs automated, transactional patching, with options to pre-cache
-packages and perform package update dependent reboots.
+auter (optionally) pre-downloads updates and then runs automatically on a
+set schedule, optionally rebooting to finish applying the updates.
 
 %prep
 %setup -q
@@ -101,26 +101,29 @@ exit 0
 %endif
 
 %changelog
-* Fri Mar 29 2019 Nick Rhodes <nrhodes91@gmail.com> - 1.0.0-1
+* Wed Jul 24 2019 Fedora Release Engineering <releng@fedoraproject.org> - 1.0.0-2
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_31_Mass_Rebuild
+
+* Fri Mar 29 2019 Nick Rhodes <nrhodes91@gmail.com> 1.0.0-1
 - #220 Introduce package dependant reboots using AUTOREBOOT option
 - #215 Remove rpm and deb package build tests from travis
 - #223 Parallelize the travis jobs
 - #224/#225 Clean up ShellCheck warnings
 
-* Tue Mar 05 2019 Nick Rhodes <nrhodes91@gmail.com> - 0.12.3-1
+* Tue Mar 05 2019 Nick Rhodes <nrhodes91@gmail.com> 0.12.3-1
 - #214 Log a machine readable status to the last-{prep,apply} output files
 
-* Tue Feb 12 2019 Nick Rhodes <nrhodes91@gmail.com> - 0.12.2-1
+* Tue Feb 12 2019 Nick Rhodes <nrhodes91@gmail.com> 0.12.2-1
 - #207 check for process matching PID file content
 
 * Thu Jan 31 2019 Fedora Release Engineering <releng@fedoraproject.org> - 0.12.1-2
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_30_Mass_Rebuild
 
-* Tue Dec 11 2018 Nick Rhodes <nrhodes91@gmail.com> - 0.12.1-1
+* Tue Dec 11 2018 Nick Rhodes <nrhodes91@gmail.com> 0.12.1-1
 - Add max-delay option to override MAXDLAY via command line
 - Redirect stderr to stdout and capture in APPLYOUTPUT variable
 
-* Thu Jul 12 2018 Paolo Gigante <paolo.gigante.sa@gmail.com> - 0.12-1
+* Thu Jul 12 2018 Paolo Gigante <paolo.gigante.sa@gmail.com> 0.12-1
 - Added --skip-all-scripts to skip the executions of all custom scripts
 - Added --skip-scripts-by-phase to skip the executions of custom scripts for the specified phase
 - Added --skip-scripts-by-phase to skip the executions of custom scripts by name
@@ -131,10 +134,10 @@ exit 0
 - Logs auter output in /var/lib/auter/ when no updates are available
 - Minor improvements to rotation of output files in /var/lib/auter/
 
-* Fri Mar 16 2018 Nick Rhodes <nrhodes91@gmail.com> - 0.11-5
+* Fri Mar 16 2018 Nick Rhodes <nrhodes91@gmail.com> 0.11-5
 - Hotfix for the AUTOREBOOT issue
 
-* Fri Mar 16 2018 Paolo Gigante <paolo.gigante@rackspace.co.uk> - 0.11-4
+* Fri Mar 16 2018 Paolo Gigante <paolo.gigante@rackspace.co.uk> 0.11-4
 - Updated documentation and references to include apt for Ubuntu/debian
 - Removed debugging message that was printed during apt update
 - Added "Valid Options" in auter.conf
@@ -146,14 +149,14 @@ exit 0
 - Improved checks to confirm prepared patches are still required
 - Adjusted some string arguments to arrays for better handling
 
-* Mon Oct 30 2017 Paolo Gigante <paolo.gigante@rackspace.co.uk> - 0.10-1
+* Mon Oct 30 2017 Paolo Gigante <paolo.gigante@rackspace.co.uk> 0.10-1
 - Added pre and post prep script hooks
 - Added a pidfile and process check to --status
 - Added a auter success log with a last run timestamp
 - Clear pidfile if the process is no longer running when disabling auter
 - Added auter.aptModule for ubuntu/debian support
 
-* Thu Mar 09 2017 Piers Cornwell <piers.cornwell@rackspace.co.uk> - 0.9-1
+* Thu Mar 09 2017 Piers Cornwell <piers.cornwell@rackspace.co.uk> 0.9-1
 - Capture package manager output
 - Document the auter --reboot cron job
 - Remove last-update file
@@ -161,22 +164,22 @@ exit 0
 - Add error checking during prep
 - Split out package manager specific code
 
-* Mon Nov 14 2016 Piers Cornwell <piers.cornwell@rackspace.co.uk> - 0.8-1
+* Mon Nov 14 2016 Piers Cornwell <piers.cornwell@rackspace.co.uk> 0.8-1
 - Release version 0.8
 - Added ONLYINSTALLFROMPREP option
 
-* Thu Aug 04 2016 Piers Cornwell <piers.cornwell@rackspace.co.uk> - 0.7-1
+* Thu Aug 04 2016 Piers Cornwell <piers.cornwell@rackspace.co.uk> 0.7-1
 - Release version 0.7
 - Updated the .spec file according to Fedora's guidelines
 - Moved scriptdir from /var/lib/auter to /etc/auter
 - Categorise log messages as INFO, WARNING or ERROR
 - Remove pre-built man page
 
-* Wed Jul 06 2016 Cameron Beere <cameron.beere@rackspace.co.uk> - 0.6-1
+* Wed Jul 06 2016 Cameron Beere <cameron.beere@rackspace.co.uk> 0.6-1
 - Release version 0.6
 - Add maintainers file
 
-* Thu Apr 28 2016 Cameron Beere <cameron.beere@rackspace.co.uk> - 0.5-1
+* Thu Apr 28 2016 Cameron Beere <cameron.beere@rackspace.co.uk> 0.5-1
 - Release version 0.5
 - Added transaction ID logging
 - Disable random sleepis when running from a tty
@@ -190,7 +193,7 @@ exit 0
 - Added CONFIGSET variable used to distinguish between distinct configs
 - Various bugfixes
 
-* Wed Mar 23 2016 Piers Cornwell <piers.cornwell@rackspace.co.uk> - 0.4-1
+* Wed Mar 23 2016 Piers Cornwell <piers.cornwell@rackspace.co.uk> 0.4-1
 - Release version 0.4
 - Support DNF
 - Add HACKING.md
@@ -200,14 +203,14 @@ exit 0
 - Record prep and apply output
 - Updated man page
 
-* Mon Mar 14 2016 Paolo Gigante <paolo.gigante@rackspace.co.uk> - 0.3-1
+* Mon Mar 14 2016 Paolo Gigante <paolo.gigante@rackspace.co.uk> 0.3-1
 - Release version 0.3
 - Better defined exit codes
 - Added bounds check for MAXDELAY
 - Updated documentation with more details about configuration options
 - Fixed logging error if downloadonly is not available
 
-* Thu Mar 10 2016 Piers Cornwell <piers.cornwell@rackspace.co.uk> - 0.2-1
+* Thu Mar 10 2016 Piers Cornwell <piers.cornwell@rackspace.co.uk> 0.2-1
 - Release version 0.2
 - Locking
 - Trap Ctrl+C during dangerous section
@@ -219,5 +222,5 @@ exit 0
 - Removed yum transaction support
 - Added pid locking to prevent multiple instances of auter running at the same time
 
-* Wed Mar 02 2016 Mike Frost <mike.frost@rackspace.co.uk> - 0.1-1
+* Wed Mar 02 2016 Mike Frost <mike.frost@rackspace.co.uk> 0.1-1
 - Release version 0.1
