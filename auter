@@ -66,18 +66,22 @@ reboots and custom scripts.
 
 Actions:
   -e, --enable      Enable auter
-  -d, --disable     Disable auter. Also deletes unused pidfile if it exists
+  -d, --disable     Disable auter and remove pidfile if it exists
   -s, --status      Show whether enabled or disabled
   --prep            Pre-download updates before applying
   --apply           Apply updates, and reboot if AUTOREBOOT=yes
   --reboot          Reboot system including pre/post reboot scripts
-  --postreboot      Run post reboot script
+  --postreboot      Run post reboot scripts
 
 Options:
   --config=FILE     Specify the full path to an auter config file. Defaults to
                     /etc/auter/auter.conf
   --stdout          Always log to STDOUT, regardless of not having a tty
   --maxdelay        Override MAXDELAY from the command line
+  --ignore-script-failure
+                    Continue with the auter execution even if a pre/post script returns
+                    non-zero
+
   --skip-all-scripts
                     Skip the executions of all custom scripts (Default in /etc/auter/*.d/)
 
@@ -120,24 +124,23 @@ function read_config() {
 }
 
 function rotate_file {
-  local output_file="$1"
-
   #Rotate old file
   for i in $(seq $((ROTATE-1)) -1 1); do
-    [[ -e "$output_file.$i" ]] && mv -f "$output_file.$i" "$output_file.$((i+1))"
+    # shellcheck disable=SC2154
+    [[ -e "$logfile.$i" ]] && mv -f "$logfile.$i" "$logfile.$((i+1))"
   done
 
   # Move base files to basefile.1
-  [[ -e "$output_file" ]] && mv "$output_file" "$output_file.1"
+  [[ -e "$logfile" ]] && mv "$logfile" "$logfile.1"
 
-  readarray -t remove_files <<< "$(find "$DATADIR" -type f -name "$(basename "$output_file").*" | awk -F'.' -v s="$ROTATE" '($NF+1)>s')"
+  readarray -t remove_files <<< "$(find "$DATADIR" -type f -name "$(basename "$logfile").*" | awk -F'.' -v s="$ROTATE" '($NF+1)>s')"
   # Finally check for extra file from the rotation, and remove if it exists
   [[ -n "${remove_files[*]}" ]] && rm -f "${remove_files[@]}"
 }
 
 function run_script {
-  local script="$1"
-  local phase="$2"
+  local phase="$1"
+
   if [[ "$SKIPALLSCRIPTS" -eq 0 ]]; then
     local skip=0
     # Check if the phase scripts have been skipped with --skip-scripts-by-phase
@@ -158,16 +161,22 @@ function run_script {
       if [[ -x "$script" ]] && [[ -f "$script" ]]; then
         logit "INFO: Running $phase script $script"
         $script
-        local RC=$?
-        if [[ "$RC" -ne 0 ]]; then
-          logit "ERROR: $phase script $script exited with non-zero exit code $RC. Aborting auter run."
-          quit 8
+        rc=$?
+
+        if [[ "$rc" -ne 0 ]]; then
+          logit "ERROR: $phase script $script exited with non-zero exit code $rc."
+          >>"$logfile" echo "${phase^^}:FAILED:$script:$rc"
+          ${EXIT_ON_SCRIPT_FAIL:=true} && logit "WARN: Aborting auter run." && quit 8
+        else
+          >>"$logfile" echo "${phase^^}:SUCCESS:$script:$rc"
         fi
       elif [[ -f "$script" ]]; then
         logit "ERROR: $phase script $script exists but the execute bit is not set. Skipping."
+        >>"$logfile" echo "${phase^^}:FAILED:$script:missing execute bit"
       fi
     else
-      logit "INFO: Skipping script $script"
+      logit "INFO: Skipping $phase script $script"
+      >>"$logfile" echo "${phase^^}:INFO:$script:skipped"
     fi
   else
     logit "INFO: The --skip-all-scripts flag was used. NOT executing $script as part of the $phase phase"
@@ -183,13 +192,13 @@ function check_package_manager() {
 }
 
 function reboot_server() {
-  for _script in "$PREREBOOTSCRIPTDIR"/*; do
-    run_script "$_script" "Pre-Reboot"
+  for script in "$PREREBOOTSCRIPTDIR"/*; do
+    run_script "Pre-Reboot"
   done
 
   if [[ -d "$POSTREBOOTSCRIPTDIR" ]]; then
     logit "INFO: Creating post-reboot hook /etc/cron.d/auter-postreboot-$CONFIGSET"
-    echo -e "@reboot root /usr/bin/auter --postreboot --config $CONFIGFILE" > "/etc/cron.d/auter-postreboot-$CONFIGSET"
+    echo "@reboot root /usr/bin/auter --postreboot --config $CONFIGFILE" > "/etc/cron.d/auter-postreboot-$CONFIGSET"
     chown root.root "/etc/cron.d/auter-postreboot-$CONFIGSET"
     chmod 0644 "/etc/cron.d/auter-postreboot-$CONFIGSET"
   fi
@@ -207,18 +216,18 @@ function post_reboot() {
   rm -f "/etc/cron.d/auter-postreboot-$CONFIGSET"
   tty -s || sleep 300
 
-  for _script in "$POSTREBOOTSCRIPTDIR"/*; do
-    run_script "$_script" "Post-Reboot"
+  for script in "$POSTREBOOTSCRIPTDIR"/*; do
+    run_script "Post-Reboot"
   done
 }
 
 function print_status() {
   if [[ -f "$LOCKFILE" ]] && [[ -f "$PIDFILE" ]]; then
-    if currentpidstatus="$(kill -0 "$(cat $PIDFILE)" 2>&1 )"; then
+    if current_pid_status="$(kill -0 "$(cat $PIDFILE)" 2>&1 )"; then
       echo "auter is currently enabled and running"
-    elif [[ "$currentpidstatus" == *"No such process"* ]]; then
+    elif [[ "$current_pid_status" == *"No such process"* ]]; then
       echo "auter is currently enabled and pid file exists but process is dead"
-    elif [[ "$currentpidstatus" == *"Operation not permitted"* ]]; then
+    elif [[ "$current_pid_status" == *"Operation not permitted"* ]]; then
       echo "auter is enabled but permission denied on $PIDFILE. Run 'auter --status' as root"
     fi
   elif [[ -f "$LOCKFILE" ]] && [[ ! -f "$PIDFILE" ]]; then
@@ -247,7 +256,7 @@ function log_last_run() {
 default_signal_handling
 
 ARGS="$*"
-if ! OPTS=$(getopt -n "$0" -o 'edhvs' --long 'prep,apply,enable,disable,reboot,postreboot,version,help,stdout,no-wall,status,config:,skip-all-scripts,skip-scripts-by-phase:,skip-scripts-by-name:,maxdelay:' -- "$@"); then
+if ! OPTS=$(getopt -n "$0" -o 'edhvs' --long 'prep,apply,enable,disable,reboot,postreboot,version,help,stdout,no-wall,status,config:,skip-all-scripts,skip-scripts-by-phase:,skip-scripts-by-name:,maxdelay:,ignore-script-failure' -- "$@"); then
   echo "See '$0 --help' for valid options."
   quit 1
 fi
@@ -314,6 +323,10 @@ while true ; do
       DISABLE=1
       shift
       ;;
+    '--ignore-script-failure')
+      EXIT_ON_SCRIPT_FAIL=false
+      shift
+      ;;
     '--skip-all-scripts')
       SKIPALLSCRIPTS=1
       shift
@@ -341,9 +354,9 @@ while true ; do
 done
 
 if ! $_required; then
-  echo "Auter must be run with one of the following:
+  >&2 echo "Auter must be run with one of the following:
   $0 [--enable|--disable|--status|--prep|--apply|--reboot|--postreboot]"
-  echo "See auter --help for details."
+  >&2 echo "See auter --help for details."
   quit 1
 fi
 unset _required
@@ -353,7 +366,7 @@ if ! PACKAGE_MANAGER=$(check_package_manager); then logit "ERROR: Cannot find yu
 
 # Do this after option processing so --help and --status still work.
 if [[ "$(whoami)" != "root" ]]; then
-  echo "Script must be run as root"
+  >&2 echo "Script must be run as root"
   quit 5
 fi
 
@@ -455,3 +468,6 @@ fi
 [[ $REBOOTCALL -eq 1 ]] && reboot_server
 
 quit 0
+
+
+# vim: sw=2 sts=2 et
