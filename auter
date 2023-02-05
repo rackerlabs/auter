@@ -194,7 +194,7 @@ function reboot_server() {
   if [[ -d "${POSTREBOOTSCRIPTDIR}" ]]; then
     logit "INFO: Creating post-reboot hook /etc/cron.d/auter-postreboot-${CONFIGSET}"
     echo -e "@reboot root /usr/bin/auter --postreboot --config ${CONFIGFILE}" > "/etc/cron.d/auter-postreboot-${CONFIGSET}"
-    chown root.root "/etc/cron.d/auter-postreboot-${CONFIGSET}"
+    chown root:root "/etc/cron.d/auter-postreboot-${CONFIGSET}"
     chmod 0644 "/etc/cron.d/auter-postreboot-${CONFIGSET}"
   fi
 
