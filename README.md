@@ -10,7 +10,7 @@ pre-download packages, run hooks, and perform automated reboots.
 
 ## Why use Auter?
 It is important to maintain regular system patching on Linux servers to keep up
-with the latest's bug and security fixes; some of these updates will require
+with the latest bug and security fixes; some of these updates will require
 service or server reboots which is where Auter fits in.
 
 Auter provides a flexible, host-based, solution for updating system packages
@@ -37,18 +37,17 @@ $ yum/dnf install auter
 ```
 
 There isn't currently a package maintained for Debian, however we provide a
-`.deb` package on the [releases
-page](https://github.com/rackerlabs/auter/releases).
+`.deb` package on the [releases page](https://github.com/rackerlabs/auter/releases).
 
 ## Setup
 All Auter configuration information is stored in `/etc/auter/auter.conf`; it
-allows you set basic options such as the sleep delay (`MAXDELAY`) and the
-whether automatic reboots should take place based on successful patching.
+allows you to set basic options such as the sleep delay (`MAXDELAY`), and
+whether automatic reboots should take place (`AUTOREBOOT`).
 
 _More information can be found on the [Wiki](https://github.com/rackerlabs/auter/wiki/Configuration)._
 
 ## Usage
-Auter can be run either manually:
+Auter can be run manually:
 ```bash
 $ auter --prep
 $ auter --apply
@@ -68,15 +67,12 @@ Please read
 details on how to contribute, and the process for submitting pull requests.
 
 ## Maintainers
-- Paolo Gigante
 - Nick Rhodes
+- Paolo Gigante
 
 See also the list of original
 [contributors](https://github.com/rackerlabs/auter/blob/master/MAINTAINERS.md)
 who started the project.
-
-The Auter team can be reached via our mailing list
-[auter-devel@rackspace.com](mailto://auter-devel@rackspace.com).
 
 ## Related projects
 - [Auter Manager](https://github.com/rackerlabs/auter-manager): Simplify the

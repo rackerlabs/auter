@@ -1,0 +1,168 @@
+auter (1.0.0) unstable; urgency=low
+
+  * #220 Introduce package dependent reboots using AUTOREBOOT option
+  * #215 Remove rpm and deb package build tests from travis
+  * #223 Parallelize the travis jobs
+  * #224/#225 Clean up ShellCheck warnings
+
+ -- Nick Rhodes <nrhodes91@gmail.com>  Fri, 29 Mar 2019 16:00:22 +0000
+
+auter (0.12.3) unstable; urgency=low
+
+  * #214 Log a machine readable status to the last-{prep,apply} output files
+
+ -- Nick Rhodes <nrhodes91@gmail.com>  Tue, 05 Mar 2019 15:51:29 +0000
+
+auter (0.12.2) unstable; urgency=low
+
+  * #207 check for process matching PID file content
+
+ -- Nick Rhodes <nrhodes91@gmail.com>  Tue, 12 Feb 2019 14:19:01 +0000
+
+auter (0.12.1) unstable; urgency=low
+
+  * Add max-delay option to override MAXDLAY via command line
+  * Redirect stderr to stdout and capture in APPLYOUTPUT variable
+
+ -- Nick Rhodes <nrhodes91@gmail.com>  Tue, 11 Dec 2018 15:02:24 +0000
+
+auter (0.12.0) unstable; urgency=low
+
+  * Added --skip-all-scripts to skip the executions of all custom scripts
+  * Added --skip-scripts-by-phase to skip the executions of custom scripts for the specified phase
+  * Added --skip-scripts-by-phase to skip the executions of custom scripts by name
+  * Added man page for auter.conf
+  * Updated auter.aptModule to reflect changes in auter.yumdnfModule
+  * added no-wall option
+  * Fix for --status when run as non-root user
+  * Logs auter output in /var/lib/auter/ when no updates are available
+  * Minor improvements to rotation of output files in /var/lib/auter/
+
+ -- Paolo Gigante <paolo.gigante.sa@gmail.com>  Thu, 12 Jul 2018 16:07:45 +0000
+
+auter (0.11.1) unstable; urgency=low
+
+  * Hotfix for the AUTOREBOOT issue
+
+ -- Nick Rhodes <nrhodes91@gmail.com>  Fri, 16 Mar 2018 14:24:53 +0000
+
+auter (0.11.0) unstable; urgency=low
+
+  * Updated documentation and references to include apt for Ubuntu/debian
+  * Removed debugging message that was printed during apt update
+  * Added "Valid Options" in auter.conf
+  * Added the pre/post prep directories in auter.conf
+  * Added retention and rotation for last-prep-output and last-apply-output files in /var/lib/auter
+  * Corrected file permissions for the auter-postreboot cron file
+  * Added --stdout option to force output to stdout even if there is no active tty
+  * Added a package manager lock file check before prep and apply functions call the package manager
+  * Improved checks to confirm prepared patches are still required
+  * Adjusted some string arguments to arrays for better handling
+
+ -- Paolo Gigante <paolo.gigante@rackspace.co.uk>  Fri, 16 Mar 2018 16:11:04 +0000
+
+auter (0.10.0) unstable; urgency=low
+
+  * Added pre and post prep script hooks
+  * Added a pidfile and process check to --status
+  * Added a auter success log with a last run timestamp
+  * Clear pidfile if the process is no longer running when disabling auter
+  * Added auter.aptModule for ubuntu/debian support
+
+ -- Paolo Gigante <paolo.gigante@rackspace.co.uk>  Mon, 30 Oct 2017 15:19:10 +0000
+
+auter (0.9.0) unstable; urgency=low
+
+  * Capture package manager output
+  * Document the auter --reboot cron job
+  * Remove last-update file
+  * Add description text to the lock file
+  * Add error checking during prep
+  * Split out package manager specific code
+
+ -- Piers Cornwell <piers.cornwell@rackspace.co.uk>  Thu, 09 Mar 2017 16:14:41 +0000
+
+auter (0.8.0) unstable; urgency=low
+
+  * Release version 0.8
+  * Added ONLYINSTALLFROMPREP option
+
+ -- Piers Cornwell <piers.cornwell@rackspace.co.uk>  Mon, 14 Nov 2016 15:38:50 +0000
+
+auter (0.7.0) unstable; urgency=low
+
+  * Release version 0.7
+  * Moved scriptdir from /var/lib/auter to /etc/auter
+  * Categorise log messages as INFO, WARNING or ERROR
+  * Remove pre-built man page
+
+ -- Piers Cornwell <piers.cornwell@rackspace.co.uk>  Thu, 04 Aug 2016 15:18:02 +0000
+
+auter (0.6.0) unstable; urgency=low
+
+  * Release version 0.6
+  * Add maintainers file
+
+ -- Cameron Beere <cameron.beere@rackspace.co.uk>  Wed, 06 Jul 2016 14:08:19 +0000
+
+auter (0.5.0) unstable; urgency=low
+
+  * Release version 0.5
+  * Added transaction ID logging
+  * Disable random sleepis when running from a tty
+  * Rename variables to be package manager agnostic
+  * Add cron examples for @reboot jobs
+  * Update default auter config file location
+  * Remove example script files
+  * Disable cronjobs & enable lockfile on installation
+  * Switch to using pre/post script directories instead of files
+  * Add better handling for option parsing
+  * Added CONFIGSET variable used to distinguish between distinct configs
+  * Various bugfixes
+
+ -- Cameron Beere <cameron.beere@rackspace.co.uk>  Thu, 28 Apr 2016 15:55:47 +0000
+
+auter (0.4.0) unstable; urgency=low
+
+  * Release version 0.4
+  * Support DNF
+  * Add HACKING.md
+  * Exit if custom config file doesn't exist
+  * Change post reboot script to use cron instead of rc.local
+  * Report if there are no updates at prep time
+  * Record prep and apply output
+  * Updated man page
+
+ -- Piers Cornwell <piers.cornwell@rackspace.co.uk>  Wed, 23 Mar 2016 14:11:08 +0000
+
+auter (0.3.0) unstable; urgency=low
+
+  * Release version 0.3
+  * Better defined exit codes
+  * Added bounds check for MAXDELAY
+  * Updated documentation with more details about configuration options
+  * Fixed logging error if downloadonly is not available
+
+ -- Paolo Gigante <paolo.gigante@rackspace.co.uk>  Mon, 14 Mar 2016 16:03:16 +0000
+
+auter (0.2.0) unstable; urgency=low
+
+  * Release version 0.2
+  * Locking
+  * Trap Ctrl+C during dangerous section
+  * Add --status flag
+  * Move reboot script to /etc/rc.d/rc.local
+  * Add random delay
+  * Change from sysv service to --enable/--disable
+  * Added warnings when pre/post hooks exist but are not executable
+  * Removed yum transaction support
+  * Added pid locking to prevent multiple instances of auter running at the same time
+
+ -- Piers Cornwell <piers.cornwell@rackspace.co.uk>  Thu, 10 Mar 2016 14:54:42 +0000
+
+auter (0.1.0) unstable; urgency=low
+
+  * Release version 0.1
+
+ -- Mike Frost <mike.frost@rackspace.co.uk>  Wed, 02 Mar 2016 15:04:49 +0000
+

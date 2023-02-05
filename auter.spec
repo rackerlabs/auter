@@ -1,6 +1,6 @@
 Name:           auter
 Version:        1.0.0
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Prepare and apply updates
 License:        ASL 2.0
 URL:            https://github.com/rackerlabs/%{name}
@@ -101,6 +101,9 @@ exit 0
 %endif
 
 %changelog
+* Wed Jul 24 2019 Fedora Release Engineering <releng@fedoraproject.org> - 1.0.0-2
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_31_Mass_Rebuild
+
 * Fri Mar 29 2019 Nick Rhodes <nrhodes91@gmail.com> 1.0.0-1
 - #220 Introduce package dependant reboots using AUTOREBOOT option
 - #215 Remove rpm and deb package build tests from travis

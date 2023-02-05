@@ -6,29 +6,29 @@
 # This is the yum/dnf version of this script intended for redhat/fedora/CentOS
 
 # Exit if this script is executed directly
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
   echo "ERROR: This script is used by auter and should not be executed directly. Exiting"
 fi
 
 function check_package_manager_lock() {
   # Set default values if the variables are undefined
-  [[ "${PACKAGEMANAGERLOCKRETRIES}" ]] || PACKAGEMANAGERLOCKRETRIES=5
-  [[ "${PACKAGEMANAGERLOCKRETRIES}" -lt 1 ]] && PACKAGEMANAGERLOCKRETRIES=5
+  [[ "$PACKAGEMANAGERLOCKRETRIES" ]] || PACKAGEMANAGERLOCKRETRIES=5
+  [[ "$PACKAGEMANAGERLOCKRETRIES" -lt 1 ]] && PACKAGEMANAGERLOCKRETRIES=5
 
-  [[ "${PACKAGEMANAGERLOCKWAITTIME}" ]] || PACKAGEMANAGERLOCKWAITTIME=60
-  [[ "${PACKAGEMANAGERLOCKWAITTIME}" -lt 1 ]] && PACKAGEMANAGERLOCKWAITTIME=60
+  [[ "$PACKAGEMANAGERLOCKWAITTIME" ]] || PACKAGEMANAGERLOCKWAITTIME=60
+  [[ "$PACKAGEMANAGERLOCKWAITTIME" -lt 1 ]] && PACKAGEMANAGERLOCKWAITTIME=60
 
   if [[ -f /var/run/yum.pid ]]; then
     if { pgrep --pidfile /var/run/yum.pid &>/dev/null ; } ; then
-      for LOCKCHECKATTEMPT in $(seq 1 $((PACKAGEMANAGERLOCKRETRIES + 1))); do
+      for _lockcheckattempt in $(seq 1 $((PACKAGEMANAGERLOCKRETRIES + 1))); do
         # If this has reached the retry limit configured then abort
-        if [[ ${LOCKCHECKATTEMPT} -eq $((PACKAGEMANAGERLOCKRETRIES + 1)) ]]; then
+        if [[ $_lockcheckattempt -eq $((PACKAGEMANAGERLOCKRETRIES + 1)) ]]; then
           logit "ERROR: Final attempt to wait for yum to release lock file failed. Aborting auter run"
           quit 3
         fi
 
-        logit "INFO: /var/run/yum.pid exists and process runnning. Waiting ${PACKAGEMANAGERLOCKWAITTIME} seconds for yum lock to be released: Attempt ${LOCKCHECKATTEMPT} of ${PACKAGEMANAGERLOCKRETRIES}"
-        sleep ${PACKAGEMANAGERLOCKWAITTIME}
+        logit "INFO: /var/run/yum.pid exists and process runnning. Waiting $PACKAGEMANAGERLOCKWAITTIME seconds for yum lock to be released: Attempt $_lockcheckattempt of $PACKAGEMANAGERLOCKRETRIES"
+        sleep $PACKAGEMANAGERLOCKWAITTIME
         { pgrep --pidfile /var/run/yum.pid &>/dev/null ; } || { logit "INFO: yum lock has been released" && break ; }
       done
     fi
@@ -38,171 +38,167 @@ function check_package_manager_lock() {
 function prepare_updates() {
   # Check for yum.lock file
   check_package_manager_lock
-  declare PREPOUTPUT
-  declare -i RC
+  local prepoutput
+  local -i rc
 
-  PREPOUTPUT="$(date '+%F %T')\\n"
+  prepoutput="$(date '+%F %T')\\n"
   # Run any pre-prep scripts
-  for SCRIPT in "${PREPREPSCRIPTDIR}"/*; do
-    run_script "${SCRIPT}" "Pre-Prep"
+  for _script in "$PREPREPSCRIPTDIR"/*; do
+    run_script "$_script" "Pre-Prep"
   done
 
-  if [[ "${PREDOWNLOADUPDATES}" == "yes" ]]; then
-    if [[ $("${PACKAGE_MANAGER}" --help | grep -c downloadonly) -gt 0 ]]; then
-      # Remove the old RPMS from the auter cache
-      [[ "${ONLYINSTALLFROMPREP}" == "yes" ]] && rm -f "${DOWNLOADDIR}"/"${CONFIGSET}"/*.rpm
+  if [[ "$PREDOWNLOADUPDATES" == "yes" ]]; then
+    if [[ $("$PACKAGE_MANAGER" --help | grep -c downloadonly) -gt 0 ]]; then
+      # Remove the old rpms from the auter cache
+      [[ "$ONLYINSTALLFROMPREP" == "yes" ]] && rm -f "$DOWNLOADDIR"/"$CONFIGSET"/*.rpm
 
-      PREPOUTPUT+=$("${PACKAGE_MANAGER}" check-update "${PACKAGEMANAGEROPTIONS[@]}" 2>&1)
-      RC=$?
+      prepoutput+=$("$PACKAGE_MANAGER" check-update "${PACKAGEMANAGEROPTIONS[@]}" 2>&1)
+      rc=$?
 
       # If check-update has an exit code of 100, updates are available.
-      if [[ "${RC}" -eq 100 ]]; then
+      if [[ "$rc" -eq 100 ]]; then
         # Run any pre-prep scripts
-        SLEEP_DELAY=$((RANDOM % MAXDELAY))
-        [[ ${SLEEP_DELAY} -gt 1 ]] && logit "INFO: Sleeping for ${SLEEP_DELAY} seconds"
-        sleep ${SLEEP_DELAY}
-        if [[ "${ONLYINSTALLFROMPREP}" == "yes" ]]; then
-          DOWNLOADOPTION=("--downloaddir=${DOWNLOADDIR}/${CONFIGSET}")
+        sleep_delay=$((RANDOM % MAXDELAY))
+        [[ $sleep_delay -gt 1 ]] && logit "INFO: Sleeping for $sleep_delay seconds"
+        sleep $sleep_delay
+        if [[ "$ONLYINSTALLFROMPREP" == "yes" ]]; then
+          downloadoption=("--downloaddir=$DOWNLOADDIR/$CONFIGSET")
 
           # DNF doesn't support downloaddir, so instead we download to the default
           # location and copy out the way
-          if [[ "${PACKAGE_MANAGER}" == "dnf" ]]; then
+          if [[ "$PACKAGE_MANAGER" == "dnf" ]]; then
             find /var/cache/dnf -name "*.rpm" -exec rm -f {} \;
-            DOWNLOADOPTION=()
+            downloadoption=()
           fi
-          DOWNLOADLOGMSG=" to ${DOWNLOADDIR}/${CONFIGSET}"
+          DOWNLOADLOGMSG=" to $DOWNLOADDIR/$CONFIGSET"
         fi
 
 
-        if PREPOUTPUT+="$("${PACKAGE_MANAGER}" "${PACKAGEMANAGEROPTIONS[@]}" "${DOWNLOADOPTION[@]}" update --downloadonly -y 2>&1)"; then
-          if [[ "${ONLYINSTALLFROMPREP}" == "yes" && "${PACKAGE_MANAGER}" == "dnf" ]]; then
-            find /var/cache/dnf -name "*.rpm" -exec mv {} "${DOWNLOADDIR}/${CONFIGSET}" \;
+        if prepoutput+="$("$PACKAGE_MANAGER" "${PACKAGEMANAGEROPTIONS[@]}" "${downloadoption[@]}" update --downloadonly -y 2>&1)"; then
+          if [[ "$ONLYINSTALLFROMPREP" == "yes" && "$PACKAGE_MANAGER" == "dnf" ]]; then
+            find /var/cache/dnf -name "*.rpm" -exec mv {} "$DOWNLOADDIR/$CONFIGSET" \;
           fi
-          logit "INFO: Updates downloaded${DOWNLOADLOGMSG}"
-          read -d '\n' -ra pkglist <<< "$(awk '/Package.*Arch/,/Transaction Summary/{if ($2 ~ /x86|686|noarch/) print $1}' <<< "$PREPOUTPUT")"
-          PREPOUTPUT+="\\nSTATUS:SUCCESS:Package download complete:${#pkglist[@]}"
+          logit "INFO: Updates downloaded$DOWNLOADLOGMSG"
+          read -d '\n' -ra pkglist <<< "$(awk '/Package.*Arch/,/Transaction Summary/{if ($2 ~ /x86|686|noarch/) print $1}' <<< "$prepoutput")"
+          prepoutput+="\\nSTATUS:SUCCESS:Package download complete:${#pkglist[@]}"
         else
-          logit "ERROR: Updates could not be pre-downloaded${DOWNLOADLOGMSG}. See the ${DATADIR}/last-prep-output-${CONFIGSET} file for details."
-          PREPOUTPUT+="\\nSTATUS:FAILED:Package download failed"
+          logit "ERROR: Updates could not be pre-downloaded$DOWNLOADLOGMSG. See the $DATADIR/last-prep-output-$CONFIGSET file for details."
+          prepoutput+="\\nSTATUS:FAILED:Package download failed"
         fi
 
-      elif [[ "${RC}" -eq 1 ]]; then
-        logit "ERROR: Exit status ${RC} returned by \`${PACKAGE_MANAGER} ${PACKAGEMANAGEROPTIONS[*]} ${DOWNLOADOPTION[*]} update --downloadonly -y\`. Exiting."
-        PREPOUTPUT+="\\nSTATUS:FAILED:Yum failed with status $RC"
+      elif [[ "$rc" -eq 1 ]]; then
+        logit "ERROR: Exit status $rc returned by \`$PACKAGE_MANAGER ${PACKAGEMANAGEROPTIONS[*]} ${downloadoption[*]} update --downloadonly -y\`. Exiting."
+        prepoutput+="\\nSTATUS:FAILED:Yum failed with status $rc"
       else
         logit "INFO: No updates are available to be downloaded."
-        PREPOUTPUT+="\\nSTATUS:SUCCESS:No updates available"
+        prepoutput+="\\nSTATUS:SUCCESS:No updates available"
       fi
     else
       if [[ "${ONLYINSTALLFROMPREP}" == "yes" ]]; then
-        logit "ERROR: DOWNLOADOPTION set to 'yes' but the '--downloadonly' option is not available in the current version of ${PACKAGE_MANAGER}"
+        logit "ERROR: DOWNLOADOPTION set to 'yes' but the '--downloadonly' option is not available in the current version of $PACKAGE_MANAGER"
         quit 3
       else
         logit "WARNING: downloadonly option is not available"
-        PREPOUTPUT+="\\nSTATUS:FAILED:Download only not available"
+        prepoutput+="\\nSTATUS:FAILED:Download only not available"
       fi
     fi
   else
-    PREPOUTPUT+="$("${PACKAGE_MANAGER}" "${PACKAGEMANAGEROPTIONS[@]}" check-update 2>&1)"
+    prepoutput+="$("$PACKAGE_MANAGER" "${PACKAGEMANAGEROPTIONS[@]}" check-update 2>&1)"
   fi
-  rotate_file "${DATADIR}/last-prep-output-${CONFIGSET}"
-  [[ "${PREPOUTPUT}" ]] && echo -e "${PREPOUTPUT}" > "${DATADIR}/last-prep-output-${CONFIGSET}"
+  rotate_file "$DATADIR/last-prep-output-$CONFIGSET"
+  [[ "$prepoutput" ]] && echo -e "$prepoutput" > "$DATADIR/last-prep-output-$CONFIGSET"
 
   # Run any post-prep scripts
-  for SCRIPT in "${POSTPREPSCRIPTDIR}"/*; do
-    run_script "${SCRIPT}" "Post-Prep"
+  for _script in "$POSTPREPSCRIPTDIR"/*; do
+    run_script "$_script" "Post-Prep"
   done
 }
 
 function apply_updates() {
-  # Default RC to 0 which means no updates are available
-  declare -i RC=0
-  declare APPLYOUTPUT
-  declare UPDATEACTION
-  declare HISTORY_BEFORE
-  declare HISTORY_AFTER
-  declare TRANSACTIONID
+  # Default rc to 0 which means no updates are available
+  local -i rc=0
+  local applyoutput updateaction history_before history_after transactionid
 
-  APPLYOUTPUT="$(date '+%F %T')\\n"
+  applyoutput="$(date '+%F %T')\\n"
   # Set the list of rpms to be installed
-  if [[ "${ONLYINSTALLFROMPREP}" == "yes" ]]; then
+  if [[ "$ONLYINSTALLFROMPREP" == "yes" ]]; then
     # Check if there are updates staged for this configset
-    if [[ $(find "${DOWNLOADDIR}/${CONFIGSET}" -name "*.rpm" | wc -l) -gt 0 ]]; then
-      local RPMS=()
+    if [[ $(find "$DOWNLOADDIR/$CONFIGSET" -name "*.rpm" | wc -l) -gt 0 ]]; then
+      local rpms=()
       # Check if the updates staged are still required
-      for PACKAGE in "${DOWNLOADDIR}"/"${CONFIGSET}"/*.rpm; do
-        # Check if the local rpm is an update to the installed package and if it is then add the file to RPMS
+      for _package in "$DOWNLOADDIR/$CONFIGSET"/*.rpm; do
+        # Check if the local rpm is an update to the installed package and if it is then add the file to rpms
         # list. We are using rpm directly for this check because "yum check-update" does not support local rpm
         # files. This also avoids connecting to the repos. And finally this avoids an issue when updating the
         # kernel to the same version.
-        rpm -U --nodeps --test "${PACKAGE}" &>/dev/null && RPMS+=("$PACKAGE")
+        rpm -U --nodeps --test "$_package" &>/dev/null && rpms+=("$_package")
       done
 
-      # We are manually setting the RC to 100 if there are updates to be applied. This is the return code that
+      # We are manually setting the rc to 100 if there are updates to be applied. This is the return code that
       # yum check-update would return if there were outstanding updates
-      [[ "${RPMS[*]}" ]] && RC=100
+      [[ "${rpms[*]}" ]] && rc=100
     fi
     # When passing RPM files to dnf/yum, the update verb won't install any that aren't already
     # installed (i.e. dependencies of other packages). Instead we need to use install.
-    UPDATEACTION="install"
+    updateaction="install"
   else
-    APPLYOUTPUT+=$("${PACKAGE_MANAGER}" check-update "${PACKAGEMANAGEROPTIONS[@]}" 2>&1)
-    RC=$?
-    UPDATEACTION="update"
+    applyoutput+=$("$PACKAGE_MANAGER" check-update "${PACKAGEMANAGEROPTIONS[@]}" 2>&1)
+    rc=$?
+    updateaction="update"
   fi
 
   # If check-update has an exit code of 100, updates are available.
-  if [[ "${RC}" -eq 100 ]]; then
+  if [[ "$rc" -eq 100 ]]; then
     # Sleep before continuing with pre-scripts and updates
-    SLEEP_DELAY=$((RANDOM % MAXDELAY))
-    [[ ${SLEEP_DELAY} -gt 1 ]] && logit "INFO: Sleeping for ${SLEEP_DELAY} seconds"
-    sleep ${SLEEP_DELAY}
+    sleep_delay=$((RANDOM % MAXDELAY))
+    [[ $sleep_delay -gt 1 ]] && logit "INFO: Sleeping for $sleep_delay seconds"
+    sleep $sleep_delay
 
     # Check for yum.lock file
     check_package_manager_lock
 
-    for SCRIPT in "${PREAPPLYSCRIPTDIR}"/*; do
-      run_script "${SCRIPT}" "Pre-Apply"
+    for _script in "$PREAPPLYSCRIPTDIR"/*; do
+      run_script "$_script" "Pre-Apply"
     done
 
     logit "INFO: Applying updates"
-    HISTORY_BEFORE=$(${PACKAGE_MANAGER} history list)
+    history_before=$($PACKAGE_MANAGER history list)
 
     # We don't want to allow the user to interrupt a yum/dnf transaction or Bad Things Happen.
     trap '' SIGINT SIGTERM
-    rotate_file "${DATADIR}/last-apply-output-${CONFIGSET}"
+    rotate_file "$DATADIR/last-apply-output-$CONFIGSET"
 
-    if APPLYOUTPUT+=$("${PACKAGE_MANAGER}" "${UPDATEACTION}" -y "${PACKAGEMANAGEROPTIONS[@]}" "${RPMS[@]}" 2>&1); then
-      read -d '\n' -ra pkglist <<< "$( sed -r 's/^[[:space:]]+//g' <<< "$APPLYOUTPUT" | awk '/(Updating|Upgrading|Installing)[[:space:]]+/{print $3}')"
-      APPLYOUTPUT+="\\nSTATUS:SUCCESS:Package updates applied:${#pkglist[@]}"
+    if applyoutput+=$("$PACKAGE_MANAGER" "$updateaction" -y "${PACKAGEMANAGEROPTIONS[@]}" "${rpms[@]}" 2>&1); then
+      read -d '\n' -ra pkglist <<< "$( sed -r 's/^[[:space:]]+//g' <<< "$applyoutput" | awk '/(Updating|Upgrading|Installing)[[:space:]]+/{print $3}')"
+      applyoutput+="\\nSTATUS:SUCCESS:Package updates applied:${#pkglist[@]}"
     else
-      APPLYOUTPUT+="\\nSTATUS:FAILED:Package updates failed"
+      applyoutput+="\\nSTATUS:FAILED:Package updates failed"
     fi
 
     default_signal_handling
-    echo -e "$APPLYOUTPUT" > "${DATADIR}/last-apply-output-${CONFIGSET}"
+    echo -e "$applyoutput" > "$DATADIR/last-apply-output-$CONFIGSET"
 
-    HISTORY_AFTER=$(${PACKAGE_MANAGER} history list)
+    history_after=$($PACKAGE_MANAGER history list)
 
-    for SCRIPT in "${POSTAPPLYSCRIPTDIR}"/*; do
-      run_script "${SCRIPT}" "Post-Apply"
+    for _script in "$POSTAPPLYSCRIPTDIR"/*; do
+      run_script "$_script" "Post-Apply"
     done
 
-    if [[ "${HISTORY_BEFORE}" == "${HISTORY_AFTER}" ]]; then
-      logit "ERROR: Updates failed. See the ${DATADIR}/last-apply-output-${CONFIGSET}-$(date +%F) file for details. Exiting."
-      cp "${DATADIR}/last-apply-output-${CONFIGSET}" "${DATADIR}/last-apply-output-${CONFIGSET}-$(date +%F)"
+    if [[ "$history_before" == "$history_after" ]]; then
+      logit "ERROR: Updates failed. See the $DATADIR/last-apply-output-$CONFIGSET-$(date +%F) file for details. Exiting."
+      cp "$DATADIR/last-apply-output-$CONFIGSET" "$DATADIR/last-apply-output-$CONFIGSET-$(date +%F)"
       quit 3
     fi
 
-    TRANSACTIONID=$(${PACKAGE_MANAGER} history info 2>&1 | grep "Transaction ID")
-    logit "INFO: Updates complete (${PACKAGE_MANAGER} ${TRANSACTIONID}). You may need to reboot for some updates to take effect"
+    transactionid=$($PACKAGE_MANAGER history info 2>&1 | grep "Transaction ID")
+    logit "INFO: Updates complete ($PACKAGE_MANAGER $transactionid). You may need to reboot for some updates to take effect"
     log_last_run
 
     # Excluding this check because the REBOOTCALL variable is used by the main auter script
     # shellcheck disable=SC2034
-    if [[ "${AUTOREBOOT}" == "yes" ]]; then
+    if [[ "$AUTOREBOOT" == "yes" ]]; then
       REBOOTCALL=1
-    elif [[ ! "${AUTOREBOOT}" == "no" ]]; then
+    elif [[ ! "$AUTOREBOOT" == "no" ]]; then
       for _pkg in "${pkglist[@]}"; do
         if [[ "${_pkg%-*-*}" =~ ^(${AUTOREBOOT// /\|})$ ]]; then
           REBOOTCALL=1
@@ -211,18 +207,18 @@ function apply_updates() {
       done
     fi
 
-    # Remove the old RPMS from the auter cache
-    [[ "${ONLYINSTALLFROMPREP}" == "yes" ]] && rm -f "${DOWNLOADDIR}"/"${CONFIGSET}"/*.rpm
+    # Remove the old rpms from the auter cache
+    [[ "$ONLYINSTALLFROMPREP" == "yes" ]] && rm -f "$DOWNLOADDIR/$CONFIGSET"/*.rpm
 
-  elif [[ "${RC}" -eq 0 ]]; then
+  elif [[ "$rc" -eq 0 ]]; then
     logit "INFO: No updates are available to be applied."
-    APPLYOUTPUT+="\\nSTATUS:SUCCESS:No updates available"
-    echo -e "$APPLYOUTPUT" > "${DATADIR}/last-apply-output-${CONFIGSET}"
+    applyoutput+="\\nSTATUS:SUCCESS:No updates available"
+    echo -e "$applyoutput" > "$DATADIR/last-apply-output-$CONFIGSET"
     log_last_run
   else
-    logit "ERROR: Exit status ${RC} returned by \`${PACKAGE_MANAGER} check-update ${PACKAGEMANAGEROPTIONS[*]}\`. Exiting."
-    APPLYOUTPUT+="\\nSTATUS:FAILED:Yum failed with status $RC"
-    echo -e "$APPLYOUTPUT" > "${DATADIR}/last-apply-output-${CONFIGSET}"
+    logit "ERROR: Exit status $rc returned by \`$PACKAGE_MANAGER check-update ${PACKAGEMANAGEROPTIONS[*]}\`. Exiting."
+    applyoutput+="\\nSTATUS:FAILED:Yum failed with status $rc"
+    echo -e "$applyoutput" > "$DATADIR/last-apply-output-$CONFIGSET"
     quit 3
   fi
 }
