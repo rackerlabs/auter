@@ -3,7 +3,6 @@
 
 > Automatic Update Transaction Execution by Rackspace
 
-[![Build Status](https://travis-ci.org/rackerlabs/auter.svg?branch=develop)](https://travis-ci.org/rackerlabs/auter)
 
 Automatic updates for RHEL and Debian based distributions with the ability to
 pre-download packages, run hooks, and perform automated reboots.
