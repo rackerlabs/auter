@@ -1,0 +1,37 @@
+#!/bin/bash
+
+red='\033[31m'
+grn='\033[32m'
+ylw='\033[33m'
+rst='\033[0m'
+
+log_success () { printf "[%b  OK  %b] %s\\n" "$grn" "$rst" "$1"; }
+log_fail () { printf "[%b FAIL %b] %s\\n" "$red" "$rst" "$1"; }
+log_info () { printf "[%b INFO %b] %s\\n" "$ylw" "$rst" "$1"; }
+
+function quit() {
+  docker ps -aq | xargs docker stop
+  exit "${1:-1}"
+}
+export -f quit
+
+function run_cmd ()
+{
+  local tag="$1"; shift
+  if output="$("${@}" 2>&1)"; then
+    log_success "$tag"
+    return 0
+  else
+    log_fail "$tag"
+    awk '{printf "|    %s\n",$0}' <<< "$output"
+    echo "-----------------------------------------------------------------------"
+    quit 1
+  fi
+}
+export -f run_cmd
+
+TESTDIR="$(dirname "$(realpath "$0")")"
+AUTERDIR="$(dirname "$TESTDIR")"
+AUTERPARENTDIR="$(dirname "$AUTERDIR")"
+VERSION="$(grep "Version" "$AUTERDIR"/auter.spec | awk '{print $2}')"
+export TESTDIR AUTERDIR AUTERPARENTDIR VERSION

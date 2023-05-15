@@ -1,70 +1,79 @@
-# auter
 
-Automatic updates for RHEL, CentOS, Fedora, Ubuntu and Debian Linux servers, with the ability to run pre/post hooks, pre-download packages and reboot after the updates.
+# Auter
 
-**When to use Auter?**
+> Automatic Update Transaction Execution by Rackspace
 
-Updates should be applied regularly to Linux systems in order to apply security and bug fixes. For some of those updates, for example the kernel, or a shared library, a system restart is required for those updates to take effect. Whether you apply those updates manually, or automatically will depend on your requirements.
 
-Auter provides a host-based (i.e. installed on the OS) way on systems using yum/dnf/apt-get (RHEL, CentOS, Fedora, Amazon Linux, Ubuntu, Debian etc.) for automatically applying updates and rebooting. For servers, it is often the case that updates and reboots must only happen during defined maintenance windows. Auter provides flexible scheduling to ensure updates and reboots happen when you want them to. Auter allows you to customize how updates run - you can pre-download updates in advance of the window to apply them, and you can run custom scripts before and after the updates.
+Automatic updates for RHEL and Debian based distributions with the ability to
+pre-download packages, run hooks, and perform automated reboots.
 
-Here's some cases where other options may be better:
+## Why use Auter?
+It is important to maintain regular system patching on Linux servers to keep up
+with the latest bug and security fixes; some of these updates will require
+service or server reboots which is where Auter fits in.
 
-- I want to update nightly, and will handle reboots myself - yum-cron or dnf-automatic do exactly this
-- I want a console to manage updates to all my systems - a central management system like RHN Satellite, or perhaps updates applied via a configuration management system like Chef or Puppet. These all need some additional infrastructure, and may impose some limits on flexibility.
+Auter provides a flexible, host-based, solution for updating system packages
+via the distributions default package manager. It is possible to configure
+independent configuration profiles that can be run individually either manually
+on the command  line, or scheduled using cron jobs. This would allow weekly
+updates to take place without a reboot, and a monthly patching schedule for the
+kernel and other core services that require a reboot.
 
-**Enable/Disable**
+Auter is also capable of caching available updates, and subsequently only
+installing from the cache. This allows package versions to be synchronized
+across environments that have different installation dates.
 
-Adds or removes a lockfile that auter will check the presence of to see whether to do anything. This will also remove the pidfile if the process is no longer running:
-```
-auter --enable
-auter --disable
-```
+There are also cases when other options are more suitable:
+ - I want to update nightly and handle reboots manually: yum-cron or
+   dnf-automatic
+ - I want to manage updates via a central management console: RHN Satellite,
+   or configuration management systems such as Chef or Puppet
 
-**Configure**
-
-Edit /etc/auter/auter.conf. See the comments in that file for help. yum/dnf/apt-get configuration should be used to configure anything affecting yum/dnf/apt-get, for example packages to exclude.
-
-**Set Regular Schedule**
-
-Edit /etc/cron.d/auter. The following can have different times:
-
-```
-prep - Pre-download packages from yum (if downloadonly option is supported)
-apply - Apply updates and reboot
-```
-
-Typically, you may want *apply* to run on one day for your UAT, and another later day for your Production servers.
-
-**Set Irregular Schedule**
-
-If the times you want this to run varies such that its not definable in a crontab, disable the cron jobs and instead create at jobs (as root):
-
-```
-echo '/usr/bin/auter --apply' | at 1am Feb 17
-echo '/usr/bin/auter --apply' | at 4am Mar 20
-echo '/usr/bin/auter --apply' | at 2am Apr 19
+## Installation
+Auter is available for RHEL and its derivatives via the EPEL repository.
+```bash
+$ yum/dnf install auter
 ```
 
-**Run at boot time**
+There isn't currently a package maintained for Debian, however we provide a
+`.deb` package on the [releases page](https://github.com/rackerlabs/auter/releases).
 
-To apply updates on every boot, set a cron job in /etc/cron.d/auter:
+## Setup
+All Auter configuration information is stored in `/etc/auter/auter.conf`; it
+allows you to set basic options such as the sleep delay (`MAXDELAY`), and
+whether automatic reboots should take place (`AUTOREBOOT`).
 
+_More information can be found on the [Wiki](https://github.com/rackerlabs/auter/wiki/Configuration)._
+
+## Usage
+Auter can be run manually:
+```bash
+$ auter --prep
+$ auter --apply
 ```
-@reboot    root /usr/bin/auter --apply
+or via cron:
+```bash
+# Prep Every Friday at 22:00
+0 22 * * Fri root /usr/bin/auter --prep
+# Apply Every Saturday at 23:00
+0 23 * * Sat root /usr/bin/auter --apply
 ```
+_For more examples and usage, please refer to the [Wiki]( https://github.com/rackerlabs/auter/wiki/Usage)._
 
-**Manual Run**
+## Contributing
+Please read
+[HACKING.md](https://github.com/rackerlabs/auter/blob/master/HACKING.md) for
+details on how to contribute, and the process for submitting pull requests.
 
-You'll usually want everything to run via cron, but you can also run auter manually should you wish to. Please review the documentation for each phase. Example for debugging:
-note: If you are wanting to manually run the reboot phase, ensure that the AUTOREBOOT option is set to "no"
-```
-auter --prep
-auter --apply
-auter --reboot
-```
+## Maintainers
+- Nick Rhodes
+- Paolo Gigante
 
-**RPM Packages**
+See also the list of original
+[contributors](https://github.com/rackerlabs/auter/blob/master/MAINTAINERS.md)
+who started the project.
 
-auter is available in Fedora 23 and newer, and EPEL for el6 and el7:
-- <https://admin.fedoraproject.org/pkgdb/package/rpms/auter/>
+## Related projects
+- [Auter Manager](https://github.com/rackerlabs/auter-manager): Simplify the
+  installation of Auter across multiple servers with a single master
+  configuration file written in CSV.

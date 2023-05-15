@@ -1,0 +1,10 @@
+#!/bin/bash
+if find /root/auter-configsnap-"$(date +%Y-%m-%d)"/configsnap/ -name "*.pre" &>/dev/null; then
+  [[ -f /usr/sbin/configsnap ]] && /usr/sbin/configsnap --silent -d /root -t auter-configsnap-"$(date +%Y-%m-%d)" -p pre-reboot
+  exit 0
+else
+  logger -p info -t "$(basename "$0")" "INFO: Configsnap pre-apply files missing, running $0 for post-reboot diff."
+  [[ -f /usr/sbin/configsnap ]] && /usr/sbin/configsnap --silent -d /root -t auter-configsnap-"$(date +%Y-%m-%d)" -p pre
+  exit 0
+fi
+

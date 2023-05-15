@@ -1,79 +1,61 @@
-pkg_name := "auter"
+NAME := "auter"
+BUILD_FILES  = auter.conf auter.cron auter.help2man-sections Makefile
+BUILD_FILES += auter.yumdnfModule auter.aptModule auter.conf.man
+BUILD_FILES += LICENSE README.md MAINTAINERS.md NEWS
+EXEC_FILES = auter
 
-# Version info:
-git_tag := $(shell git describe --exact-match --tags 2>/dev/null | sed "s/^v\?//g")
-git_commit := $(shell git log --pretty=format:'%h' -n 1)
-release := "1"
-date := $(shell date +%Y%m%d)
-datelong := $(shell date +"%a, %d %b %Y %T %z")
-lintian-standards-version := $(shell grep -o -m1 "^[0-9].* " /usr/share/lintian/data/standards-version/release-dates)
+# package info
+UPSTREAM := "https://github.com/rackerlabs/${NAME}.git"
+VERSION := $(shell git tag -l | sort -V | tail -n 1)
+RELEASE := $(shell gawk '/^Release:\s+/{print gensub(/%.*/,"","g",$$2)}' ${NAME}.spec)
+COMMIT := $(shell git log --pretty=format:'%h' -n 1)
+DATE := $(shell date --iso-8601)
+DATELONG := $(shell date --iso-8601=seconds)
 
+# build info
+BUILD_ROOT := "BUILD"
+BUILD_DIR := "${NAME}-${VERSION}"
+OUT_DIR := "${HOME}/output"
+DIST := $(shell python -c "import platform; print(platform.linux_distribution()[0])")
 
-ifeq ($(strip ${git_tag}),)
-  version := $(shell git describe --tags 2>/dev/null | sed "s/^v\?//g")-${release}
-  release := ${date}.git${git_commit}
-  release_message := "This seems to be an untagged version - ${release}. If this is not for testing you should checkout a tagged version before running make"
-else
-  version := ${git_tag}
-endif
-version_release := ${version}-${release}
+.PHONY: deb rpm variables clean
 
-# Build release for debian
-distribution := $(shell lsb_release -is)
-ifeq (${distribution}, Debian)
-  distributionrelease := unstable
-else ifeq (${distribution}, Ubuntu)
-  distributionrelease := $(shell lsb_release -cs)
-else
-  distributionrelease := "FAILED... distribution=${distribution}"
-endif
+all:
 
-ignore_files_regexp := "^Makefile\|${pkg_name}..*.tar.gz\|${pkg_name}.spec.*$$\|.*.md\|buildguide.txt"
-files := $(shell ls | egrep -ve ${ignore_files_regexp})
+deb: ${BUILD_FILES} ${EXEC_FILES}
+	install -d ${BUILD_ROOT}/$@/${BUILD_DIR}/
+	cp -rpv debian ${BUILD_ROOT}/$@/${BUILD_DIR}/
+	install -m 0644 ${BUILD_FILES} ${BUILD_ROOT}/$@/${BUILD_DIR}/
+	install ${EXEC_FILES} ${BUILD_ROOT}/$@/${BUILD_DIR}/
+	install -m 0644 auter.conf.man ${BUILD_ROOT}/$@/${BUILD_DIR}/auter.conf.5
+	install -m 0644 -T auter.aptModule ${BUILD_ROOT}/$@/${BUILD_DIR}/auter.module
+	tar -C ${BUILD_ROOT}/$@ -czf ${BUILD_ROOT}/$@/${NAME}_${VERSION}.orig.tar.gz ${BUILD_DIR}
+	cd ${BUILD_ROOT}/$@/${BUILD_DIR} \
+		&& debuild -i -us -uc -b
+
+rpm: ${BUILD_FILES} ${EXEC_FILES}
+	install -d ${BUILD_ROOT}/$@/${BUILD_DIR}/
+	install -m 0644 ${BUILD_FILES} ${BUILD_ROOT}/$@/${BUILD_DIR}/
+	install ${EXEC_FILES} ${BUILD_ROOT}/$@/${BUILD_DIR}/
+	echo "%_topdir /auter/${BUILD_ROOT}/$@/rpmbuild" > ~/.rpmmacros
+	rpmdev-setuptree
+	tar -v -czf ${BUILD_ROOT}/$@/rpmbuild/SOURCES/${VERSION}.tar.gz -C ${BUILD_ROOT}/$@/ ${BUILD_DIR}
+	install -m 0644 auter.spec ${BUILD_ROOT}/$@/rpmbuild/SPECS/
+	rpmbuild -ba ${BUILD_ROOT}/$@/rpmbuild/SPECS/auter.spec
+
+variables:
+	@echo "DIST:            ${DIST}"
+	@echo "NAME:            ${NAME}"
+	@echo "VERSION:         ${VERSION}"
+	@echo "RELEASE:         ${RELEASE}"
+	@echo "COMMIT:          ${COMMIT}"
+	@echo "DATE:            ${DATE}"
+	@echo "DATELONG:        ${DATELONG}"
+	@echo "BUILD_DIR:       ${BUILD_DIR}"
 
 clean:
-	@rm -rf ${pkg_name}-*.tar.gz
-	@rm -rf ${pkg_name}-${version}*
-	@rm -rf ${pkg_name}_${version}*
+	$(RM) -r ${BUILD_ROOT}
 
-sources:
-	@mkdir -p ${pkg_name}-${version}
-	@cp -p ${files} ${pkg_name}-${version}
-	@tar -zcf ${pkg_name}-${version}.tar.gz ${pkg_name}-${version}
-	@rm -rf ${pkg_name}-${version}
-	@sed -r -i "s/^(Name:\s*).*\$$/\1${pkg_name}/g" ${pkg_name}.spec 
-	@sed -r -i "s/^(Version:\s*).*\$$/\1${version}/g" ${pkg_name}.spec
 
-deb:
-	@echo ${release_message}
-	@mkdir -p ${pkg_name}-${version}
-	@cp -pr ${files} ${pkg_name}-${version}
-	@sed -i 's/^Standards-Version:.*$$/Standards-Version: ${lintian-standards-version}/g' ${pkg_name}-${version}/debian/control
-	@mv ${pkg_name}-${version}/auter.cron ${pkg_name}-${version}/debian/auter.cron.d
-	@mv ${pkg_name}-${version}/auter.aptModule ${pkg_name}-${version}/auter.module
-	@find ${pkg_name}-${version}/ -type f | xargs sed -i 's|/usr/bin/auter|/usr/sbin/auter|g'
-	@rm -f ${pkg_name}-${version}/auter.yumdnfModule
-	@rm -f ${pkg_name}-${version}/LICENSE
-	@mkdir ${pkg_name}-${version}/docs
-	@/usr/bin/help2man --include=auter.help2man -n auter --no-info ./auter -o ${pkg_name}-${version}/docs/auter.1
-	@echo "auter (${version}) ${distributionrelease}; urgency=medium" >${pkg_name}-${version}/debian/changelog
-	@echo "  * Release ${version}." >>${pkg_name}-${version}/debian/changelog
-	# DON'T FORGET TO CHANGE THIS VERSION AT NEXR RERLEASE
-	@/usr/bin/awk '/0.11/,/^$$/' NEWS | sed 's/*/ */g' | grep -v "^[0-9]" >>${pkg_name}-${version}/debian/changelog
-	@echo " -- Paolo Gigante <paolo.gigante.sa@gmail.com>  ${datelong}" >>${pkg_name}-${version}/debian/changelog
-	@cp -ar ${pkg_name}-${version} ${pkg_name}-${version}.orig
-	@tar -czf ${pkg_name}_${version}.orig.tar.gz ${pkg_name}-${version}.orig
+# vim: noet:
 
-showvariables:
-	@echo ${release_message}
-	@echo "date  =  ${date}"
-	@echo "datelong  =  ${datelong}"
-	@echo "distribution  =  ${distribution}"
-	@echo "distributionrelease  =  ${distributionrelease}"
-	@echo "files  =  ${files}"
-	@echo "git_commit  =  ${git_commit}"
-	@echo "git_tag  =  ${git_tag}"
-	@echo "ignore_files_regexp  =  ${ignore_files_regexp}"
-	@echo "pkg_name  =  ${pkg_name}"
-	@echo "release  =  ${release}"
-	@echo "version  =  ${version}"

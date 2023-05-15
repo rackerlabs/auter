@@ -1,6 +1,6 @@
 Name:           auter
-Version:        0.11
-Release:        1%{?dist}
+Version:        1.0.0
+Release:        2%{?dist}
 Summary:        Prepare and apply updates
 License:        ASL 2.0
 URL:            https://github.com/rackerlabs/%{name}
@@ -25,7 +25,7 @@ set schedule, optionally rebooting to finish applying the updates.
 %setup -q
 
 %build
-help2man --include=auter.help2man --no-info ./auter -o auter.man
+help2man --section=1 ./auter -N -o auter.man -n "Automatic Update Transaction Execution by Rackspace" --include=auter.help2man-sections
 
 %install
 %if 0%{?fedora} >= 15 || 0%{?rhel} >= 7
@@ -38,11 +38,9 @@ mkdir -p %{buildroot}%{_localstatedir}/run/%{name}
 touch %{buildroot}%{_localstatedir}/run/%{name}/%{name}.pid
 %endif
 
-mkdir -p %{buildroot}%{_bindir} %{buildroot}%{_sharedstatedir}/%{name} \
-  %{buildroot}%{_sysconfdir}/cron.d %{buildroot}%{_sysconfdir}/%{name} \
-  %{buildroot}%{_var}/cache/auter \
-  %{buildroot}%{_usr}/lib/%{name} \
-  %{buildroot}%{_mandir}/man1 \
+install -d -p -m 0755 \
+  %{buildroot}%{_sharedstatedir}/%{name} \
+  %{buildroot}%{_var}/cache/%{name} \
   %{buildroot}%{_sysconfdir}/%{name}/pre-reboot.d \
   %{buildroot}%{_sysconfdir}/%{name}/post-reboot.d \
   %{buildroot}%{_sysconfdir}/%{name}/pre-apply.d \
@@ -50,12 +48,12 @@ mkdir -p %{buildroot}%{_bindir} %{buildroot}%{_sharedstatedir}/%{name} \
   %{buildroot}%{_sysconfdir}/%{name}/pre-prep.d \
   %{buildroot}%{_sysconfdir}/%{name}/post-prep.d
 
-install -p -m 0755 %{name} %{buildroot}%{_bindir}
-install -p -m 0755 %{name}.yumdnfModule %{buildroot}%{_usr}/lib/%{name}/auter.module
-install -p -m 0644 %{name}.cron %{buildroot}%{_sysconfdir}/cron.d/%{name}
-install -p -m 0644 %{name}.conf %{buildroot}%{_sysconfdir}/%{name}/%{name}.conf
-install -p -m 0644 %{name}.man %{buildroot}%{_mandir}/man1/%{name}.1
-chmod 0755 %{buildroot}%{_sysconfdir}/%{name}/*.d
+install -D -p -m 0755 %{name} %{buildroot}%{_bindir}/%{name}
+install -D -p -m 0644 %{name}.cron %{buildroot}%{_sysconfdir}/cron.d/%{name}
+install -D -p -m 0755 %{name}.yumdnfModule %{buildroot}%{_usr}/lib/%{name}/auter.module
+install -D -p -m 0644 %{name}.man %{buildroot}%{_mandir}/man1/%{name}.1
+install -D -p -m 0644 %{name}.conf.man %{buildroot}%{_mandir}/man5/%{name}.conf.5
+install -D -p -m 0644 %{name}.conf %{buildroot}%{_sysconfdir}/%{name}/%{name}.conf
 
 %post
 # If this is the first time install, create the lockfile
@@ -72,13 +70,13 @@ fi
 exit 0
 
 %files
-%defattr(-,root,root,-)
 %{!?_licensedir:%global license %doc}
 %license LICENSE
 %doc README.md
 %doc NEWS
 %doc MAINTAINERS.md
 %{_mandir}/man1/%{name}.1*
+%{_mandir}/man5/%{name}.conf.5*
 %{_sharedstatedir}/%{name}
 %dir %{_sysconfdir}/%{name}
 %dir %{_var}/cache/auter
@@ -103,12 +101,53 @@ exit 0
 %endif
 
 %changelog
+* Wed Jul 24 2019 Fedora Release Engineering <releng@fedoraproject.org> - 1.0.0-2
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_31_Mass_Rebuild
 
-* Fri Dec 1 2017 Paolo Gigante <paolo.gigante@rackspace.co.uk> 0.11-1
+* Fri Mar 29 2019 Nick Rhodes <nrhodes91@gmail.com> 1.0.0-1
+- #220 Introduce package dependant reboots using AUTOREBOOT option
+- #215 Remove rpm and deb package build tests from travis
+- #223 Parallelize the travis jobs
+- #224/#225 Clean up ShellCheck warnings
+
+* Tue Mar 05 2019 Nick Rhodes <nrhodes91@gmail.com> 0.12.3-1
+- #214 Log a machine readable status to the last-{prep,apply} output files
+
+* Tue Feb 12 2019 Nick Rhodes <nrhodes91@gmail.com> 0.12.2-1
+- #207 check for process matching PID file content
+
+* Thu Jan 31 2019 Fedora Release Engineering <releng@fedoraproject.org> - 0.12.1-2
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_30_Mass_Rebuild
+
+* Tue Dec 11 2018 Nick Rhodes <nrhodes91@gmail.com> 0.12.1-1
+- Add max-delay option to override MAXDLAY via command line
+- Redirect stderr to stdout and capture in APPLYOUTPUT variable
+
+* Thu Jul 12 2018 Paolo Gigante <paolo.gigante.sa@gmail.com> 0.12-1
+- Added --skip-all-scripts to skip the executions of all custom scripts
+- Added --skip-scripts-by-phase to skip the executions of custom scripts for the specified phase
+- Added --skip-scripts-by-phase to skip the executions of custom scripts by name
+- Added man page for auter.conf
+- Updated auter.aptModule to reflect changes in auter.yumdnfModule
+- added no-wall option
+- Fix for --status when run as non-root user
+- Logs auter output in /var/lib/auter/ when no updates are available
+- Minor improvements to rotation of output files in /var/lib/auter/
+
+* Fri Mar 16 2018 Nick Rhodes <nrhodes91@gmail.com> 0.11-5
+- Hotfix for the AUTOREBOOT issue
+
+* Fri Mar 16 2018 Paolo Gigante <paolo.gigante@rackspace.co.uk> 0.11-4
 - Updated documentation and references to include apt for Ubuntu/debian
 - Removed debugging message that was printed during apt update
 - Added "Valid Options" in auter.conf
 - Added the pre/post prep directories in auter.conf
+- Added retention and rotation for last-prep-output and last-apply-output files in /var/lib/auter
+- Corrected file permissions for the auter-postreboot cron file
+- Added --stdout option to force output to stdout even if there is no active tty
+- Added a package manager lock file check before prep and apply functions call the package manager
+- Improved checks to confirm prepared patches are still required
+- Adjusted some string arguments to arrays for better handling
 
 * Mon Oct 30 2017 Paolo Gigante <paolo.gigante@rackspace.co.uk> 0.10-1
 - Added pre and post prep script hooks
@@ -133,7 +172,7 @@ exit 0
 - Release version 0.7
 - Updated the .spec file according to Fedora's guidelines
 - Moved scriptdir from /var/lib/auter to /etc/auter
-- Catagorize log messages as INFO, WARNING or ERROR
+- Categorise log messages as INFO, WARNING or ERROR
 - Remove pre-built man page
 
 * Wed Jul 06 2016 Cameron Beere <cameron.beere@rackspace.co.uk> 0.6-1
@@ -144,11 +183,11 @@ exit 0
 - Release version 0.5
 - Added transaction ID logging
 - Disable random sleepis when running from a tty
-- Rename variables to be package manager agonistic
+- Rename variables to be package manager agnostic
 - Add cron examples for @reboot jobs
 - Update default auter config file location
 - Remove example script files
-- Diable cronjobs & enable lockfile on installation
+- Disable cronjobs & enable lockfile on installation
 - Switch to using pre/post script directories instead of files
 - Add better handling for option parsing
 - Added CONFIGSET variable used to distinguish between distinct configs
@@ -168,7 +207,7 @@ exit 0
 - Release version 0.3
 - Better defined exit codes
 - Added bounds check for MAXDELAY
-- Updated documentation with more details abount configuration options
+- Updated documentation with more details about configuration options
 - Fixed logging error if downloadonly is not available
 
 * Thu Mar 10 2016 Piers Cornwell <piers.cornwell@rackspace.co.uk> 0.2-1

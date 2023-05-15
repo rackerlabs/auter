@@ -1,10 +1,26 @@
 Auter NEWS
 
+0.12
+ * Added --skip-all-scripts to skip the executions of all custom scripts
+ * Added --skip-scripts-by-phase to skip the executions of custom scripts for the specified phase
+ * Added --skip-scripts-by-phase to skip the executions of custom scripts by name
+ * Added man page for auter.conf
+ * Updated auter.aptModule to reflect changes in auter.yumdnfModule
+ * added no-wall option
+ * Fix for --status when run as non-root user
+ * Logs auter output in /var/lib/auter/ when no updates are available
+ * Minor improvements to rotation of output files in /var/lib/auter/
+
 0.11
  * Updated documentation and references to include apt for Ubuntu/debian
  * Removed debugging message that was printed during apt update
  * Added "Valid Options" in auter.conf
  * Added the pre/post prep directories in auter.conf
+ * Added retention and rotation for last-prep-output and last-apply-output files in /var/lib/auter
+ * Corrected file permissions for the auter-postreboot cron file
+ * Added --stdout option to force output to stdout even if there is no active tty
+ * Added a package manager lock file check before prep and apply functions call the package manager
+ * Improved checks to confirm prepared patches are still required
 
 0.10
  * Added pre and post prep script hooks
@@ -28,7 +44,7 @@ Auter NEWS
 0.7
  * Updated the .spec file according to Fedora's guidelines
  * Moved scriptdir from /var/lib/auter to /etc/auter
- * Catagorize log messages as INFO, WARNING or ERROR
+ * Categorize log messages as INFO, WARNING or ERROR
  * Remove pre-built man page
 
 0.6
@@ -38,11 +54,11 @@ Auter NEWS
 0.5
  * Added transaction ID logging
  * Disable random sleeps when running from a tty
- * Rename variables to be package manager agonistic
+ * Rename variables to be package manager agnostic
  * Add cron examples for @reboot jobs
  * Update default auter config file location
  * Remove example script files
- * Diable cronjobs & enable lockfile on installation
+ * Disable cronjobs & enable lockfile on installation
  * Switch to using pre/post script directories instead of files
  * Add better handling for option parsing
  * Added CONFIGSET variable used to distinguish between distinct configs
@@ -60,7 +76,7 @@ Auter NEWS
 0.3
  * Better defined exit codes
  * Added bounds check for MAXDELAY
- * Updated documentation with more details abount configuration options
+ * Updated documentation with more details about configuration options
  * Fixed logging error if downloadonly is not available
 
 0.2

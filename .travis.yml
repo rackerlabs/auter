@@ -1,0 +1,12 @@
+dist: xenial
+language: bash
+before_install:
+  - sudo apt-get update
+  - sudo apt-get install -y aspell aspell-en
+jobs:
+  include:
+    - stage: Basic Tests
+      name: SpellCheck
+      script: ./tests/01-spellcheck.sh
+    - name: ShellCheck
+      script: ./tests/05-shellcheck.sh
