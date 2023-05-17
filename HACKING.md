@@ -17,9 +17,9 @@ on the change.
 
 ### Code standards
 
-We adhere to Google's [shell style
-guide](https://google.github.io/styleguide/shell.xml). One of the current
-exceptions is to declare all variables in capitals, not just global variables.
+We adhere to Google's [shell style guide](https://google.github.io/styleguide/shell.xml). 
+Historically one of the exceptions was to declare all variables in capitals, not just 
+global variables, but work is ongoing to gradually conform to the style guide.
 
 ### Testing changes
 
