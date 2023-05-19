@@ -17,7 +17,7 @@
 # CONDITIONS OF ANY KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations under the License.
 #
-
+# shellcheck disable=SC2317  # Don't warn about unreachable commands in this function
 
 declare -r -x AUTERVERSION="1.0.0"
 declare -r -x SCRIPTDIR="/etc/auter"
@@ -108,6 +108,7 @@ function logit() {
 
 function read_config() {
   if [[ -f "$CONFIGFILE" ]]; then
+    # shellcheck source=/dev/null
     source "$CONFIGFILE"
   elif [[ "$CUSTOMCONFIG" ]]; then
     logit "ERROR: Custom config file $CONFIGFILE does not exist"
@@ -445,6 +446,7 @@ fi
 [[ "$POSTREBOOT" ]] && post_reboot && quit 0
 
 # Source the module for the specific package manager.
+# shellcheck source=/dev/null
 . /usr/lib/auter/auter.module
 
 # The following 3 functions are provided by the previously sourced /usr/lib/auter/auter.module
