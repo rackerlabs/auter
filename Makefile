@@ -16,7 +16,7 @@ DATELONG := $(shell date --iso-8601=seconds)
 BUILD_ROOT := "BUILD"
 BUILD_DIR := "${NAME}-${VERSION}"
 OUT_DIR := "${HOME}/output"
-DIST := $(shell python -c "import platform; print(platform.linux_distribution()[0])")
+DIST := $(shell python3 -c "import platform; print(platform.linux_distribution()[0])")
 
 .PHONY: deb rpm variables clean
 
