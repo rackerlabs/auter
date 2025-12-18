@@ -1,0 +1,27 @@
+BUILD
+
+# Build artifacts
+packages/
+debian/.debhelper/
+debian/auter/
+debian/files
+debian/*.debhelper.log
+
+# Vagrant
+.vagrant/
+
+# Editor files
+*.swp
+*.swo
+*~
+
+# Personal notes (optional)
+notes.text
+.notes.text.swp
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.bak

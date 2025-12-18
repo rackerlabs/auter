@@ -65,8 +65,8 @@ function prepare_updates() {
         if [[ "$ONLYINSTALLFROMPREP" == "yes" ]]; then
           # If yum then the default is:
           downloadoption=("--downloaddir=$DOWNLOADDIR/$CONFIGSET")
-          if [[ "$PACKAGE_MANAGER" == "dnf" ]]; then
-            # dnf doesn't have a --downloaddir option but we can work around it as follows
+          if [[ $(basename "$PACKAGE_MANAGER") == "dnf" ]] || [[ $(basename "$PACKAGE_MANAGER") == "dnf5" ]]; then
+            # dnf/dnf5 doesn't have a --downloaddir option but we can work around it as follows
             downloadoption=( "--setopt=destdir=$DOWNLOADDIR/$CONFIGSET")
           fi
           download_command=("$PACKAGE_MANAGER" "${PACKAGEMANAGEROPTIONS[@]}" "${downloadoption[@]}" update --downloadonly -y )

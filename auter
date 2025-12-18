@@ -19,7 +19,7 @@
 #
 # shellcheck disable=SC2317  # Don't warn about unreachable commands in this function
 
-declare -r -x AUTERVERSION="1.0.0"
+declare -r -x AUTERVERSION="2.0.0"
 declare -r -x SCRIPTDIR="/etc/auter"
 declare -r -x DATADIR="/var/lib/auter"
 declare -r -x LOCKFILE="${DATADIR}/enabled"
@@ -120,6 +120,8 @@ function read_config() {
   IFS=' ' read -r -a PACKAGEMANAGEROPTIONS <<< "${PACKAGEMANAGEROPTIONS[*]}"
 }
 
+# Used by package manager modules (auter.aptModule, auter.yumdnfModule)
+# shellcheck disable=SC2329  # Function used indirectly via sourced modules
 function rotate_file {
   local output_file="$1"
 
@@ -177,7 +179,8 @@ function run_script {
 
 # Check whether yum, or dnf is available
 function check_package_manager() {
-  for pkg_mgr in dnf yum apt-get; do
+  # Check for dnf5 first (DNF 5), then dnf (DNF 4), then yum, then apt-get
+  for pkg_mgr in dnf5 dnf yum apt-get; do
     command -v "$pkg_mgr" && return 0
   done
   return 1
@@ -235,6 +238,8 @@ function quit() {
   exit "$1"
 }
 
+# Used by package manager modules (auter.aptModule, auter.yumdnfModule)
+# shellcheck disable=SC2329  # Function used indirectly via sourced modules
 function log_last_run() {
     logit "INFO: Auter successfully ran at $(date -Iseconds)"
 }

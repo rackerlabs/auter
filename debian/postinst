@@ -1,3 +1,4 @@
+#!/bin/bash
 # If this is the first time install, create the lockfile
 /usr/sbin/auter --enable
 #DEBHELPER#

@@ -16,11 +16,37 @@ DATELONG := $(shell date --iso-8601=seconds)
 BUILD_ROOT := "BUILD"
 BUILD_DIR := "${NAME}-${VERSION}"
 OUT_DIR := "${HOME}/output"
-DIST := $(shell python3 -c "import platform; print(platform.linux_distribution()[0])")
+DIST := $(shell if [ -f /etc/os-release ]; then . /etc/os-release && echo "$$NAME"; else echo "Unknown"; fi)
 
-.PHONY: deb rpm variables clean
+.PHONY: deb rpm man man-check variables clean help
 
 all:
+
+help:
+	@echo "Available targets:"
+	@echo "  deb        - Build Debian package"
+	@echo "  rpm        - Build RPM package"
+	@echo "  man        - Generate man page from help text (requires help2man)"
+	@echo "  man-check  - Check if help2man is available"
+	@echo "  variables  - Show build variables"
+	@echo "  clean      - Clean build artifacts"
+	@echo "  help       - Show this help message"
+
+man-check:
+	@command -v help2man >/dev/null 2>&1 || { \
+		echo "ERROR: help2man is required to generate man pages"; \
+		echo "Install with:"; \
+		echo "  RHEL/CentOS/Fedora: sudo dnf install help2man"; \
+		echo "  Ubuntu/Debian:      sudo apt-get install help2man"; \
+		exit 1; \
+	}
+
+man: man-check auter auter.help2man-sections
+	@echo "Generating man page from help text..."
+	help2man --section=1 ./auter -N -o auter.1 \
+		-n "Automatic Update Transaction Execution by Rackspace" \
+		--include=auter.help2man-sections
+	@echo "Man page generated: auter.1"
 
 deb: ${BUILD_FILES} ${EXEC_FILES}
 	install -d ${BUILD_ROOT}/$@/${BUILD_DIR}/

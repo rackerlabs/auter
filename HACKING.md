@@ -157,9 +157,8 @@ Checks:
     - __[ pass/fail ]__ Prints the auter help to screen
 
 7) Execute: `auter` (no arguments provided)
-    - __[ pass/fail ]__ Exit code 0
-    - __[ pass/fail ]__ Prints the auter help to screen
-
+    - __[ pass/fail ]__ Exit code 1
+    - __[ pass/fail ]__ Prints 'Auter must be run with one of the following: ...' to screen
 
 8) Execute: `auter --version`
     - __[ pass/fail ]__ Exit code 0
@@ -192,7 +191,7 @@ Checks:
         INFO: Running Post-Prep script /etc/auter/post-prep.d/post_prep_script
         ```
     - __[ pass/fail ]__ **_/var/lib/auter/last-prep-output-default_** contains yum download-only output
-    - __[ pass/fail ]__ updates downloaded to **_/var/cache/yum/..._**
+    - __[ pass/fail ]__ updates downloaded to **_/var/cache/auter/default/_**
     - __[ pass/fail ]__ pre/post prep scripts ran successfully with messages logged to syslog
     ##### Output from prep:
     ```
@@ -282,7 +281,7 @@ Checks:
         root: custom post prep script ran
         ```
     - __[ pass/fail ]__ **_/var/lib/auter/last-prep-output-default_** contains yum download-only output
-    - __[ pass/fail ]__ updates downloaded to **_/var/cache/yum/…_** or **_/var/cache/apt/archives/..._**
+    - __[ pass/fail ]__ updates downloaded to **_/var/cache/auter/default/_** or **_/var/cache/apt/archives/..._**
     - __[ pass/fail ]__ pre/post prep scripts ran successfully with messages logged to syslog
     - __[ pass/fail ]__ mail sent to root user with stdout output from auter. Debian will log stdout to syslog rather than mail
     Output from logs:
@@ -303,7 +302,7 @@ Checks:
         auter: INFO: Applying updates
         auter: INFO: Running Post-Apply script /etc/auter/post-apply.d/pre_apply_script
         root: custom post apply script ran
-        auter: INFO: Updates complete (yum Transaction ID : 86). You may need to reboot for some updates to take effect
+        auter: INFO: Updates complete (yum/dnf Transaction ID : x). You may need to reboot for some updates to take effect
         auter: INFO: Auter successfully ran at 2018-07-18T14:59:24+0000
         ```
     - __[ pass/fail ]__ no updates available after running

@@ -1,3 +1,13 @@
+auter (2.0.0) jammy; urgency=medium
+
+  * Add DNF 5 compatibility support
+  * Use --setopt=destdir= for DNF 5 package downloads
+  * Simplify DNF download logic and remove version-specific workarounds
+  * Update package manager detection for current distributions
+  * Maintain backward compatibility with DNF 4 and YUM
+
+ -- Auter Development Team <auter@example.com>  Mon, 15 Dec 2025 15:00:00 +0000
+
 auter (1.0.0) unstable; urgency=low
 
   * #220 Introduce package dependent reboots using AUTOREBOOT option

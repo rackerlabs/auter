@@ -1,22 +1,57 @@
 #!/bin/bash
 
+# Color variables for output formatting
 red='\033[31m'
 grn='\033[32m'
 ylw='\033[33m'
 rst='\033[0m'
 
+# Logging functions
 log_success () { printf "[%b  OK  %b] %s\\n" "$grn" "$rst" "$1"; }
 log_fail () { printf "[%b FAIL %b] %s\\n" "$red" "$rst" "$1"; }
 log_info () { printf "[%b INFO %b] %s\\n" "$ylw" "$rst" "$1"; }
 
-function quit() {
-  docker ps -aq | xargs docker stop
+# Directory and version variables
+TESTDIR="$(dirname "$(realpath "$0")")"
+AUTERDIR="$(dirname "$TESTDIR")"
+AUTERPARENTDIR="$(dirname "$AUTERDIR")"
+VERSION="$(grep "Version" "$AUTERDIR"/auter.spec | awk '{print $2}')"
+export TESTDIR AUTERDIR AUTERPARENTDIR VERSION
+
+# Detect container runtime (prefer Podman, fallback to Docker)
+if command -v podman >/dev/null 2>&1; then
+    CONTAINER_CMD="podman"
+    log_info "Using Podman for build tests"
+elif command -v docker >/dev/null 2>&1; then
+    CONTAINER_CMD="docker"
+    log_info "Using Docker for build tests"
+else
+    log_fail "Neither Podman nor Docker available, skipping build tests"
+    exit 0
+fi
+
+export CONTAINER_CMD
+
+# Container command wrapper (uses CONTAINER_CMD set above)
+container_cmd() {
+    "${CONTAINER_CMD:-docker}" "$@"
+}
+
+# Cleanup function that stops all containers
+quit() {
+  # Stop all containers using the centralized container command
+  local container_ids
+  container_ids=$(container_cmd ps -aq 2>/dev/null || true)
+  if [[ -n "$container_ids" ]]; then
+    # shellcheck disable=SC2086  # We want word splitting here
+    container_cmd stop $container_ids 2>/dev/null || true
+  fi
   exit "${1:-1}"
 }
 export -f quit
 
-function run_cmd ()
-{
+# Command execution wrapper with error handling
+run_cmd() {
   local tag="$1"; shift
   if output="$("${@}" 2>&1)"; then
     log_success "$tag"
@@ -29,9 +64,3 @@ function run_cmd ()
   fi
 }
 export -f run_cmd
-
-TESTDIR="$(dirname "$(realpath "$0")")"
-AUTERDIR="$(dirname "$TESTDIR")"
-AUTERPARENTDIR="$(dirname "$AUTERDIR")"
-VERSION="$(grep "Version" "$AUTERDIR"/auter.spec | awk '{print $2}')"
-export TESTDIR AUTERDIR AUTERPARENTDIR VERSION

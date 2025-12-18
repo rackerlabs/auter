@@ -1,12 +1,12 @@
 Name:           auter
-Version:        1.0.0
-Release:        2%{?dist}
+Version:        2.0.0
+Release:        1%{?dist}
 Summary:        Prepare and apply updates
 License:        ASL 2.0
 URL:            https://github.com/rackerlabs/%{name}
 Source0:        https://github.com/rackerlabs/%{name}/archive/%{version}.tar.gz
 BuildArch:      noarch
-BuildRequires:  help2man
+# BuildRequires:  help2man  # Not needed - using pre-built man page
 %if 0%{?fedora} >= 15 || 0%{?rhel} >= 7
 BuildRequires:  systemd
 %endif
@@ -25,7 +25,8 @@ set schedule, optionally rebooting to finish applying the updates.
 %setup -q
 
 %build
-help2man --section=1 ./auter -N -o auter.man -n "Automatic Update Transaction Execution by Rackspace" --include=auter.help2man-sections
+# Use pre-built man page instead of generating with help2man
+cp auter.1 auter.man
 
 %install
 %if 0%{?fedora} >= 15 || 0%{?rhel} >= 7
@@ -101,6 +102,14 @@ exit 0
 %endif
 
 %changelog
+* Mon Dec 15 2025 Auter Development Team <auter@example.com> 2.0.0-1
+- Add DNF 5 compatibility support
+- Use --setopt=destdir= for DNF 5 package downloads
+- Simplify DNF download logic and remove version-specific workarounds
+- Update package manager detection for current distributions
+- Maintain backward compatibility with DNF 4 and YUM
+- Update test suite for current supported distributions
+
 * Wed Jul 24 2019 Fedora Release Engineering <releng@fedoraproject.org> - 1.0.0-2
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_31_Mass_Rebuild
 
