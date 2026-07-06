@@ -77,4 +77,4 @@ who started the project.
 - [Auter Manager](https://github.com/rackerlabs/auter-manager): Simplify the
   installation of Auter across multiple servers with a single master
   configuration file written in CSV.
- 
+
