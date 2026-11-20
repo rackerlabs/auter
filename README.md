@@ -66,8 +66,6 @@ Please read
 details on how to contribute, and the process for submitting pull requests.
 
 ## Maintainers
-- Nick Rhodes
-- Paolo Gigante
 
 See also the list of original
 [contributors](https://github.com/rackerlabs/auter/blob/master/MAINTAINERS.md)
